@@ -1,0 +1,12 @@
+procedural cities plan:
+- get cube to subdivide right
+- reimplement perlin noise for population density and/or water/rivers
+- start making roads somehow
+- figure out subtractive manner of constructing geometry
+
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set
+
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this
+http://stackoverflow.com/questions/20279484/how-to-access-the-correct-this-inside-a-callback
+
+http://stackoverflow.com/questions/31994303/threejs-merge-with-multiple-materials-applies-only-one-material
