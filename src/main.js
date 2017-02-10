@@ -4,36 +4,48 @@ const THREE = require('three'); // older modules are imported like this. You sho
 import Framework from './framework'
 import Shape from './shape.js'
 
-var myShape = require('./shape.js');
-
+// var myShape = require('./shape.js');
 var building_Material = new THREE.ShaderMaterial({
-  // uniforms:
-  // {
-  //   feathercolor:
-  //   {
-  //       type: "v3",
-  //       value: new THREE.Vector3( 0.0902, 0.1961, 0.5411 )
-  //       // value: new THREE.Color(0x17328A)
-  //   }
-  // },
+  uniforms:
+  {
+    shapeColor:
+    {
+        type: "v3",
+        value: new THREE.Color(0xB266FF) // violet
+    }
+  },
   vertexShader: require('./shaders/buildings-vert.glsl'),
   fragmentShader: require('./shaders/buildings-frag.glsl')
 });
 
-var guiParameters = {
-    BranchColor: new THREE.Color(0x17328A),// [23,50,138],
-    LeafColor: [216,42,42],
-    FruitColor: [17,191,52],
+// var guiParameters = {}
+
+var cube = new THREE.BoxGeometry( 1, 1, 1 );
+// var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+var cube1 = new THREE.Mesh( cube, building_Material );
+
+//shape extrusion
+/*
+var shape = new THREE.Shape();
+shape.moveTo( 0, 0 );
+var numSteps = 10, stepSize = 10;
+
+for ( var i = 0; i < numSteps; i ++ ) {
+
+    shape.lineTo( i * stepSize, ( i + 1 ) * stepSize );
+    shape.lineTo( ( i + 1 ) * stepSize, ( i + 1 ) * stepSize );
+
 }
 
-function changeGUI(framework)
-{
-  var scene = framework.scene;
-  var camera = framework.camera;
-  var renderer = framework.renderer;
-  var gui = framework.gui;
-  var stats = framework.stats;
+var extrudeSettings = { amount: 100, bevelEnabled: false };
+var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
 
+var material = new THREE.MeshBasicMaterial( {color: 0xffffff } );
+var steps = new THREE.Mesh( geometry, material );
+*/
+
+function changeGUI(gui, camera)
+{
   // var f1 = gui.addFolder('Colors');
   // f1.addColor(guiParameters, 'BranchColor').onChange(function(newVal)
   // {
@@ -55,14 +67,8 @@ function changeGUI(framework)
   });
 }
 
-function setupLightsandSkybox(framework)
+function setupLightsandSkybox(scene, camera)
 {
-  var scene = framework.scene;
-  var camera = framework.camera;
-  var renderer = framework.renderer;
-  var gui = framework.gui;
-  var stats = framework.stats;
-
   // Set light
   var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
   directionalLight.color.setHSL(0.1, 1, 0.95);
@@ -79,6 +85,19 @@ function setupLightsandSkybox(framework)
   ] );
   scene.background = skymap;
 
+  //set plane
+  var geometry = new THREE.PlaneGeometry( 100, 100, 1 );
+  var material = new THREE.MeshBasicMaterial( {color: 0x696969, side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+  plane.rotateX(90 * 3.14/180);
+  scene.add( plane );
+
+  //create grid
+  var size = 50;
+  var divisions = 50;
+  var gridHelper = new THREE.GridHelper( size, divisions );
+  scene.add( gridHelper );
+
   // set camera position
   camera.position.set(0, 1, 5);
   camera.lookAt(new THREE.Vector3(0,0,0));
@@ -87,6 +106,11 @@ function setupLightsandSkybox(framework)
   scene.add(directionalLight);
 }
 
+function addToScene(scene)
+{
+  //change building.shapeColor everytime you add something to the scene
+  scene.add( cube1 );
+}
 
 // called after the scene loads
 function onLoad(framework) {
@@ -96,9 +120,9 @@ function onLoad(framework) {
   var gui = framework.gui;
   var stats = framework.stats;
 
-  setupLightsandSkybox(framework);
-  changeGUI(framework);
-
+  setupLightsandSkybox(scene, camera);
+  changeGUI(gui, camera);
+  addToScene(scene);
 }
 
 // called on frame updates
