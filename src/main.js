@@ -3,8 +3,8 @@ const THREE = require('three');
 const _ = require('lodash');
 import Framework from './framework'
 import Lsystem, { LinkedListToString } from './lsystem.js'
-import Turtle from './turtle.js'
 import City from './city.js'
+import ShapeGrammar from './shapeGrammar.js'
 
 var turtle;
 
@@ -29,11 +29,17 @@ function onLoad(framework) {
   renderLight(scene);
   setCamera(camera);
 
-  var city = new City(scene);
+  var shapeGrammar = new ShapeGrammar(scene);
+  var city = new City(scene, shapeGrammar);
 
   city.renderBase();
-  city.renderNodes();
-  city.renderEdges();
+  city.renderRings();
+  city.renderDivisions();
+  city.renderCells();
+  city.renderBuildings();
+  // city.renderRiver();
+
+
 }
 
 

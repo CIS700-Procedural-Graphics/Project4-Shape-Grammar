@@ -17,7 +17,8 @@
     "lodash": "^4.17.4",
     "stats-js": "^1.0.0-alpha1",
     "three": "^0.82.1",
-    "three-orbit-controls": "^82.1.0"
+    "three-orbit-controls": "^82.1.0",
+    "three.meshline": "^1.0.3"
   },
   "devDependencies": {
     "babel-core": "^6.18.2",
