@@ -1,3 +1,5 @@
+//skybox images from: https://github.com/simianarmy/webgl-skybox/tree/master/images
+
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
 import Shape from './shape.js'
@@ -66,6 +68,16 @@ function setupLightsandSkybox(framework)
   directionalLight.color.setHSL(0.1, 1, 0.95);
   directionalLight.position.set(1, 3, 2);
   directionalLight.position.multiplyScalar(10);
+
+  // set skybox
+  var loader = new THREE.CubeTextureLoader();
+  var urlPrefix = 'images/skymap/';
+  var skymap = new THREE.CubeTextureLoader().load([
+      urlPrefix + 'skyposx.png', urlPrefix + 'skynegx.png',
+      urlPrefix + 'skyposy.png', urlPrefix + 'skynegy.png',
+      urlPrefix + 'skyposz.png', urlPrefix + 'skynegz.png'
+  ] );
+  scene.background = skymap;
 
   // set camera position
   camera.position.set(0, 1, 5);
