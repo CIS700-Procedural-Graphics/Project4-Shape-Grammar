@@ -1,0 +1,242 @@
+const THREE = require('three')
+
+// A class used to encapsulate the state of a turtle at a given moment.
+// The Turtle class contains one TurtleState member variable.
+// You are free to add features to this state class,
+// such as color or whimiscality
+var TurtleState = function(pos, dir) {
+    return {
+        pos: new THREE.Vector3(pos.x, pos.y, pos.z),
+        dir: new THREE.Vector3(dir.x, dir.y, dir.z)
+    }
+}
+
+
+//turtleStateStack.push(<value1>)
+//turtleStateStack.push(<value2>)
+//array is now [value1, value2]
+// var i = turtleStateStack.pop()
+//i = value2
+
+export default class Turtle {
+
+    constructor(scene, grammar) {
+        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));
+        this.scene = scene;
+        this.turtleStateStack = [];
+        this.angle = 10;
+        this.branchColor = 0x00cccc;
+        this.cylinderWidth = 0.1;
+
+        // TODO: Start by adding rules for '[' and ']' then more!
+        // Make sure to implement the functions for the new rules inside Turtle
+        if (typeof grammar === "undefined") {
+            this.renderGrammar = {
+                '+' : this.rotateTurtle.bind(this, 30, 0, 0),
+                '-' : this.rotateTurtle.bind(this, -30, 0, 0),
+                //'F' : this.makeCylinder.bind(this, 2, 0.1, this.branchColor),
+                'F' : this.makeCylinder.bind(this, 2, this.cylinderWidth, this.branchColor),
+                '[' : this.saveState.bind(this),
+                ']' : this.setState.bind(this),
+                //'R' : this.rotateTurtle.bind(this, 45, 0, 0),
+                'R' : this.rotateTurtle.bind(this, this.angle, 0, 0),
+                'L' : this.rotateTurtle.bind(this, -this.angle, 0, 0),
+                'S' : this.makeSphere.bind(this, 1, 5)
+            };
+        } else {
+            this.renderGrammar = grammar;
+        }
+    }
+
+    //updates angle of symbols R and L
+    updateAngle(angle) {
+      if(typeof angle !== "undefined") {
+        this.angle = angle;
+      }
+    }
+
+    updateBranchColor(color) {
+      if(typeof color !== "undefined") {
+        this.branchColor = color;
+      }
+    }
+
+    updateCylinderWidth(new_width) {
+      if(typeof new_width !== "undefined") {
+        this.cylinderWidth = new_width;
+      }
+    }
+
+
+    // Resets the turtle's position to the origin
+    // and its orientation to the Y axis
+    clear() {
+        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));
+    }
+
+    // A function to help you debug your turtle functions
+    // by printing out the turtle's current state.
+    printState() {
+        console.log(this.state.pos)
+        console.log(this.state.dir)
+    }
+
+    // Rotate the turtle's _dir_ vector by each of the
+    // Euler angles indicated by the input.
+    rotateTurtle(x, y, z) {
+        var e = new THREE.Euler(
+                x * 3.14/180,
+				y * 3.14/180,
+				z * 3.14/180);
+        this.state.dir.applyEuler(e);
+    }
+
+    // Translate the turtle along the input vector.
+    // Does NOT change the turtle's _dir_ vector
+    moveTurtle(x, y, z) {
+	    var new_vec = THREE.Vector3(x, y, z);
+	    this.state.pos.add(new_vec);
+    };
+
+    // Translate the turtle along its _dir_ vector by the distance indicated
+    moveForward(dist) {
+        var newVec = this.state.dir.multiplyScalar(dist);
+        this.state.pos.add(newVec);
+    };
+
+    // Make a cylinder of given length and width starting at turtle pos
+    // Moves turtle pos ahead to end of the new cylinder
+    makeCylinder(len, width, color) {
+
+      //console.log("IM IN MAKE CYLLINDER");
+
+        var geometry = new THREE.CylinderGeometry(width, width, len);
+        //var material = new THREE.MeshBasicMaterial( {color: 0x00cccc} );
+        var material = new THREE.MeshBasicMaterial( {color: color} );
+        var cylinder = new THREE.Mesh( geometry, material );
+        this.scene.add( cylinder );
+
+        //Orient the cylinder to the turtle's current direction
+        var quat = new THREE.Quaternion();
+        quat.setFromUnitVectors(new THREE.Vector3(0,1,0), this.state.dir);
+        var mat4 = new THREE.Matrix4();
+        mat4.makeRotationFromQuaternion(quat);
+        cylinder.applyMatrix(mat4);
+
+
+        //Move the cylinder so its base rests at the turtle's current position
+        var mat5 = new THREE.Matrix4();
+        var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * len));
+        mat5.makeTranslation(trans.x, trans.y, trans.z);
+        cylinder.applyMatrix(mat5);
+
+        //Scoot the turtle forward by len units
+        this.moveForward(len/2);
+    };
+
+    //When you parse [ you need to store the current turtle state somewhere
+    saveState() {
+      this.turtleStateStack.push(new TurtleState(this.state.pos, this.state.dir));
+    };
+
+    /*  When you parse ] you need to set your turtle’s state to the most recently stored state.
+        Think of this a pushing and popping turtle states on and off a stack.
+        For example, given F[+F][-F], the turtle should draw a Y shape.
+        Note that your program must be capable of storing many turtle states at once in a stack.
+    */
+    setState() {
+      this.state = this.turtleStateStack.pop();
+    };
+
+
+    makeSphere(radius, width) {
+      var geometry = new THREE.SphereGeometry(radius, width, width);
+      var material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+      //var material = toonShader(0.5); //NEED TO ASK AUSTIN ABOUT CONSTRUCTOR FIX
+
+      var color1 = 0xfff000;
+      var color2 = 0xff0000;
+      var green = 0x32CD32;
+      var randVal = Math.random();
+      if(randVal <= 0.3)
+      {
+        material = new THREE.MeshBasicMaterial( {color: color1} );
+      }
+      else if(randVal <= 0.6 && randVal > 0.3)
+      {
+        material = new THREE.MeshBasicMaterial( {color: green} );
+      }
+      else {
+        material = new THREE.MeshBasicMaterial( {color: color2} );
+      }
+
+      var sphere = new THREE.Mesh( geometry, material );
+      this.scene.add( sphere );
+
+
+      //Orient the sphere to the turtle's current direction
+      var quat = new THREE.Quaternion();
+      quat.setFromUnitVectors(new THREE.Vector3(0,1,0), this.state.dir);
+      var mat4 = new THREE.Matrix4();
+      mat4.makeRotationFromQuaternion(quat);
+      sphere.applyMatrix(mat4);
+
+
+      //Move the sphere so its base rests at the turtle's current position
+      var mat5 = new THREE.Matrix4();
+      var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * width));
+      mat5.makeTranslation(trans.x, trans.y, trans.z);
+      sphere.applyMatrix(mat5);
+
+      //Scoot the turtle forward by len units
+      this.moveForward(width/2);
+    }
+
+    // Call the function to which the input symbol is bound.
+    // Look in the Turtle's constructor for examples of how to bind
+    // functions to grammar symbols.
+    renderSymbol(symbolNode) {
+      //console.log("IM IN RENDER SYMBOLS");
+        var func = this.renderGrammar[symbolNode.grammarSym];//character];
+        if (func) {
+            func();
+        }
+    };
+
+    // Invoke renderSymbol for every node in a linked list of grammar symbols.
+    renderSymbols(linkedList) {
+        var currentNode;
+        for(currentNode = linkedList.head; currentNode != null; currentNode = currentNode.next) {
+            this.renderSymbol(currentNode);
+        }
+    }
+}//end turtle class
+
+
+function toonShader(colorOffset) {
+    var toonGreenMaterial;
+    var stepSize = 1.0/5.0;
+
+    for ( var alpha = 0, alphaIndex = 0; alpha <= 1.0; alpha += stepSize, alphaIndex ++ ) {
+          var specularShininess = Math.pow(2.0 , alpha * 10.0 );
+
+          for ( var beta = 0; beta <= 1.0; beta += stepSize ) {
+              var specularColor = new THREE.Color( beta * 0.2, beta * 0.2, beta * 0.2 );
+
+              for ( var gamma = 0; gamma <= 1.0; gamma += stepSize ) {
+                  var offset = colorOffset;
+                  var diffuseColor = new THREE.Color().setHSL( alpha * offset, 0.5, gamma * 0.5 ).multiplyScalar( 1.0 - beta * 0.2 );
+
+                  toonGreenMaterial = new THREE.MeshToonMaterial( {
+                        color: diffuseColor,
+                        specular: specularColor,
+                        reflectivity: beta,
+                        shininess: specularShininess,
+                        shading: THREE.SmoothShading
+                  } );//end var toon material
+              }//end for gamma
+          }//end for beta
+    }//end for alpha
+
+    return toonGreenMaterial;
+}
