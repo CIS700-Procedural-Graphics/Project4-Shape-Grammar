@@ -6,7 +6,8 @@ export default class City {
   constructor(scene, shapeGrammar) {
     this.scene = scene;
 
-    this.baseDim = 100;
+    this.baseDim = 200;
+    this.baseDiagonal = Math.sqrt((2 * Math.pow(this.baseDim / 2, 2)));
     this.base = null;
 
     this.numRings = 4;
@@ -19,7 +20,7 @@ export default class City {
 
     this.riverPoints = 32;
 
-    this.cellDim = 3;
+    this.cellDim = 7;
     this.cells = [];
 
     this.shapeGrammar = shapeGrammar;
@@ -164,31 +165,12 @@ export default class City {
         if (draw) {
           this.cells.push({
             pos: pos,
+            density: 1 - (pos.length() / this.baseDiagonal),
             color: THREE.Math.randInt(0, 1)
           });
         }
       }
     }
-
-
-    // var geometryRed = new THREE.Geometry();
-    // var geometryBlue=  new THREE.Geometry();
-
-    // _.each(this.cells, function (cell) {
-    //   if (cell.color) {
-    //     geometryRed.vertices.push(cell.pos);
-    //   } else {
-    //     geometryBlue.vertices.push(cell.pos);
-    //   }
-    // });
-
-    // var materialRed = new THREE.PointsMaterial({ color: 0xff0000 });
-    // var materialBlue = new THREE.PointsMaterial({ color: 0x0000ff });
-    // var meshRed = new THREE.Points(geometryRed, materialRed);
-    // var meshBlue = new THREE.Points(geometryBlue, materialBlue);
-
-    // this.scene.add(meshRed);
-    // this.scene.add(meshBlue);
   }
 
   renderRiver() {
@@ -251,7 +233,7 @@ export default class City {
 
     geometry.vertices = points;
 
-    var material = new THREE.LineBasicMaterial({ color: 0x010d21, lineWidth: 1 });
+    var material = new THREE.LineBasicMaterial({ color: 0x010d21 });
     var mesh = new THREE.Line(geometry, material);
 
     this.scene.add(mesh);
@@ -297,5 +279,13 @@ export default class City {
 
   getRandSpread() {
     return THREE.Math.randFloatSpread(this.baseDim);
+  }
+
+  clearBuildings() {
+    this.scene.traverseVisible(function(child) {
+      if (child.type !== 'Scene' && child.name === 'building') {
+        this.scene.remove(child);
+      }
+    });
   }
 };
