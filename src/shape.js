@@ -1,11 +1,25 @@
 const THREE = require('three')
 
-var Meshtypes = {
+exports.shape = {
   building_shape : {value: 0, name: "building"},
   window_shape: {value: 1, name: "window"}
 };
 
+var building_Material = new THREE.ShaderMaterial({
+  uniforms:
+  {
+    shapeColor:
+    {
+        type: "v3",
+        value: new THREE.Color(0xB266FF) // violet
+    }
+  },
+  vertexShader: require('./shaders/buildings-vert.glsl'),
+  fragmentShader: require('./shaders/buildings-frag.glsl')
+});
 
+var cube = new THREE.BoxGeometry( 1, 1, 1 );
+// var cube1 = new THREE.Mesh( cube, building_Material );
 
 export default class Shape
 {

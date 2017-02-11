@@ -4,7 +4,9 @@ const THREE = require('three'); // older modules are imported like this. You sho
 import Framework from './framework'
 import Shape from './shape.js'
 
-// var myShape = require('./shape.js');
+var shapeType = require('./shape.js');
+
+/*
 var building_Material = new THREE.ShaderMaterial({
   uniforms:
   {
@@ -17,13 +19,26 @@ var building_Material = new THREE.ShaderMaterial({
   vertexShader: require('./shaders/buildings-vert.glsl'),
   fragmentShader: require('./shaders/buildings-frag.glsl')
 });
-
+*/
 // var guiParameters = {}
 
-var cube = new THREE.BoxGeometry( 1, 1, 1 );
-// var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
-var cube1 = new THREE.Mesh( cube, building_Material );
+// var cube = new THREE.BoxGeometry( 1, 1, 1 );
+// // var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+// var cube1 = new THREE.Mesh( cube, building_Material );
 
+var shapeList = [];
+
+var shapeGrammar = {
+        // '+' : this.rotateTurtle.bind(this, 30, 0, 30),
+        // '-' : this.rotateTurtle.bind(this, -30, 0, -30),
+        // 'F' : this.makeCylinder.bind(this, 2, 0.1),
+        // 'X' : this.makeCylinder.bind(this, 2, 0.1), //branch
+        // 'A' : this.makeFruit.bind(this, 0.2), //leaf
+        // 'L' : this.makeLeaf.bind(this, 0.1, 0.2), //fruit
+        // 'a' : this.radialrotate.bind(this), //radial growth
+        // '[' : this.saveState.bind(this),
+        // ']' : this.respawnAtState.bind(this)
+    };
 //shape extrusion
 /*
 var shape = new THREE.Shape();
@@ -109,7 +124,20 @@ function setupLightsandSkybox(scene, camera)
 function addToScene(scene)
 {
   //change building.shapeColor everytime you add something to the scene
-  scene.add( cube1 );
+  // scene.add( cube1 );
+}
+
+function addToShapeList(shape)
+{
+  shapeList.push(shape);
+}
+
+function replaceShape(shape)
+{
+  var func = shapeGrammar[shape.type];
+  if (func) {
+      func();
+  }
 }
 
 // called after the scene loads
@@ -122,14 +150,17 @@ function onLoad(framework) {
 
   setupLightsandSkybox(scene, camera);
   changeGUI(gui, camera);
-  addToScene(scene);
+
+  for(var i=0; i<shapeList.length; i++)
+  {
+    replaceShape(shapeList[i]);
+  }
+  // addToScene(scene); //things can be added when they are made maybe
 }
 
 // called on frame updates
 function onUpdate(framework)
-{
-
-}
+{}
 
 // when the scene is done initializing, it will call onLoad, then on frame updates, call onUpdate
 Framework.init(onLoad, onUpdate);
