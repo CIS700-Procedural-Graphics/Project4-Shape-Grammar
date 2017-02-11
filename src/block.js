@@ -1,4 +1,5 @@
 const THREE = require('three')
+import {spread, size} from './distribution'
 
 // A class that represents functions applied to shapes
 function Rule(prob, func) {
@@ -10,23 +11,11 @@ function Rule(prob, func) {
 var scope;
 
 // TODO: shape call for geometric and Tranformation data
-var Shape = function(sym) {
-	this.sym = sym;
-	this.geo = null;
-	this.color = 0x000000;
-	this.pos = new THREE.Vector3(0,0,0); 
-	this.rot = new THREE.Vector3(0,0,0);
-	this.scale = new THREE.Vector3(1,1,1);
-	this.terminal = false;
-}
-
-function copyState(shape) {
-	var result = new Shape(shape.sym)
-	result.pos.copy(shape.pos);
-	result.rot.copy(shape.rot);
-	result.scale.copy(shape.scale);
-	return result;
-
+var Block = function(sym) {
+	this.p1;
+	this.p2; 
+	this.p3
+	this.p4
 }
 
 export default class Buildings {
@@ -107,51 +96,6 @@ export default class Buildings {
 		}
 	}
 
-	subdivideY(c, s) {
-		return function() {
-		
-			var len = scope.curr.scale.y;
-			var zero = scope.curr.pos.y - len/2;
-			var pos1 = zero + c * len / 2;
-			var pos2 = zero + c * len + (1 - c) * len / 2; 
-			var s1 = copyState(scope.curr);
-			s1.pos.y = pos1;
-			s1.scale.y = c*len;
-			var s2 = copyState(scope.curr);
-			s2.pos.y = pos2;
-			s2.scale.y = (1-c)*len;
-			// shrink second partition by s
-			s2.scale.x *= s; s2.scale.z *= s;
-			//s2.pos.y = s2.pos.y + (s2.scale.y + s1.scale.y)/2;
-			s1.sym = "M";
-			// replace current with one division and push the other
-			scope.updateCurr(s1);
-			scope.shapes.push(s2);
-		}
-		
-	}
-
-	subdivideZ(c, s) {
-		return function() {
-			var len = scope.curr.scale.z;
-			var zero = scope.curr.pos.z - len/2;
-			var pos1 = zero + c * len / 2;
-			var pos2 = zero + c * len + (1 - c) * len / 2; 
-			var s1 = copyState(scope.curr);
-			s1.pos.z = pos1;
-			s1.scale.z = c*len;
-			var s2 = copyState(scope.curr);
-			s2.pos.z = pos2;
-			s2.scale.z = (1-c)*len;
-			// shrink second partition by s
-			s1.scale.y *= s;
-			s1.pos.y = s1.pos.y - (s2.scale.y - s1.scale.y)/2;
-			// replace current with one division and push the other
-			scope.updateCurr(s1);
-			scope.shapes.push(s2);
-		}
-	}
-
 	selectRule(str) {
 		var x = Math.random();
 		var i = 0;
@@ -164,7 +108,6 @@ export default class Buildings {
 		return this.grammar[str][i].func;
 	}
 
-	// TODO
 	// This function returns a list of shapes to be rendered
 	doIterations() {	
 		for (var i = 0; i < this.iterations; i++) {
@@ -176,19 +119,6 @@ export default class Buildings {
 					var f = this.selectRule(this.shapes[j].sym);
 					f();
 				}
-			}
-		}
-		return this.shapes;
-	}
-
-	doOneIteration() {	
-		var len = this.shapes.length;
-		for (var j = 0; j < len; j ++) {
-			this.curr = this.shapes[j];
-			// if a rule exists
-			if (this.grammar[this.shapes[j].sym] !== undefined) {
-				var f = this.selectRule(this.shapes[j].sym);
-				f();
 			}
 		}
 		return this.shapes;
