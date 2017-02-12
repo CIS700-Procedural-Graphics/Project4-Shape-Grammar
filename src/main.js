@@ -13,16 +13,16 @@ var settings = {
 }
 
 var ZONES = {
-  UNZONED    : {value: 1, name: "Unzoned",     code: "U"},
-  ROAD       : {value: 2, name: "Road",        code: "D"},
-  RESIDENTIAL: {value: 3, name: "Residential", code: "R"},
-  COMMERCIAL : {value: 4, name: "Commerical",  code: "C"},
-  INDUSTRIAL : {value: 5, name: "Industrial",  code: "I"}
+  UNZONED    : {value: 1, name: "Unzoned",     color: 0xd1cfca},
+  ROAD       : {value: 2, name: "Road",        color: 0x2c2a2d},
+  RESIDENTIAL: {value: 3, name: "Residential", color: 0x1fbc14},
+  COMMERCIAL : {value: 4, name: "Commerical",  color: 0x7c14bc},
+  INDUSTRIAL : {value: 5, name: "Industrial",  color: 0xddac30}
 };
 
 
 var city = {
-    zones: []
+    grid: []
 }
 
 // called after the scene loads
@@ -54,8 +54,12 @@ function onLoad(framework) {
   gui.add(settings, 'newSeed');
   gui.add(settings, 'split', 0, 10);
 
-  city.zones = new Array(settings.resolution).fill(new Array(settings.resolution).fill(ZONES.UNZONED.value));
-  console.log(city.zones);
+  for (var i = 0; i < settings.resolution; i++) {
+      city.grid.push([]);
+      for (var j = 0; j < settings.resolution; j++) {
+          city.grid[i].push({zone: ZONES.UNZONED.value});
+      }
+  }
 
   draw(framework);
 }
@@ -85,13 +89,15 @@ function draw(framework) {
   plane.name = "plane_landValue";
   scene.add( plane );
 
+  regenerateCity(framework);
 
   var square_size = settings.size / settings.resolution;
   var offset = settings.size / 2.0 - square_size / 2.0;
   for (var i = 0; i < settings.resolution; i++) {
       for (var j = 0; j < settings.resolution; j++) {
+          var grid_color = getZoneProperties(city.grid[i][j].zone).color;
           var geometry = new THREE.PlaneBufferGeometry( square_size - 0.01, square_size - 0.01, 1 );
-          var material = new THREE.MeshBasicMaterial( {color: 0xffcccc} );
+          var material = new THREE.MeshBasicMaterial( {color: grid_color} );
           var plane = new THREE.Mesh( geometry, material );
           plane.position.set(i * square_size - offset, j * square_size - offset, 0.01);
           plane.name = "square";
@@ -99,6 +105,42 @@ function draw(framework) {
       }
   }
 
+}
+
+function getZoneProperties(zoneValue) {
+    var myKeys = Object.keys(ZONES);
+    var matchingKeys = myKeys.filter(function(key){
+        return ZONES[key].value == zoneValue;
+    });
+    return ZONES[matchingKeys[0]];
+}
+
+function regenerateCity(framework) {
+    generateRoads();
+}
+
+function generateRoads() {
+    var x = Math.floor(Math.random() * settings.resolution);
+    var y = Math.floor(Math.random() * settings.resolution);
+
+    for (var i = 0; i < 100; i++) {
+        var r = Math.random();
+        if (r < 0.2) {
+            x += 1;
+        } else {
+            y += 1;
+        }
+        if (within(x, 0, settings.resolution) && within(y, 0, settings.resolution)) {
+            city.grid[x][y] = { zone: ZONES.ROAD.value };
+        } else {
+            x = Math.floor(Math.random() * settings.resolution);
+            y = Math.floor(Math.random() * settings.resolution);
+        }
+    }
+}
+
+function within(x, low, high) {
+    return x > low && x < high;
 }
 
 // called on frame updates
