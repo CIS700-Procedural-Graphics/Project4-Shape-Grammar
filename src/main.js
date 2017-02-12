@@ -7,8 +7,22 @@ var settings = {
     seed: 1.0,
     resetCamera: function() {},
     newSeed: function(newVal) { settings.seed = Math.random(); },
-    size: 5.0,
+    size: 10.0,
+    resolution: 64,
     split: 0.0
+}
+
+var ZONES = {
+  UNZONED    : {value: 1, name: "Unzoned",     code: "U"},
+  ROAD       : {value: 2, name: "Road",        code: "D"},
+  RESIDENTIAL: {value: 3, name: "Residential", code: "R"},
+  COMMERCIAL : {value: 4, name: "Commerical",  code: "C"},
+  INDUSTRIAL : {value: 5, name: "Industrial",  code: "I"}
+};
+
+
+var city = {
+    zones: []
 }
 
 // called after the scene loads
@@ -38,8 +52,10 @@ function onLoad(framework) {
       camera.lookAt(new THREE.Vector3(0,0,0));
   });
   gui.add(settings, 'newSeed');
-  gui.add(settings, 'size', 1, 10);
   gui.add(settings, 'split', 0, 10);
+
+  city.zones = new Array(settings.resolution).fill(new Array(settings.resolution).fill(ZONES.UNZONED.value));
+  console.log(city.zones);
 
   draw(framework);
 }
@@ -69,6 +85,19 @@ function draw(framework) {
   plane.name = "plane_landValue";
   scene.add( plane );
 
+
+  var square_size = settings.size / settings.resolution;
+  var offset = settings.size / 2.0 - square_size / 2.0;
+  for (var i = 0; i < settings.resolution; i++) {
+      for (var j = 0; j < settings.resolution; j++) {
+          var geometry = new THREE.PlaneBufferGeometry( square_size - 0.01, square_size - 0.01, 1 );
+          var material = new THREE.MeshBasicMaterial( {color: 0xffcccc} );
+          var plane = new THREE.Mesh( geometry, material );
+          plane.position.set(i * square_size - offset, j * square_size - offset, 0.01);
+          plane.name = "square";
+          scene.add( plane );
+      }
+  }
 
 }
 
