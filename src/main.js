@@ -1,7 +1,8 @@
 
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
-import Lsystem, {LinkedListToString} from './lsystem.js'
+// import Lsystem, {LinkedListToString} from './lsystem.js'
+//import Node from ./lsystem.js
 import Turtle from './turtle.js'
 
 var turtle;
@@ -21,81 +22,39 @@ function onLoad(framework) {
   directionalLight.position.multiplyScalar(10);
   scene.add(directionalLight);
 
-  var leafMaterial = new THREE.MeshLambertMaterial( {color: 0x3A5F0B, side: THREE.DoubleSide} );
-  var objLoader = new THREE.OBJLoader();
-  objLoader.load('/leaf.obj', function(obj) {
-    var leafOBJ = obj.children[0].geometry;
-    var leaf = new THREE.Mesh(leafOBJ, leafMaterial);
-    leaf.name="leaf1";
-    scene.add(leaf);
-    //var leaf = new THREE.Mesh(leafOBJ, lambertWhite);
-  });
+  var geometry = new THREE.PlaneGeometry( 20*2, 20*2, 32 );
+  var material = new THREE.MeshBasicMaterial( {color: 0x23525f, side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+  plane.position.set(9,0,9);
+  plane.rotateX(90*3.14/180);
+  scene.add( plane );
 
   // set camera position
-  camera.position.set(1, 1, 2);
+  camera.position.set(10, 10, 20);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   // initialize LSystem and a Turtle to draw
-  var lsys = new Lsystem();
+  //var lsys = new Lsystem();
   turtle = new Turtle(scene);
+  turtle.start();
+  //console.log(scene);
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
-
-  gui.add(lsys, 'axiom').onChange(function(newVal) {
-    lsys.updateAxiom(newVal);
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'F').onChange(function(newVal) {
-    lsys.updateGramF(newVal);
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'X').onChange(function(newVal) {
-    lsys.updateGramX(newVal);
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'A').onChange(function(newVal) {
-    lsys.updateGramA(newVal);
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'ProbabilityA').onChange(function(newVal) {
-    lsys.updateProbA(newVal);
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'B').onChange(function(newVal) {
-    lsys.updateGramB(newVal);
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'ProbabilityB').onChange(function(newVal) {
-    lsys.updateProbB(newVal);
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'iterations', 0, 12).step(1).onChange(function(newVal) {
-    clearScene(turtle);
-    clearScene(turtle);
-    doLsystem(lsys, newVal, turtle);
-  });
-
-  // gui.add(turtle, 'angle', 0, 360).step(1).onChange(function(newVal) {
-  //   clearScene(turtle);
-  //   turtle.updateAngle(newVal);
-  //   doLsystem(lsys, lsys.iterations, turtle);
+  var update= new GUIoptions();
+  gui.add(update,'iterate').onclick;
+  // gui.add(update, 'kaipan', 0, 12).step(1).onChange(function(newVal) {
+  //
   // });
+}
+
+var GUIoptions = function()
+{
+  //this.kaipan = 0.1;
+	this.iterate=function(){
+    turtle.renderSymbols();
+		};
 }
 
 // clears the scene by removing all geometries added by turtle.js
@@ -108,10 +67,9 @@ function clearScene(turtle) {
 }
 
 function doLsystem(lsystem, iterations, turtle) {
-    var result = lsystem.doIterations(iterations);
-    turtle.clear();
-    turtle = new Turtle(turtle.scene);
-    //turtle.scene.add();
+    // var result = lsystem.doIterations(iterations);
+    // turtle.clear();
+    // turtle = new Turtle(turtle.scene);
     turtle.renderSymbols(result);
 }
 
