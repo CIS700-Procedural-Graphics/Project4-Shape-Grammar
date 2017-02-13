@@ -3,7 +3,7 @@
 
 For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
 
-**Goal:** to model an urban environment using a shape grammar. 
+**Goal:** to model an urban environment using a shape grammar.
 
 **Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
 
@@ -11,7 +11,7 @@ For this assignment you'll be building directly off of Project 3. To make things
 Modify your symbol node class to include attributes necessary for rendering, such as
 - Associated geometry instance
 - Position
-- Scale 
+- Scale
 - Anything else you may need
 
 ## Grammar design (55 points)
@@ -43,3 +43,6 @@ Go for a very high level of decorative detail!
 Place buildings with a strategy such that buildings have doors and windows that are always accessible.
 Generate buildings with coherent interiors
 If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+
+## Resources
+Textures: https://shop.bitgem3d.com/collections/free-3d-models/products/texture-pack-11

@@ -2,14 +2,14 @@
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
 import Builder from './builder.js'
-
+import OBJLoader from './OBJLoader.js'
 
 var settings = {
     seed: 1.0,
     resetCamera: function() {},
     newSeed: function(newVal) { settings.seed = Math.random(); },
     size: 10.0,
-    resolution: 9,
+    resolution: 3,
     split: 0.0
 }
 
@@ -42,14 +42,14 @@ function onLoad(framework) {
   scene.add(directionalLight);
 
   // set camera position
-  camera.position.set(0, -10, 10);
+  camera.position.set(0, 10, 10);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
   gui.add(settings, 'resetCamera').onChange(function() {
-      camera.position.set(0, -10, 10);
+      camera.position.set(0, 10, 10);
       camera.lookAt(new THREE.Vector3(0,0,0));
   });
   gui.add(settings, 'newSeed');
@@ -75,18 +75,21 @@ function draw(framework) {
   var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
   var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
+  plane.rotateX(Math.PI / 2.0);
   plane.name = "plane_terrain";
   scene.add( plane );
 
   var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
   var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
+  plane.rotateX(Math.PI / 2.0);
   plane.name = "plane_popDensity";
   scene.add( plane );
 
   var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
   var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
+  plane.rotateX(Math.PI / 2.0);
   plane.name = "plane_landValue";
   scene.add( plane );
 
@@ -122,34 +125,95 @@ function generateRoads() {
     }
 }
 
+// http://stackoverflow.com/questions/934012/get-image-data-in-javascript
+function getBase64FromImageUrl(url) {
+    var img = new Image();
+
+    img.setAttribute('crossOrigin', 'anonymous');
+
+    img.onload = function () {
+        var canvas = document.createElement("canvas");
+        canvas.width =this.width;
+        canvas.height =this.height;
+
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(this, 0, 0);
+
+        var dataURL = canvas.toDataURL("image/png");
+
+        alert(dataURL.replace(/^data:image\/(png|jpg);base64,/, ""));
+
+
+
+        var imgd = ctx.getImageData(10, 11, 512, 512);
+        var pix = imgd.data;
+        console.log(pix.length);
+    };
+
+    img.src = url;
+
+}
+
 function generateBuildings(framework) {
     var scene = framework.scene;
-    var square_size = settings.size / settings.resolution;
-    var half_square_size = 0.5 * settings.size / settings.resolution;
-    var offset = settings.size / 2.0 - square_size / 2.0;
-    var builder = new Builder();
-    for (var i = 0; i < settings.resolution; i++) {
-        for (var j = 0; j < settings.resolution; j++) {
-            var grid_color = getZoneProperties(city.grid[i][j].zone).color;
-            var geometry = new THREE.PlaneBufferGeometry( square_size - 0.01, square_size - 0.01, 1 );
-            var material = new THREE.MeshBasicMaterial( {color: grid_color} );
-            var plane = new THREE.Mesh( geometry, material );
-            plane.position.set(i * square_size - offset, j * square_size - offset, 0.01);
-            plane.name = "square";
-            scene.add( plane );
 
-            if (city.grid[i][j].zone == ZONES.UNZONED.value) {
-                var options = {
-                    zone: city.grid[i][j].zone,
-                    square_size: settings.size / settings.resolution
-                };
-                var building = builder.generateBuilding(options);
-                building.position.set(i * square_size - offset, j * square_size - offset, half_square_size + 0.01);
-                scene.add(building);
+    getBase64FromImageUrl('./maps/population.png')
+
+    var loader = new THREE.TextureLoader();
+    // //Manager from ThreeJs to track a loader and its status
+    // var manager = new THREE.LoadingManager();
+    // //Loader for Obj from Three.js
+    // var modelLoader = new THREE.OBJLoader( manager );
+    //
+    // modelLoader.load('./models/single_arch.obj', function ( object ) {
+    //     console.log(object);
+    //     object.scale.set(0.1,0.1,0.1);
+    //     scene.add(object);
+    // });
+
+
+
+    loader.load('./textures/floor06.tga', function ( texture ) {
+        // var geometry = new THREE.BoxGeometry(1, 1, 1);
+        var road_material = new THREE.MeshBasicMaterial({map: texture, overdraw: 0.5, side: THREE.DoubleSide});
+        // var mesh = new THREE.Mesh(geometry, material);
+        // scene.add(mesh);
+
+        var square_size = settings.size / settings.resolution;
+        var half_square_size = 0.5 * settings.size / settings.resolution;
+        var offset = settings.size / 2.0 - square_size / 2.0;
+        var builder = new Builder();
+        for (var i = 0; i < settings.resolution; i++) {
+            for (var j = 0; j < settings.resolution; j++) {
+
+
+                if (city.grid[i][j].zone == ZONES.UNZONED.value) {
+                    if (Math.random() < 0.5) {
+                        continue;
+                    }
+                    var options = {
+                        zone: city.grid[i][j].zone,
+                        length: settings.size / settings.resolution,
+                        width: settings.size / settings.resolution,
+                        height: settings.size / settings.resolution
+                    };
+                    var building = builder.generateBuilding(options);
+                    building.position.set(i * square_size - offset + Math.random() - 0.5, 0.05, j * square_size - offset + Math.random() - 0.5);
+                    scene.add(building);
+                } else if (city.grid[i][j].zone == ZONES.ROAD.value) {
+                    var grid_color = getZoneProperties(city.grid[i][j].zone).color;
+                    var geometry = new THREE.PlaneBufferGeometry( square_size, square_size, 1 );
+                    // var material = new THREE.MeshBasicMaterial( {color: grid_color} );
+                    var plane = new THREE.Mesh( geometry, road_material );
+                    plane.rotateX(Math.PI / 2.0);
+                    plane.position.set(i * square_size - offset, 0.01, j * square_size - offset);
+                    plane.name = "square";
+                    scene.add( plane );
+                }
             }
         }
-    }
 
+    });
 
 }
 
@@ -173,13 +237,13 @@ function onUpdate(framework) {
     var plane_popDensity = scene.getObjectByName("plane_popDensity");
     if (plane_popDensity !== undefined) {
         plane_popDensity.geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
-        plane_popDensity.position.set(0, 0, -settings.split);
+        plane_popDensity.position.set(0, -settings.split, 0);
     }
 
     var plane_landValue = scene.getObjectByName("plane_landValue");
     if (plane_landValue !== undefined) {
         plane_landValue.geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
-        plane_landValue.position.set(0, 0, -2 * settings.split);
+        plane_landValue.position.set(0, -2 * settings.split, 0);
     }
 
 
