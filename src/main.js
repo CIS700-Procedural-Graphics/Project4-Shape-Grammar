@@ -1,6 +1,7 @@
 
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
+import Builder from './builder.js'
 
 
 var settings = {
@@ -8,7 +9,7 @@ var settings = {
     resetCamera: function() {},
     newSeed: function(newVal) { settings.seed = Math.random(); },
     size: 10.0,
-    resolution: 64,
+    resolution: 9,
     split: 0.0
 }
 
@@ -90,21 +91,6 @@ function draw(framework) {
   scene.add( plane );
 
   regenerateCity(framework);
-
-  var square_size = settings.size / settings.resolution;
-  var offset = settings.size / 2.0 - square_size / 2.0;
-  for (var i = 0; i < settings.resolution; i++) {
-      for (var j = 0; j < settings.resolution; j++) {
-          var grid_color = getZoneProperties(city.grid[i][j].zone).color;
-          var geometry = new THREE.PlaneBufferGeometry( square_size - 0.01, square_size - 0.01, 1 );
-          var material = new THREE.MeshBasicMaterial( {color: grid_color} );
-          var plane = new THREE.Mesh( geometry, material );
-          plane.position.set(i * square_size - offset, j * square_size - offset, 0.01);
-          plane.name = "square";
-          scene.add( plane );
-      }
-  }
-
 }
 
 function getZoneProperties(zoneValue) {
@@ -117,26 +103,54 @@ function getZoneProperties(zoneValue) {
 
 function regenerateCity(framework) {
     generateRoads();
+    generateBuildings(framework);
 }
 
 function generateRoads() {
-    var x = Math.floor(Math.random() * settings.resolution);
-    var y = Math.floor(Math.random() * settings.resolution);
-
-    for (var i = 0; i < 100; i++) {
-        var r = Math.random();
-        if (r < 0.2) {
-            x += 1;
-        } else {
-            y += 1;
-        }
-        if (within(x, 0, settings.resolution) && within(y, 0, settings.resolution)) {
-            city.grid[x][y] = { zone: ZONES.ROAD.value };
-        } else {
-            x = Math.floor(Math.random() * settings.resolution);
-            y = Math.floor(Math.random() * settings.resolution);
+    // vertical streets
+    for (var i = 0; i < settings.resolution; i+=8) {
+        for (var j = 0; j < settings.resolution; j++) {
+            city.grid[i][j] = { zone: ZONES.ROAD.value };
         }
     }
+
+    // horizontal streets
+    for (var i = 0; i < settings.resolution; i+=4) {
+        for (var j = 0; j < settings.resolution; j++) {
+            city.grid[j][i] = { zone: ZONES.ROAD.value };
+        }
+    }
+}
+
+function generateBuildings(framework) {
+    var scene = framework.scene;
+    var square_size = settings.size / settings.resolution;
+    var half_square_size = 0.5 * settings.size / settings.resolution;
+    var offset = settings.size / 2.0 - square_size / 2.0;
+    var builder = new Builder();
+    for (var i = 0; i < settings.resolution; i++) {
+        for (var j = 0; j < settings.resolution; j++) {
+            var grid_color = getZoneProperties(city.grid[i][j].zone).color;
+            var geometry = new THREE.PlaneBufferGeometry( square_size - 0.01, square_size - 0.01, 1 );
+            var material = new THREE.MeshBasicMaterial( {color: grid_color} );
+            var plane = new THREE.Mesh( geometry, material );
+            plane.position.set(i * square_size - offset, j * square_size - offset, 0.01);
+            plane.name = "square";
+            scene.add( plane );
+
+            if (city.grid[i][j].zone == ZONES.UNZONED.value) {
+                var options = {
+                    zone: city.grid[i][j].zone,
+                    square_size: settings.size / settings.resolution
+                };
+                var building = builder.generateBuilding(options);
+                building.position.set(i * square_size - offset, j * square_size - offset, half_square_size + 0.01);
+                scene.add(building);
+            }
+        }
+    }
+
+
 }
 
 function within(x, low, high) {
