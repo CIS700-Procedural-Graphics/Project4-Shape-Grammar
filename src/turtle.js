@@ -87,15 +87,15 @@ export default class Turtle {
                     var rando = Math.random();
                     if(rando < 0.2)
                     {
-                        mat = new THREE.MeshLambertMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
+                        mat = new THREE.MeshBasicMaterial( {color: 0xc9c6c6, side: THREE.DoubleSide} );
                     }
                     else if(rando < 0.4)
                     {
-                        mat = new THREE.MeshLambertMaterial( {color: 0x363636, side: THREE.DoubleSide} );
+                        mat = new THREE.MeshBasicMaterial( {color: 0x363636, side: THREE.DoubleSide} );
                     }
                     else if(rando < 0.6)
                     {
-                        mat = new THREE.MeshLambertMaterial( {color: 0xc70909, side: THREE.DoubleSide} );
+                        mat = new THREE.MeshBasicMaterial( {color: 0x8a2020, side: THREE.DoubleSide} );
                     }
                     else
                     {

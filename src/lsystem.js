@@ -265,9 +265,9 @@ function modif4(initShape, s) //do nothing to this shape, return it unchanged
 		{
 			var scale = new THREE.Vector3(0.5, 1.0, 0.1);
 			var pos1 = new THREE.Vector3(initShape.pos.x, initShape.pos.y, initShape.pos.z);
-			pos1.x = pos1.x - 1.25*initShape.zaxis.x;
-			pos1.y = pos1.y - 1.25*initShape.zaxis.y;
-			pos1.z = pos1.z - 1.25*initShape.zaxis.z;
+			pos1.x = pos1.x + 1.25*initShape.zaxis.x;
+			pos1.y = pos1.y + 1.25*initShape.zaxis.y;
+			pos1.z = pos1.z + 1.25*initShape.zaxis.z;
 			pos1.y -= 0.5;
 			shapeSet.add(new Shape('G', pos1, initShape.rot, scale, initShape.material, initShape.xaxis, initShape.zaxis, false));
 		}
@@ -290,9 +290,9 @@ function modif5(initShape, s) //scale height of this shape by 1.25
 		{
 			var scale = new THREE.Vector3(0.5, 1.0, 0.1);
 			var pos2 = new THREE.Vector3(initShape.pos.x, initShape.pos.y, initShape.pos.z);
-			pos2.x = pos2.x - 1.25*initShape.zaxis.x;
-			pos2.y = pos2.y - 1.25*initShape.zaxis.y;
-			pos2.z = pos2.z - 1.25*initShape.zaxis.z;
+			pos2.x = pos2.x + 1.25*initShape.zaxis.x;
+			pos2.y = pos2.y + 1.25*initShape.zaxis.y;
+			pos2.z = pos2.z + 1.25*initShape.zaxis.z;
 			pos2.y -= 0.5;
 			shapeSet.add(new Shape('G', pos2, initShape.rot, scale, initShape.material, initShape.xaxis, initShape.zaxis, false));
 		}
@@ -315,9 +315,9 @@ function modif6(initShape, s) //scale height of this shape by 1.5
 		{
 			var scale = new THREE.Vector3(0.5, 1.0, 0.1);
 			var pos2 = new THREE.Vector3(initShape.pos.x, initShape.pos.y, initShape.pos.z);
-			pos2.x = pos2.x - 1.25*initShape.zaxis.x;
-			pos2.y = pos2.y - 1.25*initShape.zaxis.y;
-			pos2.z = pos2.z - 1.25*initShape.zaxis.z;
+			pos2.x = pos2.x + 1.25*initShape.zaxis.x;
+			pos2.y = pos2.y + 1.25*initShape.zaxis.y;
+			pos2.z = pos2.z + 1.25*initShape.zaxis.z;
 			pos2.y -= 0.5;
 			shapeSet.add(new Shape('G', pos2, initShape.rot, scale, initShape.material, initShape.xaxis, initShape.zaxis, false));
 		}
@@ -430,15 +430,22 @@ function parseC(initShape, s)
 {
 	var rando = Math.random();
 
+	var prob1;
+	var prob2;
+	var t = (initShape.pos.z + 40.0)/80.0;
+
+	prob1 = 0.9*(t) + 0.3*(1-t);
+	prob2 = 0.2 + (prob1 - 0.2)/2.0;
+
 	if(rando < 0.2)
 	{
 		modif3(initShape, s);
 	}
-	else if(rando < 0.4)
+	else if(rando < prob2)
 	{
 		modif4(initShape, s);
 	}	
-	else if(rando < 0.7)
+	else if(rando < prob1)
 	{
 		modif5(initShape, s);
 	}
@@ -452,15 +459,24 @@ function parseD(initShape, s)
 {
 	var rando = Math.random();
 
-	if(rando < 0.25)
+	var prob1;
+	var prob2;
+	var prob3;
+	var t = (initShape.pos.z + 40.0)/80.0;
+
+	prob1 = 0.8*(1-t) + 0.2*t;
+	prob2 = prob1/2.0;
+	prob3 = prob1 + (1-prob1)/2.0;
+
+	if(rando < prob2)
 	{
 		modif7(initShape, s);
 	}
-	else if(rando < 0.5)
+	else if(rando < prob1)
 	{
 		modif8(initShape, s);
 	}	
-	else if(rando < 0.75)
+	else if(rando < prob3)
 	{
 		modif9(initShape, s);
 	}
