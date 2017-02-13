@@ -9,7 +9,7 @@ export default class ShapeGrammar {
     this.axiom = axiom || this.createAxiom();
     this.grammar = grammar || {};
     this.shapes = null;
-    this.iterations = iterations || 1;
+    this.iterations = iterations || 3;
     this.scene = scene;
   }
 
@@ -34,26 +34,10 @@ export default class ShapeGrammar {
       var worldPosition = this.state.worldPosition;
       var worldDensity = this.state.worldDensity;
 
+      shape.recompute();
       shape.set('worldPosition', worldPosition);
       shape.set('worldDensity', worldDensity);
     }
-  }
-
-  getSuccessors(shape) {
-    var successors = [];
-    var symbol = shape.symbol;
-
-    switch (symbol) {
-      case 'B':
-
-        var base = new Shape(ST.Base, shape);
-        var mid = new Shape(ST.Mid, shape);
-        var top = new Shape(ST.Top, shape);
-
-        successors.push(base, mid, top);
-    }
-
-    return successors;
   }
 
   doIterations() {
@@ -68,7 +52,9 @@ export default class ShapeGrammar {
         var shape = shapes[j];
 
         if (!shape.terminal) {
-          Array.prototype.push.apply(successors, this.getSuccessors(shape));
+          Array.prototype.push.apply(successors, shape.successors());
+        } else {
+          successors.push(shape);
         }
       }
 
@@ -85,12 +71,13 @@ export default class ShapeGrammar {
 
     for (var i = 0; i < this.shapes.length; i++) {
       var shape = this.shapes[i];
-      var geometry = shape.geometry;
-      var scale = (typeof shape.scale === 'function') ? shape.scale() : shape.scale;
-      var position = (typeof shape.position === 'function') ? shape.position() : shape.position;
-      var color = shape.color;
+      var geometry = (typeof shape.geometry == 'function') ? shape.geometry() : shape.geometry;
+      var scale = shape.scale();
+      var position = shape.position();
+      var color = (typeof shape.color == 'function') ? shape.color() : shape.color;
+      var wireframe = shape.wireframe;
 
-      var material = new THREE.MeshBasicMaterial({ color: color });
+      var material = new THREE.MeshLambertMaterial({ color: color });
       var mesh = new THREE.Mesh(geometry, material);
 
       this.scene.add(mesh);

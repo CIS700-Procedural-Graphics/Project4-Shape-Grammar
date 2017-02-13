@@ -10,12 +10,14 @@ var turtle;
 
 function renderLight(scene) {
   var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  var ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
 
   directionalLight.color.setHSL(0.1, 1, 0.95);
-  directionalLight.position.set(1, 3, 2);
+  directionalLight.position.set(1, -10, 10);
   directionalLight.position.multiplyScalar(10);
 
   scene.add(directionalLight);
+  scene.add(ambientLight);
 }
 
 function setCamera(camera) {

@@ -28,7 +28,7 @@ export default class City {
 
   renderBase() {
     var geometry = new THREE.PlaneGeometry(this.baseDim, this.baseDim, 32);
-    var material = new THREE.MeshBasicMaterial({ color: 0x00ffe0, side: THREE.DoubleSide });
+    var material = new THREE.MeshBasicMaterial({ color: 0x619739, side: THREE.DoubleSide });
     var mesh = new THREE.Mesh(geometry, material);
 
     this.scene.add(mesh);
@@ -192,6 +192,12 @@ export default class City {
 
   renderBuildings() {
     for (var i = 0; i < this.cells.length; i++) {
+
+      // Render one building
+      if (THREE.Math.randFloat(0, 1) > 0.5) {
+        continue;
+      }
+
       var cell = this.cells[i];
 
       this.shapeGrammar.setState(cell);
@@ -202,7 +208,7 @@ export default class City {
   renderRing(radius) {
     var halfWidth = (this.ringWidth / 2);
     var geometry = new THREE.RingGeometry(radius - halfWidth, radius + halfWidth, this.ringPoints);
-    var material = new THREE.MeshBasicMaterial({ color: 0x010d21, side: THREE.DoubleSide });
+    var material = new THREE.MeshBasicMaterial({ color: 0x0e77c4, side: THREE.DoubleSide });
     var mesh = new THREE.Mesh(geometry, material);
 
     this.scene.add(mesh);
@@ -214,7 +220,7 @@ export default class City {
     var height = (this.baseDim / (2 * 4)) + this.divisionWidth - epsilon;
 
     var geometry = new THREE.PlaneGeometry(width, height, 32);
-    var material = new THREE.MeshBasicMaterial({ color: 0x010d21, side: THREE.DoubleSide });
+    var material = new THREE.MeshBasicMaterial({ color: 0x0e77c4, side: THREE.DoubleSide });
     var mesh = new THREE.Mesh(geometry, material);
 
     this.scene.add(mesh);
@@ -233,7 +239,7 @@ export default class City {
 
     geometry.vertices = points;
 
-    var material = new THREE.LineBasicMaterial({ color: 0x010d21 });
+    var material = new THREE.LineBasicMaterial({ color: 0x0e77c4 });
     var mesh = new THREE.Line(geometry, material);
 
     this.scene.add(mesh);
