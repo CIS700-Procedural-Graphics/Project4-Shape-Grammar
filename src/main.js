@@ -3,15 +3,34 @@ const THREE = require('three'); // older modules are imported like this. You sho
 import Framework from './framework'
 import Builder from './builder.js'
 import OBJLoader from './OBJLoader.js'
+import Turtle from './turtle.js'
+import Lsystem, {LinkedListToString} from './lsystem.js'
 
 var settings = {
     seed: 1.0,
     resetCamera: function() {},
     newSeed: function(newVal) { settings.seed = Math.random(); },
     size: 10.0,
-    resolution: 3,
+    resolution: 128,
     split: 0.0
 }
+
+var lsystem_settings = {
+    Axiom: "[[[RA]RA]RA]",
+    Rules: [
+        {Rule: "A=RMA", Prob: 0.5},
+        {Rule: "R=-R", Prob: 1.0},
+        {Rule: "R=+R", Prob: 1.0},
+        {Rule: "R=*R", Prob: 1.0},
+        {Rule: "R=/R", Prob: 1.0},
+        {Rule: "R=MMR", Prob: 10.0},
+        {Rule: "R=M", Prob: 0.5},
+    ],
+    iterations: 6,
+    Render: function() {}
+}
+
+var turtle;
 
 var ZONES = {
   UNZONED    : {value: 1, name: "Unzoned",     color: 0xd1cfca},
@@ -55,45 +74,82 @@ function onLoad(framework) {
   gui.add(settings, 'newSeed');
   gui.add(settings, 'split', 0, 10);
 
-  for (var i = 0; i < settings.resolution; i++) {
-      city.grid.push([]);
-      for (var j = 0; j < settings.resolution; j++) {
-          city.grid[i].push({zone: ZONES.UNZONED.value});
+
+  var f2 = gui.addFolder('Roads');
+  f2.add(lsystem_settings, 'Axiom')
+  for (var i = 0; i < lsystem_settings.Rules.length; i++) {
+      f2.add(lsystem_settings.Rules[i], 'Rule');
+      f2.add(lsystem_settings.Rules[i], 'Prob');
+  }
+
+
+  f2.add(lsystem_settings, 'Render').onChange(function() {
+      regenerateCity(framework);
+  });
+  f2.open();
+
+  regenerateCity(framework);
+}
+
+
+function draw(framework) {
+
+}
+
+function generateTexture() {
+  var w = city.grid.length - 1;
+  var h = city.grid[0].length - 1;
+  // build a small canvas 32x64 and paint it in white
+  var canvas  = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  var context = canvas.getContext('2d');
+  // plain it in white
+  context.fillStyle    = '#ffffff';
+  context.fillRect( 0, 0, w, h );
+  // draw the window rows - with a small noise to simulate light variations in each room
+
+  for (var i = 0; i < w; i++) {
+      for (var j = 0; j < h; j++) {
+          var x = Math.floor(city.grid.length * i / w);
+          var y = Math.floor(city.grid[0].length * j / h);
+          if (city.grid[x][h-y].zone == ZONES.ROAD.value) {
+              context.beginPath();
+              context.arc(i,j,1,0,2*Math.PI,false);
+              context.fillStyle = '#333';
+              context.fill();
+        } else {
+            var r = Math.floor(50 * Math.random()) + 100;
+            var g = Math.floor(50 * Math.random()) + 150;
+            var b = Math.floor(50 * Math.random());
+            context.fillStyle = 'rgb(' + [r, g, b].join( ',' )  + ')';
+            context.fillRect( i, j, 1, 1 );
+        }
       }
   }
 
-  draw(framework);
+  // build a bigger canvas and copy the small one in it
+  // This is a trick to upscale the texture without filtering
+  var canvas2 = document.createElement( 'canvas' );
+  canvas2.width    = 512;
+  canvas2.height   = 512;
+  var context = canvas2.getContext( '2d' );
+  // disable smoothing
+  context.imageSmoothingEnabled        = false;
+  context.webkitImageSmoothingEnabled  = false;
+  context.mozImageSmoothingEnabled     = false;
+  // then draw the image
+  context.drawImage( canvas, 0, 0, canvas2.width, canvas2.height );
+  // return the just built canvas2
+
+  var debug = document.getElementById("debug");
+  debug.appendChild(canvas2);
+
+  return canvas2;
 }
 
-function draw(framework) {
-  var scene = framework.scene;
-  var camera = framework.camera;
-  var renderer = framework.renderer;
-  var gui = framework.gui;
-  var stats = framework.stats;
+function loadMap(key, path) {
 
-  var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
-  var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-  var plane = new THREE.Mesh( geometry, material );
-  plane.rotateX(Math.PI / 2.0);
-  plane.name = "plane_terrain";
-  scene.add( plane );
-
-  var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
-  var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-  var plane = new THREE.Mesh( geometry, material );
-  plane.rotateX(Math.PI / 2.0);
-  plane.name = "plane_popDensity";
-  scene.add( plane );
-
-  var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
-  var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-  var plane = new THREE.Mesh( geometry, material );
-  plane.rotateX(Math.PI / 2.0);
-  plane.name = "plane_landValue";
-  scene.add( plane );
-
-  regenerateCity(framework);
 }
 
 function getZoneProperties(zoneValue) {
@@ -105,20 +161,88 @@ function getZoneProperties(zoneValue) {
 }
 
 function regenerateCity(framework) {
+    var scene = framework.scene;
+    var camera = framework.camera;
+    var renderer = framework.renderer;
+    var gui = framework.gui;
+    var stats = framework.stats;
+
+    // clear scene
+    scene.children.forEach(function(object){
+        scene.remove(object);
+    });
+
+
+    // reset grid
+    city.grid = [];
+    for (var i = 0; i < settings.resolution; i++) {
+      city.grid.push([]);
+      for (var j = 0; j < settings.resolution; j++) {
+          city.grid[i].push({zone: ZONES.UNZONED.value});
+      }
+    }
+
+    // generate roads
+    var lsys = new Lsystem(lsystem_settings.Axiom);
+    lsys.UpdateRules(lsystem_settings.Rules);
+    var result = lsys.DoIterations(lsystem_settings.iterations);
+    turtle = new Turtle(city.grid);
+    turtle.renderSymbols(result);
+
     generateRoads();
+
+    var texture = new THREE.Texture(generateTexture());
+    texture.anisotropy = renderer.getMaxAnisotropy();
+    texture.needsUpdate = true;
+
+    // build the mesh
+    var material  = new THREE.MeshLambertMaterial({
+      map: texture,
+      side: THREE.DoubleSide
+    });
+
+    // redraw planes
+    var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
+    // var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+    var plane = new THREE.Mesh( geometry, material );
+    plane.rotateX(Math.PI / 2.0);
+    plane.name = "plane_terrain";
+    scene.add( plane );
+
+    var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
+    var material = new THREE.MeshLambertMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+    var plane = new THREE.Mesh( geometry, material );
+    plane.rotateX(Math.PI / 2.0);
+    plane.name = "plane_popDensity";
+    scene.add( plane );
+
+    var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
+    var material = new THREE.MeshLambertMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+    var plane = new THREE.Mesh( geometry, material );
+    plane.rotateX(Math.PI / 2.0);
+    plane.name = "plane_landValue";
+    scene.add( plane );
+
+
     generateBuildings(framework);
+    var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
+    scene.add( light );
+    var light = new THREE.PointLight( 0xffffff, 10, 100 );
+    light.position.set( 50, 50, 50 );
+    scene.add( light );
 }
 
 function generateRoads() {
+
     // vertical streets
-    for (var i = 0; i < settings.resolution; i+=8) {
+    for (var i = 0; i < settings.resolution; i+=16) {
         for (var j = 0; j < settings.resolution; j++) {
             city.grid[i][j] = { zone: ZONES.ROAD.value };
         }
     }
 
     // horizontal streets
-    for (var i = 0; i < settings.resolution; i+=4) {
+    for (var i = 0; i < settings.resolution; i+=8) {
         for (var j = 0; j < settings.resolution; j++) {
             city.grid[j][i] = { zone: ZONES.ROAD.value };
         }
@@ -141,7 +265,7 @@ function getBase64FromImageUrl(url) {
 
         var dataURL = canvas.toDataURL("image/png");
 
-        alert(dataURL.replace(/^data:image\/(png|jpg);base64,/, ""));
+        // alert(dataURL.replace(/^data:image\/(png|jpg);base64,/, ""));
 
 
 
@@ -156,64 +280,41 @@ function getBase64FromImageUrl(url) {
 
 function generateBuildings(framework) {
     var scene = framework.scene;
-
-    getBase64FromImageUrl('./maps/population.png')
-
     var loader = new THREE.TextureLoader();
-    // //Manager from ThreeJs to track a loader and its status
-    // var manager = new THREE.LoadingManager();
-    // //Loader for Obj from Three.js
-    // var modelLoader = new THREE.OBJLoader( manager );
-    //
-    // modelLoader.load('./models/single_arch.obj', function ( object ) {
-    //     console.log(object);
-    //     object.scale.set(0.1,0.1,0.1);
-    //     scene.add(object);
-    // });
+    var square_size = settings.size / settings.resolution;
+    var half_square_size = 0.5 * settings.size / settings.resolution;
+    var offset = settings.size / 2.0 - square_size / 2.0;
+    var builder = new Builder();
+
+    for (var i = 0; i < settings.resolution; i++) {
+        for (var j = 0; j < settings.resolution; j++) {
 
 
-
-    loader.load('./textures/floor06.tga', function ( texture ) {
-        // var geometry = new THREE.BoxGeometry(1, 1, 1);
-        var road_material = new THREE.MeshBasicMaterial({map: texture, overdraw: 0.5, side: THREE.DoubleSide});
-        // var mesh = new THREE.Mesh(geometry, material);
-        // scene.add(mesh);
-
-        var square_size = settings.size / settings.resolution;
-        var half_square_size = 0.5 * settings.size / settings.resolution;
-        var offset = settings.size / 2.0 - square_size / 2.0;
-        var builder = new Builder();
-        for (var i = 0; i < settings.resolution; i++) {
-            for (var j = 0; j < settings.resolution; j++) {
-
-
-                if (city.grid[i][j].zone == ZONES.UNZONED.value) {
-                    if (Math.random() < 0.5) {
-                        continue;
-                    }
-                    var options = {
-                        zone: city.grid[i][j].zone,
-                        length: settings.size / settings.resolution,
-                        width: settings.size / settings.resolution,
-                        height: settings.size / settings.resolution
-                    };
-                    var building = builder.generateBuilding(options);
-                    building.position.set(i * square_size - offset + Math.random() - 0.5, 0.05, j * square_size - offset + Math.random() - 0.5);
-                    scene.add(building);
-                } else if (city.grid[i][j].zone == ZONES.ROAD.value) {
-                    var grid_color = getZoneProperties(city.grid[i][j].zone).color;
-                    var geometry = new THREE.PlaneBufferGeometry( square_size, square_size, 1 );
-                    // var material = new THREE.MeshBasicMaterial( {color: grid_color} );
-                    var plane = new THREE.Mesh( geometry, road_material );
-                    plane.rotateX(Math.PI / 2.0);
-                    plane.position.set(i * square_size - offset, 0.01, j * square_size - offset);
-                    plane.name = "square";
-                    scene.add( plane );
+            if (city.grid[i][j].zone == ZONES.UNZONED.value) {
+                if (Math.random() < 0.5) {
+                    continue;
                 }
+                var options = {
+                    zone: city.grid[i][j].zone,
+                    length: settings.size / settings.resolution,
+                    width: settings.size / settings.resolution,
+                    height: settings.size / settings.resolution
+                };
+                var building = builder.generateBuilding(options);
+                building.position.set(i * square_size - offset, 0.05, j * square_size - offset);
+                scene.add(building);
+            } else if (city.grid[i][j].zone == ZONES.ROAD.value) {
+                // var grid_color = getZoneProperties(city.grid[i][j].zone).color;
+                // var geometry = new THREE.PlaneBufferGeometry( square_size, square_size, 1 );
+                // // var material = new THREE.MeshBasicMaterial( {color: grid_color} );
+                // var plane = new THREE.Mesh( geometry, road_material );
+                // plane.rotateX(Math.PI / 2.0);
+                // plane.position.set(i * square_size - offset, 0.01, j * square_size - offset);
+                // plane.name = "square";
+                // scene.add( plane );
             }
         }
-
-    });
+    }
 
 }
 
