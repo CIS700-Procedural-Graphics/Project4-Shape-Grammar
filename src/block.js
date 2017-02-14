@@ -1,49 +1,87 @@
 const THREE = require('three')
-import {spread, size} from './distribution'
+import {popMap} from './perlin.js'
 
-// A class that represents functions applied to shapes
+// A class that represents functions applied to blocks
 function Rule(prob, func) {
 	this.prob = prob; // The probability that this Rule will be used when replacing a character in the grammar string
 	// this.cond = cond; // a condition required to apply this rule
-	this.func = func; // function that applies to shape
+	this.func = func; // function that applies to the block
 }
 
 var scope;
+var cityX = 10; var cityZ = 10;
 
-// TODO: shape call for geometric and Tranformation data
+
+// block defined by its four corners
 var Block = function(sym) {
-	this.p1;
-	this.p2; 
-	this.p3
-	this.p4
+	this.sym = sym;
+	// Vector2
+	this.p = [];
+	this.p.push(new THREE.Vector3(0,0,0));				// p4	----	p3
+	this.p.push(new THREE.Vector3(cityX,0,0)); 		// |			|
+	this.p.push(new THREE.Vector3(cityX,0,cityZ));	// |			|
+	this.p.push(new THREE.Vector3(0,0,cityZ));		// p1	----	p2
+	this.center = new THREE.Vector3();
 }
 
-export default class Buildings {
-	constructor(scene, axiom, grammar, iterations) {
-		// default LSystem
-		this.scene = scene;
-		this.axiom = new Shape('B');
-		this.grammar = {};
-		this.grammar['B'] = [new Rule(0.25, this.subdivideX(0.5, 0.5)),
-							new Rule(0.25, this.subdivideY(0.5, 0.5)),
-							new Rule(0.5, this.subdivideZ(0.5, 0.5))];
-		this.iterations = 2; 
-		this.curr = this.axiom;
-		this.shapes = [this.axiom];
-		this.color = 0xff1111;
-		scope = this;
-		
-		// Set up the axiom string
-		if (typeof axiom !== "undefined") {
-			this.axiom = axiom;
-		}
+function computeCentroid(block) {
+	var p1 = new THREE.Vector3();
+	var p2 = new THREE.Vector3();
+	var centroid = new THREE.Vector3();
+	var area = 0;
+	var sArea = 0;
+	for (var i = 0; i < 4; i++) {
+		p1 = block.p[i];
+		p2 = block.p[(i+1)%4];
+		area = p1.x * p2.z - p2.x * p1.z;
+		sArea += area;
+		centroid.x += (p1.x + p2.x)*area;
+		centroid.y += (p1.z + p2.z)*area;
+	}
+	sArea *= 0.5;
+	centroid.x /= (6*sArea);
+	centroid.z /= (6*sArea);
+	block.center = centroid;
+}
 
-		// Set up the grammar as a dictionary that 
-		// maps a single character (symbol) to a Rule.
-		if (typeof grammar !== "undefined") {
-			this.grammar = Object.assign({}, grammar);
-		}
-		
+// function to return a NEW Block with the same parameters as the input
+function copyState(block) {
+	var result = new Block(block.sym)
+	result.p[0].copy(block.p[0]);
+	result.p[1].copy(block.p[1]);
+	result.p[2].copy(block.p[2]);
+	result.p[3].copy(block.p[3]);
+	return result;
+}
+
+function cubicPulse(center, width, x) {
+  	x = Math.abs(x - center);
+   	if (x > width) return 0;
+   	x /= width;
+   	return 1 - x*x*(3-2*x);
+}
+	
+// return a value between probability between 0.25 - 0.75 (avoid tiny blocks)
+function cutEdge(x1, x2) {
+	var x = Math.random(); // [0,1)
+	var value = cubicPulse(0.5, 0.7, x); // [0,1) with higher probability around 0.5
+	var len = x2 - x1 - 1;
+	return (len * x + x1 + 0.5);
+}
+
+export default class Layout {
+	constructor(scene, iterations) {
+		this.scene = scene;
+		this.axiom = new Block('B');
+		this.grammar = {};
+		this.grammar['B'] = [new Rule(0.5, this.subdivide(0, 1)),
+							new Rule(0.5, this.subdivide(1, 1))];
+		this.iterations = 1; 
+		this.curr = this.axiom;
+		this.blocks = [this.axiom];
+		this.map = popMap(cityX, cityZ);
+		scope = this;
+	
 		// Set up iterations (the number of times you 
 		// should expand the axiom in DoIterations)
 		if (typeof iterations !== "undefined") {
@@ -52,47 +90,53 @@ export default class Buildings {
 	}
 
 	clear() {
-        this.shapes = [this.axiom];  
+        this.blocks = [this.axiom];  
         this.curr = this.axiom; 
     }
 
-    // A function to alter the axiom string stored 
-	// in the L-system
-	updateAxiom(axiom) {
-		// Setup axiom
-		if (typeof axiom !== "undefined") {
-			this.axiom = axiom;
+	subX(b, n) {
+		if (n <= 0) {
+			return;
+		} else {
+			var x1 = cutEdge(b.p[0].x, b.p[1].x);
+			var x2 = cutEdge(b.p[3].x, b.p[2].x);
+			var bl = copyState(b);
+			b.p[1].x = x1;
+			b.p[2].x = x2;
+			bl.p[0].x = b.p[1].x;
+			bl.p[3].x = b.p[2].x;
+			this.blocks.push(bl);
+			this.curr = bl;
+			this.subX(bl, n - 1);
 		}
 	}
 
-	updateCurr(shape) {
-		this.curr.sym = shape.sym;
-		this.curr.geo = shape.geo;
-		this.curr.rot = shape.rot;
-		this.curr.pos = shape.pos;
-		this.curr.scale = shape.scale;
-		this.curr.terminal = shape.terminal;
+	subZ(b, n) {
+		if (n <= 0) {
+			return;
+		} else {
+			// debugger;
+			var z1 = cutEdge(b.p[0].z, b.p[3].z);
+			var z2 = cutEdge(b.p[1].z, b.p[2].z);
+			var bl = copyState(b);
+			b.p[3].z = z1;
+			b.p[2].z = z2;
+			bl.p[0].z = b.p[3].z;
+			bl.p[1].z = b.p[2].z;
+			this.blocks.push(bl);
+			this.curr = bl;
+			this.subZ(bl, n - 1);
+		}
 	}
 
-	// rule functions
-	subdivideX(c, s) {
+	// divisions along axis, num cuts => num+1 blocks
+	subdivide(axis, num) { 
 		return function() {
-			var len = scope.curr.scale.x;
-			var zero = scope.curr.pos.x - len/2;
-			var pos1 = zero + c * len / 2;
-			var pos2 = zero + c * len + (1 - c) * len / 2; 
-			var s1 = copyState(scope.curr);
-			s1.pos.x = pos1;
-			s1.scale.x = c*len;
-			var s2 = copyState(scope.curr);
-			s2.pos.x = pos2;
-			s2.scale.x = (1-c)*len;
-			// shrink second partition by s
-			s1.scale.y *= s;
-			s1.pos.y = s1.pos.y - (s2.scale.y - s1.scale.y)/2;
-			// replace current with one division and push the other
-			scope.updateCurr(s1);
-			scope.shapes.push(s2);
+			if (axis == 0) { // X axis
+				scope.subX(scope.curr, num);				
+			} else { // Z axis
+				scope.subZ(scope.curr, num);
+			}
 		}
 	}
 
@@ -108,19 +152,24 @@ export default class Buildings {
 		return this.grammar[str][i].func;
 	}
 
-	// This function returns a list of shapes to be rendered
-	doIterations() {	
+	// This function returns a list of blocks
+	doIterations() {
+		// debugger;
 		for (var i = 0; i < this.iterations; i++) {
-			var len = this.shapes.length;
+			var len = this.blocks.length;
 			for (var j = 0; j < len; j ++) {
-				this.curr = this.shapes[j];
+				this.curr = this.blocks[j];
 				// if a rule exists
-				if (this.grammar[this.shapes[j].sym] !== undefined) {
-					var f = this.selectRule(this.shapes[j].sym);
+				if (this.grammar[this.blocks[j].sym] !== undefined) {
+					var f = this.selectRule(this.blocks[j].sym);
 					f();
 				}
 			}
 		}
-		return this.shapes;
+		// calculate centroid;
+		for (var k = 0; k < this.blocks.length; k++) {
+			computeCentroid(this.blocks[k]); 
+		}
+		return this.blocks;
 	}
 }

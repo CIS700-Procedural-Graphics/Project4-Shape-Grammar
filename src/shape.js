@@ -10,50 +10,44 @@ function Rule(prob, func) {
 var scope;
 
 // TODO: shape call for geometric and Tranformation data
-var Shape = function(sym) {
+var Shape = function(sym, pos, rot, scale) {
 	this.sym = sym;
 	this.geo = null;
 	this.color = 0x000000;
-	this.pos = new THREE.Vector3(0,0,0); 
-	this.rot = new THREE.Vector3(0,0,0);
-	this.scale = new THREE.Vector3(1,1,1);
+	this.pos = pos;
+	this.rot = rot;
+	this.scale = scale;
 	this.terminal = false;
 }
 
 function copyState(shape) {
-	var result = new Shape(shape.sym)
-	result.pos.copy(shape.pos);
-	result.rot.copy(shape.rot);
-	result.scale.copy(shape.scale);
+	var position = new THREE.Vector3();
+	var rotation = new THREE.Vector3();
+	var size = new THREE.Vector3();
+	position.copy(shape.pos);
+	rotation.copy(shape.rot);
+	size.copy(shape.scale);
+	var result = new Shape(shape.sym, position, rotation, size);
+	
 	return result;
-
 }
 
-export default class Buildings {
-	constructor(scene, axiom, grammar, iterations) {
+export default class Building {
+	constructor(scene, pos, rot, scale, iterations) {
 		// default LSystem
 		this.scene = scene;
-		this.axiom = new Shape('B');
+		this.axiom = new Shape('B', pos, rot, scale);
 		this.grammar = {};
 		this.grammar['B'] = [new Rule(0.25, this.subdivideX(0.5, 0.5)),
 							new Rule(0.25, this.subdivideY(0.5, 0.5)),
 							new Rule(0.5, this.subdivideZ(0.5, 0.5))];
-		this.iterations = 2; 
+		this.iterations = 1; 
 		this.curr = this.axiom;
 		this.shapes = [this.axiom];
 		this.color = 0xff1111;
+		this.sizeX = 0.5;
+		this.sizeZ = 0.5;
 		scope = this;
-		
-		// Set up the axiom string
-		if (typeof axiom !== "undefined") {
-			this.axiom = axiom;
-		}
-
-		// Set up the grammar as a dictionary that 
-		// maps a single character (symbol) to a Rule.
-		if (typeof grammar !== "undefined") {
-			this.grammar = Object.assign({}, grammar);
-		}
 		
 		// Set up iterations (the number of times you 
 		// should expand the axiom in DoIterations)
@@ -176,19 +170,6 @@ export default class Buildings {
 					var f = this.selectRule(this.shapes[j].sym);
 					f();
 				}
-			}
-		}
-		return this.shapes;
-	}
-
-	doOneIteration() {	
-		var len = this.shapes.length;
-		for (var j = 0; j < len; j ++) {
-			this.curr = this.shapes[j];
-			// if a rule exists
-			if (this.grammar[this.shapes[j].sym] !== undefined) {
-				var f = this.selectRule(this.shapes[j].sym);
-				f();
 			}
 		}
 		return this.shapes;
