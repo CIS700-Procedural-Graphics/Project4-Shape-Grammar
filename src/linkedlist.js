@@ -1,26 +1,22 @@
-const THREE = require('three'); 
-
-const Geometry = {
-	WINDOW_WALL:'',
-	WINDOWLESS_WALL: '',
-	ROOF: '',
-	TALL_HOUSE: '', // for test 
-	SHORT_HOUSE: './../assets/window_house.obj', // for test
-	TOWER: './../assets/tall_tower.obj', // for test
-}
+const THREE = require('three');
 
 export class Node {
-	constructor(symbol, iter) {
-		this.symbol = symbol;
+	constructor(shape, iter) {
 		this.prev = null;
 		this.next = null;
 		this.scale = new THREE.Vector3(1, 1, 1);
 		this.position = new THREE.Vector3(0, 0, 0);
 		this.rotation = new THREE.Vector3(0, 0, 0);
 		this.terminal = false;
+		// this.id = (new Date()).getTime();
 
-		this.geometryType = Geometry.SHORT_HOUSE;
-		
+
+		if (shape) {
+			this.shape = shape;
+		} else {
+			this.shape = 'GROUND_FLOOR';
+		}
+
 		if(iter) {
 			this.iteration = iter;
 		} else {
@@ -38,6 +34,10 @@ export class Node {
 
 	setIteration(iter) {
 		this.iter = iter;
+	}
+
+	terminate() {
+		this.terminal = true;
 	}
 }
 
@@ -63,3 +63,4 @@ export default {
 	Node: Node,
 	LinkedList: LinkedList
 }
+

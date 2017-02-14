@@ -3,8 +3,8 @@ import { Node, LinkedList } from './linkedlist'
 // A class that represents a symbol replacement rule to
 // be used when expanding an L-system grammar.
 function Rule(prob, str) {
-	this.probability = prob; // The probability that this Rule will be used when replacing a character in the grammar string
-	this.successorString = str; // The string that will replace the char that maps to this Rule
+	this.probability = prob; 
+	this.successorString = str; 
 }
 
 
@@ -112,23 +112,17 @@ export default function Lsystem(axiom, grammar, iterations) {
 		]
 	}
 
-
 	this.iterations = 4; 
 	this.angle = 25;
-	
-	// Set up the axiom string
+
 	if (axiom) {
 		this.axiom = axiom;
 	}
 
-	// Set up the grammar as a dictionary that 
-	// maps a single character (symbol) to a Rule.
 	if (grammar) {
 		this.grammar = Object.assign({}, grammar);
 	}
-	
-	// Set up iterations (the number of times you 
-	// should expand the axiom in DoIterations)
+
 	if (iterations) {
 		this.iterations = iterations;
 	}
@@ -136,7 +130,6 @@ export default function Lsystem(axiom, grammar, iterations) {
 	// A function to alter the axiom string stored 
 	// in the L-system
 	this.updateAxiom = function(axiom) {
-		// Setup axiom
 		if (axiom) {
 			this.axiom = axiom;
 		}
@@ -144,8 +137,6 @@ export default function Lsystem(axiom, grammar, iterations) {
 
 	// This function returns a linked list that is the result 
 	// of expanding the L-system's axiom n times.
-	// The implementation we have provided you just returns a linked
-	// list of the axiom.
 	this.doIterations = function(iterations) {	
 		var list = stringToLinkedList(this.axiom, 0);
 
