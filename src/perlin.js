@@ -27,7 +27,7 @@ function blerp(a, b, c, d, u, v) {
 }
 
 function p_noise(point, freq, amp) {
-	var p = point.clone().multiplyScalar(freq).divideScalar(10);
+	var p = point.clone().multiplyScalar(freq);
 	var cube1 = p.clone().floor(); 
 	var cube3 = p.clone().ceil();
 	var cube2 = new THREE.Vector2(cube3.x, cube1.y); 
@@ -42,7 +42,7 @@ function p_noise(point, freq, amp) {
 	var c = p.clone().sub(cube3).dot(grads[hash(cube3)]);
 	var d = p.clone().sub(cube4).dot(grads[hash(cube4)]);
 
-	return amp * blerp(a,b,c,d,u,v);
+	return Math.abs(amp * blerp(a,b,c,d,u,v));
 }
 
 function noise(position) {

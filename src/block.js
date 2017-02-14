@@ -1,5 +1,4 @@
 const THREE = require('three')
-import {popMap} from './perlin.js'
 
 // A class that represents functions applied to blocks
 function Rule(prob, func) {
@@ -10,7 +9,6 @@ function Rule(prob, func) {
 
 var scope;
 var cityX = 10; var cityZ = 10;
-
 
 // block defined by its four corners
 var Block = function(sym) {
@@ -36,7 +34,7 @@ function computeCentroid(block) {
 		area = p1.x * p2.z - p2.x * p1.z;
 		sArea += area;
 		centroid.x += (p1.x + p2.x)*area;
-		centroid.y += (p1.z + p2.z)*area;
+		centroid.z += (p1.z + p2.z)*area;
 	}
 	sArea *= 0.5;
 	centroid.x /= (6*sArea);
@@ -79,7 +77,7 @@ export default class Layout {
 		this.iterations = 1; 
 		this.curr = this.axiom;
 		this.blocks = [this.axiom];
-		this.map = popMap(cityX, cityZ);
+
 		scope = this;
 	
 		// Set up iterations (the number of times you 

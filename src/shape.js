@@ -9,6 +9,7 @@ function Rule(prob, func) {
 
 var scope;
 
+
 // TODO: shape call for geometric and Tranformation data
 var Shape = function(sym, pos, rot, scale) {
 	this.sym = sym;

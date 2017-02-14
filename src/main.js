@@ -5,15 +5,24 @@ import Building from './shape.js'
 import Shape from './shape.js'
 import Layout from './block.js'
 import Block from './block.js'
+import {popMap} from './perlin.js'
 
 var sx = 0.5; var sz = 0.5;
-var roadWidth = 0.5;
+var roadWidth = 0.25;
 var scene;
 var building; // object
 var layout;
 var totalGeo = new THREE.Geometry(); // all geometry
 var materials = []; // all materials
 var town; // mesh of all boxes
+var cityX = 10; var cityZ = 10;
+var mat = {
+  uniforms: {
+    ground: {value: popMap(cityX, cityZ) }
+    },
+  vertexShader: require('./shaders/ground-vert.glsl'),
+  fragmentShader: require('./shaders/ground-frag.glsl')
+};
 
 // called after the scene loads
 function onLoad(framework) {
@@ -58,55 +67,51 @@ function build(shapes) {
     for (var j = 0; j < 6; j++) {
       materials.push(mat);
     }
-      
-    var geo = new THREE.Mesh(geometry, mat);
 
+    var geo = new THREE.Mesh(geometry, mat);
+      
     //Orient the flower to the turtle's current direction
     var quat = new THREE.Quaternion();
     quat.setFromUnitVectors(new THREE.Vector3(0,1,0), shapes[i].rot);
     var mat4 = new THREE.Matrix4();
     mat4.makeRotationFromQuaternion(quat);
-    geometry.applyMatrix(mat4);
+    geo.applyMatrix(mat4);
 
     //Move the flower so its base rests at the turtle's current position
     var mat5 = new THREE.Matrix4();
     mat5.makeTranslation(shapes[i].pos.x, shapes[i].pos.y, shapes[i].pos.z);
-    geometry.applyMatrix(mat5);
+    geo.applyMatrix(mat5);
 
     totalGeo.merge(geo.geometry, geo.matrix, i);
   }
 }
 
-// draw one building
-function build(shapes) {
-  //building.scene.remove(totalGeo); // remove mesh
-  //totalGeo.dispose(); // remove geometry
-  //totalGeo = new THREE.Geometry(); // create fresh geometry
-  //materials = []; // remove materials
-  makeGeometry(building.shapes); // add to one geo
-  }
-
 // construction 
-function layoutBlock(block, s) {
+function layoutBlock(block) {
   
-  var rot = new THREE.Vector3(0,0,0);
-  var scale = new THREE.Vector3(sx,s,sz);
+  var rot = new THREE.Vector3();
+  var scale = new THREE.Vector3();
   // shrink points to fit within block
   var scaledP = [];
-  scaledP.push(block.p[0].clone().add(block.center.clone().sub(block.p[0])));
-  scaledP.push(block.p[1].clone().add(block.center.clone().sub(block.p[1])));
-  scaledP.push(block.p[2].clone().add(block.center.clone().sub(block.p[2])));
-  scaledP.push(block.p[3].clone().add(block.center.clone().sub(block.p[3])));
+  for (var j = 0; j < 4; j++) {
+    scaledP.push(block.p[j].clone());
+    var shrink = block.center.clone().sub(scaledP[j]);
+    scaledP[j].add(shrink.multiplyScalar(roadWidth));
+  }
 
   // each side of the quadrilateral block
   for (var i = 0; i < 4; i++) {
     var dir = scaledP[(i+1)%4].clone().sub(scaledP[i]);
+    rot.y = Math.atan2(dir.z, dir.x);
     var len = dir.length();
-    dir.normalize();
-    var pos = scaledP[i].clone().add(dir);
+    var pos;
     // number of houses on a block edge
     for (var j = 1; j < len; j++) {
-      pos.add(dir);
+      pos = scaledP[i].clone().lerp(scaledP[(i+1)%4],j/len);
+
+      var x = Math.floor(pos.x);
+      var y = Math.floor(pos.z);
+      scale = new THREE.Vector3(sx,mat.uniforms['ground'].value[x][y],sz);
       building = new Building(scene, pos, rot, scale);
       building.doIterations();
       build(building.shapes);
@@ -118,9 +123,8 @@ function layoutBlock(block, s) {
 function cityPlan(layout) {
   console.log(layout.blocks);
   for (var i = 0; i < layout.blocks.length; i++) {
-    var x = Math.floor(layout.blocks[i].p[0].x);
-    var y = Math.floor(layout.blocks[i].p[0].y);
-    layoutBlock(layout.blocks[i], layout.map[x][y]);
+    
+    layoutBlock(layout.blocks[i]);
   }
   town = new THREE.Mesh(totalGeo, new THREE.MultiMaterial( materials ));
   layout.scene.add(town); // draw one geo
