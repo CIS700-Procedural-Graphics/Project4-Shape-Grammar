@@ -185,7 +185,7 @@ function cleanscene(scene)
 
 function finalgeneration(scene)
 {
-  for(var i=0; i<1; i++)
+  for(var i=0; i<3; i++)
   {
     var l = shapeList.length;
     for(var j=0; j<l; j++)
