@@ -6,6 +6,7 @@ import Drawer from './Drawer';
 
 const THREE = require('three');
 const OrbitControls = require('three-orbit-controls')(THREE)
+const OBJLoader = require('three-obj-loader')(THREE)
 
 const defaultAxiom = 'P';
 const defaultGrammar = ``;
@@ -20,7 +21,7 @@ export default class Framework {
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
     this.renderer = new THREE.WebGLRenderer( { antialias: true } );
     this.stats = new Stats();
-
+    this.meshes = {}; // imported meshes
     this.iterations = 4; // default testing
   }
 
@@ -40,9 +41,9 @@ export default class Framework {
   }
 
   doLsystem() {
-    let result = this.lsystem.doIterations(this.iterations);
+    let result = this.lsystem.doIterations(Math.floor(this.iterations));
     Framework.printSymbols(result);
-    this.drawer = new Drawer(this.scene);
+    this.drawer = new Drawer(this.scene, this.meshes);
     this.drawer.renderSymbols(result);
   }
 
@@ -59,11 +60,49 @@ export default class Framework {
    ********************/
   setup() {
     this.cameraSetup();
-    this.sceneSetup();
     this.rendererSetup();
     this.statsSetup();
     this.lightSetup();
     this.guiSetup();
+  }
+
+  loadResources(callback) {
+    let objLoader = new THREE.OBJLoader();
+    let textureLoader = new THREE.CubeTextureLoader();
+    let workGroup = 5;
+    let finalCallback = (dbg) => {
+      workGroup--;
+      if (workGroup <= 0) {
+        callback();
+      }
+    }
+
+    let loadObj = (name, color, obj) => {
+      let lambert = new THREE.MeshLambertMaterial({color: 0x888888, side: THREE.DoubleSide});
+      let geometry = obj.children[0].geometry;
+      obj.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+            child.material = geometry;
+        }
+      });
+      this.meshes[name] = new THREE.Mesh(geometry, lambert);
+      finalCallback('name');
+    }
+
+    let skymap = new THREE.CubeTextureLoader().load([
+      'img/px.jpg', 'img/nx.jpg',
+      'img/py.jpg', 'img/ny.jpg',
+      'img/pz.jpg', 'img/nz.jpg'
+    ], (texture) => {
+      this.background = texture;
+      finalCallback('texture');
+    });
+
+    objLoader.load('obj/tower.obj', loadObj.bind(this, 'tower', 0x888888));
+    objLoader.load('obj/lpt_0.obj', loadObj.bind(this, 'lpt_0', 0x888888));
+    objLoader.load('obj/lpt_1.obj', loadObj.bind(this, 'lpt_1', 0x888888));
+    objLoader.load('obj/lpt_2.obj', loadObj.bind(this, 'lpt_2', 0x888888));
+
   }
 
   cameraSetup() {
@@ -78,18 +117,6 @@ export default class Framework {
     controls.panSpeed = 2.0;
   }
 
-  sceneSetup() {
-    let loader = new THREE.CubeTextureLoader();
-    let urlPrefix = 'img/';
-
-    let skymap = new THREE.CubeTextureLoader().load([
-        urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
-        urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
-        urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
-    ] );
-
-    this.background = skymap;
-  }
 
   rendererSetup() {
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -148,10 +175,12 @@ export default class Framework {
   onLoad() {
     document.body.appendChild(this.stats.domElement);
     document.body.appendChild(this.renderer.domElement);
-    this.setup();
-    this.clearScene();
-    this.doLsystem()
-    this.run();
+    this.loadResources(() => {
+      this.setup();
+      this.clearScene();
+      this.doLsystem()
+      this.run();
+    });
   }
 
   onResize() {

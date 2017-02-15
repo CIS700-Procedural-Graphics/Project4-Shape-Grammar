@@ -28,6 +28,7 @@ export default class LSystem {
       this.axiom = [
         Symbol.genGround(),
         Symbol.genHouse('H'),
+        Symbol.genTree(),
       ];
     }
     // deep copy
@@ -40,15 +41,58 @@ export default class LSystem {
     };
   }
 
+  applyGrammar(symbol) {
+    let { char, shape: {pos, size, rot, color}, iter } = symbol;
+    let random = Math.random();
+    let successors = [];
+    switch (char) {
+      // Ground Rule: G -> O*
+      case 'G':
+        successors.push(symbol.copy());
+        successors.push(Symbol.genRoad());
+        break;
+      case 'O':
+        successors.push(symbol.copy());
+        break;
+      case 'E':
+        successors.push(symbol.copy());
+        break;
+      case 'R':
+        break;
+      case 'W':
+        successors.push(symbol.copy());
+        break;
+      // House Rule: H -> HR(T|H)
+      case 'H':
+        successors.push(symbol.copy());
+        if (random < 0.1) {
+          successors.push(Symbol.genSubHouse('h', symbol, {nextLevel: true}));
+        } else {
+          successors.push(Symbol.genRoof(symbol));
+        }
+        if (random < 0.1) {
+          successors.push(Symbol.genSubHouse('h', symbol));
+        }
+        break;
+      // Sub-House Rule:
+      case 'h':
+
+      // Terminal Symbols
+      case 'R':
+      case 'T':
+        successors.push(symbol.copy());
+        break;
+      default:
+    }
+    return successors;
+  }
+
   doIterations(numIters) {
     if (this.cache[numIters]) {
       return this.cache[numIters];
     }
     let nextState = [];
     this.doIterations(numIters - 1).forEach((sym) => {
-      // sym.next().forEach((nextSym) => {
-      //   nextState.push(nextSym);
-      // });
       let successors = this.applyGrammar(sym);
       if (successors) {
         successors.forEach((ns) => {
@@ -57,35 +101,6 @@ export default class LSystem {
       }
     });
     return nextState;
-  }
-
-  applyGrammar(symbol) {
-    let { char, shape: {pos, size, rot, color}, iter } = symbol;
-    let random = Math.random();
-    let successors = [];
-    switch (char) {
-      // Ground
-      case 'G':
-        successors.push(Symbol.genGround());
-        break;
-      // House Rule: H -> HR(T|H)
-      case 'H':
-        successors.push(symbol.copy());
-        if (random < 0.1) {
-          successors.push(Symbol.genHouse('H', symbol, {nextLevel: true}));
-        } else {
-          successors.push(Symbol.genRoof(symbol));
-        }
-        if (random < 0.1) {
-          successors.push(Symbol.genHouse('H', symbol));
-        }
-        break;
-      // Terminal Symbols
-      case 'R':
-      case 'T':
-        break;
-    }
-    return successors;
   }
 
   copyState() {
