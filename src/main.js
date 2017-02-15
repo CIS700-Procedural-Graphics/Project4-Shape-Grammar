@@ -1,13 +1,15 @@
-
-const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
+const THREE = require('three');
 import Framework from './framework'
-import LSystem from './lsystem.js'
-import Turtle from './turtle.js'
-import {PlantLSystem, MainCharacter, CactusCharacter, WillowCharacter}  from './plants.js'
 
-var turtle;
+import * as Building from './building.js'
 
-function onLoad(framework) {
+var UserSettings = 
+{
+  iterations : 5
+}
+
+function onLoad(framework) 
+{
   var scene = framework.scene;
   var camera = framework.camera;
   var renderer = framework.renderer;
@@ -25,108 +27,36 @@ function onLoad(framework) {
   camera.position.set(2, 3, 4);
   camera.lookAt(new THREE.Vector3(0,2,0));
 
+  var profile = new Building.Profile();
+  profile.addPoint(1.0, 0.0);
+  profile.addPoint(1.0, 1.0);
 
-  var UserSettings = 
+  profile.addPoint(.9, 1.0);
+  profile.addPoint(.9, 1.1);
+  profile.addPoint(.8, 1.1);
+  profile.addPoint(.8, 1.0);
+
+  profile.addPoint(0.5, 1.0);
+  profile.addPoint(0.5, 2.0);
+  profile.addPoint(0.0, 2.0);
+
+  var lot = new Building.BuildingLot();
+  var subdivs = 15;
+  for(var i = 0; i < subdivs; i++)
   {
-    iterations : 5,
-    willow : null,
-    main : null,
-    cactus : null,
-    rebuild : function() { RebuildTrees(scene, UserSettings) }
+    var a = i * Math.PI * 2 / subdivs;
+    lot.addPoint(Math.cos(a), Math.sin(a));
   }
+  // lot.addPoint(1.0, 1.0);
+  // lot.addPoint(1.0, -1.0);
+  // lot.addPoint(-1.0, -1.0);
+  // lot.addPoint(-1.0, 1.0);
+  // lot.addPoint(.5, 1.5);
 
-  // // initialize LSystem and a Turtle to draw
-  // var lsys = new Lsystem();
-  // turtle = new Turtle(scene);
+  var shape = new Building.MassShape();
+  var mesh = shape.generateMesh(lot, profile);
 
-  gui.add(UserSettings, 'rebuild', 0, 180);
-  // gui.add(lsys, 'axiom').onChange(function(newVal) {
-  //   lsys.UpdateAxiom(newVal);
-  //   doLsystem(lsys, lsys.iterations, turtle);
-  // });
-
-  gui.add(UserSettings, 'iterations', 0, 8).step(1).onChange(function(newVal) {
-    // clearScene(turtle);
-    // doLsystem(lsys, newVal, turtle);
-    RebuildTrees(scene, UserSettings);
-  });
-
-  // var lSystem = new LSystem("FX", "", 10);
-  // lSystem.expand();
-
-  var lSystem = new MainCharacter(2234, 5);
-  var expandedChain = lSystem.expand();
-
-  var mesh = lSystem.generateMesh();
-  mesh.scale.set(.3, .3, .3);
   scene.add(mesh);
-
-  var cactus = new CactusCharacter(6565, 6);
-  cactus.expand();
-  var cactusMesh = cactus.generateMesh();
-  cactusMesh.position.set(2, 0, 0);
-  cactusMesh.scale.set(.2, .2, .2);
-  scene.add(cactusMesh);
-
-  var willow = new WillowCharacter(2135, 5);
-  willow.expand();
-  var willowMesh = willow.generateMesh();
-  willowMesh.position.set(-2, 0, 0);
-  willowMesh.scale.set(.2, .2, .2);
-  scene.add(willowMesh);
-
-  UserSettings.willow = willowMesh;
-  UserSettings.main = mesh;
-  UserSettings.cactus = cactusMesh;
-}
-
-function RebuildTrees(scene, UserSettings)
-{
-  scene.remove(UserSettings.willow);
-  scene.remove(UserSettings.main);
-  scene.remove(UserSettings.cactus);
-
-  var lSystem = new MainCharacter(performance.now(), UserSettings.iterations);
-  lSystem.expand();
-  var mesh = lSystem.generateMesh();
-  mesh.scale.set(.3, .3, .3);
-  scene.add(mesh);
-
-  var cactus = new CactusCharacter(performance.now(), UserSettings.iterations);
-  cactus.expand();
-  var cactusMesh = cactus.generateMesh();
-  cactusMesh.position.set(2, 0, 0);
-  cactusMesh.scale.set(.2, .2, .2);
-  scene.add(cactusMesh);
-
-  var willow = new WillowCharacter(performance.now(), UserSettings.iterations);
-  willow.expand();
-  var willowMesh = willow.generateMesh();
-  willowMesh.position.set(-2, 0, 0);
-  willowMesh.scale.set(.2, .2, .2);
-  scene.add(willowMesh);
-
-
-  UserSettings.willow = willowMesh;
-  UserSettings.main = mesh;
-  UserSettings.cactus = cactusMesh;
-
-}
-
-// clears the scene by removing all geometries added by turtle.js
-function clearScene(turtle) {
-  var obj;
-  for( var i = turtle.scene.children.length - 1; i > 3; i--) {
-      obj = turtle.scene.children[i];
-      turtle.scene.remove(obj);
-  }
-}
-
-function doLsystem(lsystem, iterations, turtle) {
-    var result = lsystem.DoIterations(iterations);
-    turtle.clear();
-    turtle = new Turtle(turtle.scene);
-    turtle.renderSymbols(result);
 }
 
 // called on frame updates
