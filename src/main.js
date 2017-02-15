@@ -84,8 +84,8 @@ function onLoad(framework) {
   var gui = framework.gui;
   var stats = framework.stats;
 
-  // LOOK: the line below is synyatic sugar for the code above. Optional, but I sort of recommend it.
-  // var {scene, camera, renderer, gui, stats} = framework; 
+  scene.fog = new THREE.Fog(0xffffff, 1, 60);
+  scene.fog.color.setHSL( 0.55, 0.4, 0.8 );
 
   // initialize a simple box and material
   var box = new THREE.IcosahedronBufferGeometry(1, 6);

@@ -1,7 +1,8 @@
 const THREE = require('three')
 const OBJLoader = require('three-obj-loader')(THREE)
 
-var ShapeEnum = Object.freeze({Ring: 0, Wall: 1, Roof1: 2, Roof2: 3, Block: 4});
+var ShapeEnum = Object.freeze({Ring: 0, Wall: 1, Roof1: 2, 
+								Roof2: 3, Block: 4, Tower: 5, Wedge: 6});
 var material = new THREE.MeshPhongMaterial();
 var objLoader = new THREE.OBJLoader();
 var objLibrary = [];
@@ -15,13 +16,14 @@ scale: scale
 yaw: rotation about world Y axis
 symbol: the type of shape that this will be
 */
-var Shape = function(pos, scale, yaw, symbol, terminal) {
+var Shape = function(pos, scale, yaw, symbol, terminal, iter) {
 	return {
 		pos: new THREE.Vector3(pos.x, pos.y, pos.z),
 		scale: new THREE.Vector3(scale.x, scale.y, scale.z),
 		yaw: yaw,
 		type: symbol,
-		terminal: terminal
+		terminal: terminal,
+		iter: iter
 	}
 }
 
@@ -33,7 +35,7 @@ The exported GrammarSystem class.
 */
 export default class GrammarSystem {
 	
-	loadAllObjs() {
+	loadAllObjs(selfRef) {
 		var mContainer1 = new THREE.Geometry();
 		mContainer1.applyMatrix( new THREE.Matrix4().makeTranslation(0, 2, 0));
 		mContainer1.applyMatrix( new THREE.Matrix4().makeScale(8, 1, 8));
@@ -48,27 +50,32 @@ export default class GrammarSystem {
 			
 			objLibrary[0].merge(g, objLibrary[0].matrix);
 
+			selfRef.clearIterations();
+
 		});
 	}
 
 	constructor(scene) {
-		this.loadAllObjs();
+		
 		this.scene = scene;
 		this.allShapes = []; // will contain every single 
 		this.geometry = new THREE.Geometry();
 		this.mesh = undefined;
 		this.numIterations = 1;
+		this.loadAllObjs(this);
 
-		this.addShape(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1), 0.0, ShapeEnum.Ring, false);
-		this.addShape(new THREE.Vector3(0, 0, 15), new THREE.Vector3(2, 2, 2), 35.0, ShapeEnum.Block, false);
+		this.addShape(new THREE.Vector3(0, 0, 0), 
+			new THREE.Vector3(1, 1, 1), 0.0, ShapeEnum.Ring, false, 1);
+		this.addShape(new THREE.Vector3(0, 0, 15), 
+			new THREE.Vector3(2, 2, 2), 35.0, ShapeEnum.Block, false, 1);
 	}
 
 
 
 	// add a single shape to the grammar with specified values
-	addShape(pos, scale, yaw, type, terminal) {
+	addShape(pos, scale, yaw, type, terminal, iter) {
 		
-		var s = new Shape(pos, scale, yaw, type, terminal);
+		var s = new Shape(pos, scale, yaw, type, terminal, iter);
 		this.allShapes.push(s);
 		// merge into existing geometry
 		var geom;
@@ -90,6 +97,18 @@ export default class GrammarSystem {
 				geom = objLibrary[0].clone();
 				break;
 
+			case ShapeEnum.Wedge:
+				geom = new THREE.CylinderGeometry(2, 2.4, 2, 3);
+				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 1, 0));
+				geom.applyMatrix( new THREE.Matrix4().makeScale(1, 1, 4));
+				geom.computeFlatVertexNormals();
+				geom.normalsNeedUpdate = true;
+				break;
+
+			case ShapeEnum.Tower:
+				geom = new THREE.CylinderGeometry(0.3,0.25, 6);
+				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 3, 0));
+				break;
 			default:
 				geom = new THREE.CylinderGeometry(8, 8, 2, 20);
 				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 1, 0));
@@ -105,7 +124,7 @@ export default class GrammarSystem {
 
 	// add a single already-created shape
 	addWholeShape(shape) {
-		this.addShape(shape.pos, shape.scale, shape.yaw, shape.type, shape.terminal);
+		this.addShape(shape.pos, shape.scale, shape.yaw, shape.type, shape.terminal, shape.iter);
 	}
 
 	// completely removes all geometry and information
@@ -124,7 +143,8 @@ export default class GrammarSystem {
 	// resets the shape grammar to its initial state
 	clearIterations() {
 		this.resetGrammar();
-		this.addShape(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1), 0.0, ShapeEnum.Ring, false);
+		this.addShape(new THREE.Vector3(0, 0, 0), 
+			new THREE.Vector3(1, 1, 1), 0.0, ShapeEnum.Ring, false, 1);
 		this.finalizeGrammar();
 	}
 
@@ -134,64 +154,114 @@ export default class GrammarSystem {
 		var xS = Math.cos(shape.yaw * Math.PI / 180.0);
 		var zS = Math.sin(shape.yaw * Math.PI / 180.0);
 
+		if (Math.random() < 0.1) {
+			shape.terminal = true;
+			shapeList.push(shape);
+			return;
+		}
+
 
 		var s1; var s2;
 		var d; var s;
 		if (Math.random() > 0.5) {
 			d = new THREE.Vector2(0, shape.scale.z);
 			d.rotateAround(new THREE.Vector2(0, 0), shape.yaw * Math.PI / 180.0);
-
-			s = new THREE.Vector3(shape.scale.x, shape.scale.y, 0.49 * shape.scale.z);
-			/*s1 = new Shape(new THREE.Vector3(shape.pos.x + zS * shape.scale.x,
-				shape.pos.y, shape.pos.z + xS * shape.scale.z), s, shape.yaw, ShapeEnum.Block, false);
-			s2 = new Shape(new THREE.Vector3(shape.pos.x - zS * shape.scale.x,
-				shape.pos.y, shape.pos.z - xS * shape.scale.z), s, shape.yaw, ShapeEnum.Block, false);
-			*/
-
-			console.log("bark");
+			s = new THREE.Vector3(shape.scale.x, shape.scale.y, 0.45 * shape.scale.z);
 		} else {
 			d = new THREE.Vector2(shape.scale.x, 0);
 			d.rotateAround(new THREE.Vector2(0, 0), shape.yaw * Math.PI / 180.0);
-
-			s = new THREE.Vector3(0.49 * shape.scale.x, shape.scale.y, shape.scale.z);
-
-			
-
-			console.log("snorf");
+			s = new THREE.Vector3(0.4 * shape.scale.x, shape.scale.y, shape.scale.z);
 		}
 
 		s1 = new Shape(new THREE.Vector3(shape.pos.x + d.x,
-				shape.pos.y, shape.pos.z - d.y), s, shape.yaw, ShapeEnum.Block, false);
+				shape.pos.y, shape.pos.z - d.y), s.multiply(new THREE.Vector3(1, 1.0 - Math.random() * 0.5, 1)),
+				 shape.yaw, ShapeEnum.Block, false, shape.iter + 1);
 		s2 = new Shape(new THREE.Vector3(shape.pos.x - d.x,
-				shape.pos.y, shape.pos.z + d.y), s, shape.yaw, ShapeEnum.Block, false);
+				shape.pos.y, shape.pos.z + d.y), s.multiply(new THREE.Vector3(1, 1.0 - Math.random() * 0.5, 1)),
+				 shape.yaw, ShapeEnum.Block, false, shape.iter + 1);
 			
 		shapeList.push(s1);
 		shapeList.push(s2);
 	}
 
-	// creates a tower on the edge of the ring
+	// creates another layer of the city
 	buildLayer(shape, shapeList) {
-		var x = (8.0 - 1.5 * this.numIterations) / 8.0;
-		var y = (8.0 - 0.5 * this.numIterations) / 8.0;
+		var x = (8.0 - 1.5 * shape.iter) / 8.0;
+		var y = (8.0 - 0.5 * shape.iter) / 8.0;
 		var s = new THREE.Vector3(x, y, x)
 
 		var layer = new Shape(new THREE.Vector3(shape.pos.x, shape.pos.y + 2 * shape.scale.y, shape.pos.z),
 						s,
-						shape.yaw, ShapeEnum.Ring, this.numIterations > 3);
+						shape.yaw, ShapeEnum.Ring, this.numIterations > 3, shape.iter + 1);
 
 
+		var cliff = new Shape(new THREE.Vector3(0, 0, 0),
+		 				new THREE.Vector3(1, y * (shape.iter + 2), 1), 
+						 0, ShapeEnum.Wedge, true, 1);
+			
 
+		shape.terminal = true; // end iteration on original
 		shapeList.push(shape); // preserve original
-
+		shapeList.push(cliff);
 		shapeList.push(layer);
 	}
+
+
 	// places houses in a reasonable way along the ring
+	placeRadial(shape, shapeList) {
+		var inner = (8.0 - 1.5 * (shape.iter - 1.0));
+		var outer = (8.0 - 1.5 * (shape.iter - 2.0));
+		var rCenter = 0.5 * (inner + outer) - 0.05;
+		var arc = 2 * Math.PI * rCenter * 
+		console.log(rCenter);
+		var rScale = 0.5 * 0.25 * (outer - inner);
+		var rowOffset = (Math.random() - 0.5) * 5.0;
+		for (var i = 0; i <= 20; i++) {
+			var offset = (Math.random() - 0.5) * 2.0;
+			var theta = i * 360.0 / 40 + offset + rowOffset + offset;
+
+			if (Math.abs(theta - 90) < 10) continue; // avoid the wedge
+			var rct = rCenter * Math.cos(theta * Math.PI / 180.0);
+			var rst = rCenter * Math.sin(theta * Math.PI / 180.0);
+			//console.log(theta);
+
+
+			var s = new Shape(new THREE.Vector3(rct, shape.pos.y, rst),
+				new THREE.Vector3(1.4 * rScale, 
+					0.5 * inner * (1 + Math.random()) * (rScale), 
+					shape.scale.z * 1.5 * rScale),
+				-theta, ShapeEnum.Block, 
+				false, shape.iter + 1);
+			shapeList.push(s);
+		}
+	}
 
 	// creates a more detailed wall segment on the ring
 
 	// caps this shape with a roof and terminates it
 
 	// creates a tower on this building
+
+	// creates a tower on the wall
+	buildWallTower(shape, shapeList) {
+		var rad = 7.9 * shape.scale.z;
+		var numTowers = Math.floor(Math.random() * 5.0);
+		var offset = Math.random() * 180.0 / numTowers;
+		for (var i = 0; i < numTowers; i++) {
+			var theta = i * 180.0 / numTowers + offset;
+
+			if (Math.abs(theta - 90) < 10) continue; // avoid the wedge
+			var rct = rad * Math.cos(theta * Math.PI / 180.0);
+			var rst = rad * Math.sin(theta * Math.PI / 180.0);
+
+			var s = new Shape(new THREE.Vector3(rct, shape.pos.y, rst), 
+				new THREE.Vector3(1, 1, 1), -theta, ShapeEnum.Tower, true, shape.iter + 1);
+			shapeList.push(s);
+		}
+
+
+
+	}
 
 	// creates a more centrally located tower
 
@@ -211,9 +281,14 @@ export default class GrammarSystem {
 				switch(this.allShapes[i].type) {
 					case ShapeEnum.Ring:
 						this.buildLayer(this.allShapes[i], newShapes);
+						this.placeRadial(this.allShapes[i], newShapes);
+						this.buildWallTower(this.allShapes[i], newShapes);
 						break;
 					case ShapeEnum.Block:
 						this.subdivide(this.allShapes[i], newShapes);
+						break;
+					case ShapeEnum.Wall:
+						this.buildWallTower(this.allShapes[i], newShapes);
 						break;
 					default:
 						newShapes.push(this.allShapes[i]);
@@ -235,7 +310,7 @@ export default class GrammarSystem {
 		}
 
 		var outerWall = new Shape(new THREE.Vector3(0, -2, 0), new THREE.Vector3(1.2, 1, 1.2),
-			0, ShapeEnum.Wall, false);
+			0, ShapeEnum.Wall, false, 1);
 		this.addWholeShape(outerWall);
 
 		// render the new shape grammar
