@@ -29,8 +29,6 @@ export default class Shape
       this.subDivideBuilding( shapeList, index, axis);
       this.subDivideBuilding( shapeList, index, Math.abs(axis-1));
       this.subDivideBuilding( shapeList, index + 2, Math.abs(axis-1));
-      // this.subDivideBuilding( shapeList, index, 'x');
-      // this.scaleBuilding( shapeList, index, 'x');
     }
 
     subDivideBuilding(shapeList, index, axis) //axis should be x or z

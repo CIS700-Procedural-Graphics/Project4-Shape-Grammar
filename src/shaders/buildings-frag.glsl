@@ -1,5 +1,6 @@
 uniform vec3 shapeColor;
 varying vec3 PosBasedColor;
+// varying vec3 randcolor;
 uniform vec3 lightVec;
 varying vec3 vnor;
 
@@ -7,6 +8,7 @@ void main()
 {
   // vec3 diffuseColor = shapeColor;
   vec3 diffuseColor = PosBasedColor;
+  // vec3 diffuseColor = randcolor;
   // Calculate the diffuse term for Lambert shading
   float diffuseTerm = dot(normalize(vnor), normalize(lightVec));
 

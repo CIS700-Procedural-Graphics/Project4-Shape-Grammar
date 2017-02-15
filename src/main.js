@@ -38,6 +38,7 @@ var building_Material = new THREE.ShaderMaterial({
 
 //------------------------------------------------------------------------------
 //various geometries and meshes for the city and buildings
+// var box = new THREE.BoxBufferGeometry( 1, 1, 1 );
 var box = new THREE.BoxGeometry( 1, 1, 1 );
 var cube = new THREE.Mesh( box, building_Material );
 
@@ -202,7 +203,7 @@ function cleanscene(scene)
 
 function finalgeneration()
 {
-  for(var i=0; i<10; i++)
+  for(var i=0; i<2; i++)
   {
     var l = shapeList.length;
     for(var j=0; j<l; j++)
@@ -210,6 +211,7 @@ function finalgeneration()
       shapeList[j].replaceShape(shapeList, j);
     }
   }
+  // shapeList.splice(0, 3);
 }
 
 function render(scene)
@@ -218,6 +220,11 @@ function render(scene)
     {
       shapeList[j].mesh.scale.set( shapeList[j].scale.x, shapeList[j].scale.y, shapeList[j].scale.z );
       shapeList[j].mesh.position.set( shapeList[j].pos.x, shapeList[j].pos.y, shapeList[j].pos.z );
+      // var c = shapeList[j].mesh.geometry.color;
+      // for(var i=0; i<shapeList[j].mesh.geometry.color.count; i++)
+      // {
+      //   shapeList[j].mesh.geometry.color.setXYZ(shapeList[j].mesh.color.x, shapeList[j].mesh.color.y, shapeList[j].mesh.color.z);
+      // }
       scene.add(shapeList[j].mesh);
     }
 }
@@ -273,7 +280,7 @@ function onLoad(framework) {
 
   //--------------------------- Add starting shapes here -----------------------
   var shape1 = new Shape(0, cube);
-  shape1.scale = new THREE.Vector3( 100, 2, 100 );
+  shape1.scale = new THREE.Vector3( 10, 2, 10 );
   shape1.pos.setY(shape1.scale.y/2.0);
   shapeList.push(shape1);
 

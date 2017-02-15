@@ -1,5 +1,6 @@
 varying vec3 vnor;
 varying vec3 PosBasedColor;
+varying vec3 randcolor;
 
 void main()
 {
