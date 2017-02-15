@@ -21,8 +21,10 @@ var Block = function(sym) {
 	this.p.push(new THREE.Vector3(cityX,0,cityZ));	// |			|
 	this.p.push(new THREE.Vector3(0,0,cityZ));		// p1	----	p2
 	this.center = new THREE.Vector3();
-	this.x = true; 
-	this.z = true;
+	this.length = 0;
+	this.width = 0;
+	this.x = true; // continue to x subdivide?
+	this.z = true; // continue to z subdivide?
 }
 
 function computeCentroid(block) {
@@ -49,6 +51,8 @@ function computeCentroid(block) {
 function copyState(block) {
 	var result = new Block(block.sym)
 	result.terminal = block.terminal;
+	result.length = block.length;
+	result.width = block.width;
 	result.p[0].copy(block.p[0]);
 	result.p[1].copy(block.p[1]);
 	result.p[2].copy(block.p[2]);
@@ -180,9 +184,11 @@ export default class Layout {
 				}
 			}
 		}
-		// calculate centroid;
+		// calculate centroid;, minimum length and width
 		for (var k = 0; k < this.blocks.length; k++) {
 			computeCentroid(this.blocks[k]); 
+			this.blocks[k].length = Math.min(this.blocks[k].p[1].x - this.blocks[k].p[0].x, this.blocks[k].p[2].x - this.blocks[k].p[3].x);
+			this.blocks[k].width = Math.min(this.blocks[k].p[3].z - this.blocks[k].p[0].z, this.blocks[k].p[2].z - this.blocks[k].p[1].z);
 		}
 		return this.blocks;
 	}

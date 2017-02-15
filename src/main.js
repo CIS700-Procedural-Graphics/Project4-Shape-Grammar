@@ -1,6 +1,7 @@
 
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
-const OBJLoader = require('three-obj-loader')(THREE)
+const OBJLoader = require('three-obj-loader');
+OBJLoader(THREE)
 import Framework from './framework'
 import Building from './shape.js'
 import Shape from './shape.js'
@@ -165,12 +166,21 @@ function layoutBlock(block) {
       totalRoad.merge(circle.geometry, circle.matrix);
     }
 
-    // tree
-    var tree = new THREE.Mesh(treeGeo, green);
-    var mat5 = new THREE.Matrix4();
-    mat5.makeTranslation(block.center.x, -0.499, block.center.z);
-    tree.applyMatrix(mat5);
-    layout.scene.add(tree);
+    // trees added in block center 
+    // larger area -> more trees
+    // more random offset with larger block/width
+    var min = Math.min(block.length, block.width);
+    if (min > 6) {
+      for (var l = 0; l < min/2; l++) {
+        var x = block.center.x + (Math.random()-0.5)*block.length/2;
+        var z = block.center.z + (Math.random()-0.5)*block.width/2;
+        var tree = new THREE.Mesh(treeGeo, green);
+        var mat5 = new THREE.Matrix4();
+        mat5.makeTranslation(x, -0.499, z);
+        tree.applyMatrix(mat5);
+        layout.scene.add(tree);
+      }
+    }
   }
 }
 
