@@ -13,7 +13,8 @@ var settings = {
     newSeed: function(newVal) { settings.seed = Math.random(); },
     size: 10.0,
     resolution: 64,
-    split: 0.0
+    split: 0.0,
+    numBuildings: 500
 }
 
 var lsystem_settings = {
@@ -43,6 +44,11 @@ var ZONES = {
   RESIDENTIAL: {value: 3, name: "Residential", color: 0x1fbc14},
   COMMERCIAL : {value: 4, name: "Commerical",  color: 0x7c14bc},
   INDUSTRIAL : {value: 5, name: "Industrial",  color: 0xddac30}
+};
+
+var STATUS = {
+  VACANT    : {value: 1, name: "Vacant",     color: 0xd1cfca},
+  OCCUPIED  : {value: 2, name: "Occupied",   color: 0x2c2a2d},
 };
 
 
@@ -117,7 +123,7 @@ function getMapValue(canvas, ni, nj) {
 }
 
 function generateTexture() {
-  var size = settings.resolution * 3;
+  var size = settings.resolution;
   var canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
@@ -168,19 +174,28 @@ function loadMapFromCanvas(framework, key, canvas) {
   scene.add(plane);
   city.maps[key] = canvas;
   console.log(city.maps);
+  console.log(key+" is done");
+  return canvas;
 }
 
 function loadMapFromPath(framework, key, path) {
-  var img = new Image();
-  img.onload = function () {
-    var canvas  = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    var context = canvas.getContext('2d');
-    context.drawImage(img, 0, 0);
-    loadMapFromCanvas(framework, key, canvas);
-  };
-  img.src = path;
+  var promise = new Promise(function(resolve, reject) {
+    var img = new Image();
+    img.onload = function () {
+      var canvas  = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      var context = canvas.getContext('2d');
+      context.drawImage(img, 0, 0);
+      if (loadMapFromCanvas(framework, key, canvas)) {
+        resolve("Stuff worked!");
+      } else {
+        reject(Error("It broke"));
+      }
+    };
+    img.src = path;
+  });
+  return promise;
 }
 
 function getZoneProperties(zoneValue) {
@@ -198,21 +213,20 @@ function regenerateCity(framework) {
     var gui = framework.gui;
     var stats = framework.stats;
 
-
-
-
     // clear scene
     scene.children.forEach(function(object){
         scene.remove(object);
     });
-
 
     // reset grid
     city.grid = [];
     for (var i = 0; i < settings.resolution; i++) {
       city.grid.push([]);
       for (var j = 0; j < settings.resolution; j++) {
-          city.grid[i].push({zone: ZONES.UNZONED.value});
+          city.grid[i].push({
+            zone: ZONES.UNZONED.value,
+            status: STATUS.VACANT.value
+          });
       }
     }
 
@@ -226,41 +240,47 @@ function regenerateCity(framework) {
     var cturtle = new CTurtle(256,256);
     var turtle_canvas = cturtle.renderSymbols(result);
     loadMapFromCanvas(framework, 'roads', turtle_canvas);
-    var debug = document.getElementById('debug');
-    debug.appendChild(turtle_canvas);
+    // var debug = document.getElementById('debug');
+    // debug.appendChild(turtle_canvas);
 
-    loadMapFromPath(framework, 'population', './maps/population.png');
-
-    // HACK: wait for resources to load
-    setTimeout(function() {
-
-          var texture = new THREE.Texture(generateTexture());
-          texture.anisotropy = renderer.getMaxAnisotropy();
-          texture.needsUpdate = true;
-
-          // build the mesh
-          var material  = new THREE.MeshBasicMaterial({
-            map: texture,
-            side: THREE.DoubleSide
-          });
-
-          // redraw planes
-          var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
-          // var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-          var plane = new THREE.Mesh( geometry, material );
-          plane.rotateX(Math.PI / 2.0);
-          plane.name = "plane_terrain";
-          scene.add( plane );
-
+    loadMapFromPath(framework, 'population', './maps/population.png')
+      .then(function(response) {
+        try {
+          generateTerrain(framework);
           generateBuildings(framework);
-          var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
-          scene.add( light );
-          var light = new THREE.PointLight( 0xffffff, 10, 100 );
-          light.position.set( 50, 50, 50 );
-          scene.add( light );
+        } catch (error) {
+          console.log("error " + error);
+        }
+      }, function(error) {
+        console.error("Failed!", error);
+      });
 
-    }, 3000);
 
+    var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
+    scene.add(light);
+    var light = new THREE.PointLight( 0xffffff, 10, 100 );
+    light.position.set( 50, 50, 50 );
+    scene.add(light);
+}
+
+
+function generateTerrain(framework) {
+  var scene = framework.scene;
+  var renderer = framework.renderer;
+
+  var geometry = new THREE.PlaneBufferGeometry( settings.size, settings.size, 1 );
+  var texture = new THREE.Texture(generateTexture());
+  texture.anisotropy = renderer.getMaxAnisotropy();
+  texture.needsUpdate = true;
+  var material  = new THREE.MeshBasicMaterial({
+    map: texture,
+    side: THREE.DoubleSide
+  });
+  var plane = new THREE.Mesh( geometry, material );
+
+  plane.rotateX(Math.PI / 2.0);
+  plane.name = "terrain";
+  scene.add(plane);
 }
 
 // function generateRoads() {
@@ -289,48 +309,144 @@ function generateBuildings(framework) {
     var offset = settings.size / 2.0 - square_size / 2.0;
     var builder = new Builder();
 
-    var roads = city.maps['roads'];
+    var building_sizes = {
+      small: [
+        [0.5,0.5,0.5],
+        [0.5,1,0.5]
+      ],
+      medium: [
+        [3,3,6],
+        [3,3,10],
+      ],
+      large: [
+        [3,4,35],
+        [4,4,40]
+      ]
+    }
 
+    var canvas = document.createElement('canvas');
+    canvas.width = settings.resolution;
+    canvas.height = settings.resolution;
+    var context = canvas.getContext('2d');
+    context.fillStyle = '#ffffff';
+    context.fillRect(0,0,settings.resolution, settings.resolution);
+    context.fillStyle = '#000000';
 
-    for (var i = 0; i < settings.resolution; i++) {
-        for (var j = 0; j < settings.resolution; j++) {
+    var debug = document.getElementById('debug');
+    debug.appendChild(canvas);
 
+    for (var n = 0; n < settings.numBuildings; n++) {
+      // randomly pick points
+      var norm_i = Math.random();
+      var norm_j = Math.random();
 
-          var isClear = true;
-          for (var k = -1; k < 2; k++) {
-            for (var m = -1; m < 2; m++) {
-              var norm_i = (i + k) / settings.resolution;
-              var norm_j = (settings.resolution - (j + m)) / settings.resolution;
-              var rgba = getMapValue(roads, norm_i, norm_j);
-              if (rgba.x != 255) {
-                isClear = false;
+      // keep point based on probability (relative to population)
+      var rgba = getMapValue(city.maps['population'], norm_i, norm_j);
+
+      var keep = Math.random() * 255;
+      if (keep > rgba.x) {
+
+        // pick a building size semi-randomly
+        if (keep < 100) {
+          var building_size = building_sizes.large[Math.floor(Math.random()*4)%2]
+        } else if (keep < 200) {
+          var building_size = building_sizes.medium[Math.floor(Math.random()*4)%2]
+        } else {
+          continue;
+        }
+
+        // check that the building fits in the location
+        var i = Math.floor(norm_i * settings.resolution);
+        var j = Math.floor(settings.resolution - norm_j * settings.resolution);
+        console.log(i+", "+j);
+        var bbox_x = [-Math.floor((building_size[0]+1)/2), Math.floor((building_size[0]+1)/2)];
+        var bbox_z = [-Math.floor((building_size[1]+1)/2), Math.floor((building_size[1]+1)/2)];
+        var isVacant = true;
+        for (var q = bbox_x[0]; q < bbox_x[1]; q++) {
+          for (var r = bbox_z[0]; r < bbox_z[1]; r++) {
+
+            // bbox must not be out of grid and must not be occupied
+            if ((q+i).clamp(0,settings.resolution-1) != q+i ||
+                (r+j).clamp(0,settings.resolution-1) != r+j ||
+                city.grid[q+i][r+j].status != STATUS.VACANT.value) {
+                isVacant = false;
                 break;
-              }
             }
-          }
-
-          if (isClear) {
-            if (Math.random() < 0.3) {
-                continue;
-            }
-
-            var norm_i = i / settings.resolution;
-            var norm_j = (settings.resolution - j) / settings.resolution;
-            var rgba = getMapValue(city.maps['population'], norm_i, norm_j);
-
-            var density = Math.pow((255 - rgba.x) / 255, 2) * 20;
-            var options = {
-                zone: city.grid[i][j].zone,
-                length: settings.size / settings.resolution,
-                width: settings.size / settings.resolution,
-                height: density * settings.size / settings.resolution * Math.random()
-            };
-            var building = builder.generateBuilding(options);
-            building.position.set(i * square_size - offset, 0, j * square_size - offset);
-            scene.add(building);
           }
         }
+
+        console.log(isVacant);
+        if (isVacant) {
+          // generate building
+          var scale_factor = 0.5 * settings.size / settings.resolution; // 0.5 bc box size is half size width
+          var density = Math.pow((255 - rgba.x) / 255, 2) * 20;
+          var density = 0.4;
+          var options = {
+              length: scale_factor * building_size[0],
+              width: scale_factor * building_size[1],
+              height: scale_factor * (building_size[2] + (Math.random() * building_size[2]))
+          };
+          var building = builder.generateBuilding(options);
+          building.position.set(i * square_size - offset, 0, j * square_size - offset);
+          scene.add(building);
+
+          for (var q = bbox_x[0]; q < bbox_x[1]; q++) {
+            for (var r = bbox_z[0]; r < bbox_z[1]; r++) {
+              city.grid[q+i][r+j].status = STATUS.OCCUPIED.value;
+            }
+          }
+          console.log(city.grid);
+        }
+      }
     }
+
+
+
+
+
+
+    // var roads = city.maps['roads'];
+    //
+    //
+    // for (var i = 0; i < settings.resolution; i++) {
+    //     for (var j = 0; j < settings.resolution; j++) {
+    //
+    //
+    //       var isClear = true;
+    //       for (var k = -1; k < 2; k++) {
+    //         for (var m = -1; m < 2; m++) {
+    //           var norm_i = (i + k) / settings.resolution;
+    //           var norm_j = (settings.resolution - (j + m)) / settings.resolution;
+    //           var rgba = getMapValue(roads, norm_i, norm_j);
+    //           if (rgba.x != 255) {
+    //             isClear = false;
+    //             break;
+    //           }
+    //         }
+    //       }
+    //
+    //       if (isClear) {
+    //         if (Math.random() < 0.3) {
+    //             continue;
+    //         }
+    //
+    //         var norm_i = i / settings.resolution;
+    //         var norm_j = (settings.resolution - j) / settings.resolution;
+    //         var rgba = getMapValue(city.maps['population'], norm_i, norm_j);
+    //
+    //         var density = Math.pow((255 - rgba.x) / 255, 2) * 20;
+    //         var options = {
+    //             zone: city.grid[i][j].zone,
+    //             length: settings.size / settings.resolution,
+    //             width: settings.size / settings.resolution,
+    //             height: density * settings.size / settings.resolution * Math.random()
+    //         };
+    //         var building = builder.generateBuilding(options);
+    //         building.position.set(i * square_size - offset, 0, j * square_size - offset);
+    //         scene.add(building);
+    //       }
+    //     }
+    // }
 
 }
 
@@ -353,6 +469,24 @@ function onUpdate(framework) {
       i++;
     }
 }
+
+
+/**
+ * Returns a number whose value is limited to the given range.
+ *
+ * Example: limit the output of this computation to between 0 and 255
+ * (x * 255).clamp(0, 255)
+ *
+ * Source: http://strd6.com/2010/08/useful-javascript-game-extensions-clamp/
+ *
+ * @param {Number} min The lower boundary of the output range
+ * @param {Number} max The upper boundary of the output range
+ * @returns A number in the range [min, max]
+ * @type Number
+ */
+Number.prototype.clamp = function(min, max) {
+  return Math.min(Math.max(this, min), max);
+};
 
 // when the scene is done initializing, it will call onLoad, then on frame updates, call onUpdate
 Framework.init(onLoad, onUpdate);

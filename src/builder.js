@@ -112,7 +112,7 @@ export default class Builder {
             baseGeo.merge(auxMesh.geometry, auxMesh.matrix);
         }
         var mesh = new THREE.Mesh(baseGeo, material);
-        mesh.rotateY(Math.random());
+        // mesh.rotateY(Math.random());
         return mesh;
     }
 
