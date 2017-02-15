@@ -15,6 +15,10 @@ function randColor() {
   return {r: Math.random() * 255, g: Math.random() * 255, b: Math.random() * 255}
 }
 
+function randGray() {
+  return {r: Math.random() * 40 - 107, g: Math.random() * 40 - 107, b: Math.random() * 40 - 107};
+}
+
 export class Shape {
   constructor(type, pos, size, rot, color, points = []) {
     this.type = type;
@@ -59,14 +63,14 @@ export class Symbol {
     let { char, shape: {type, pos, size, rot, color}, iter } = refSymbol;
 
     let newType = ROOF_TYPES[Math.floor(Math.random() * ROOF_TYPES.length)];
-    let roofShape = new Shape(newType, v3(0,size.y / 2,0).add(pos), v3(1,1,1).multiply(size), rot, randColor());
+    let roofShape = new Shape(newType, v3(0,size.y / 2,0).add(pos), v3(1,1,1).multiply(size), rot, randGray());
     let roofSymbol = new Symbol('R', roofShape, iter + 1);
     return roofSymbol;
   }
 
   static genHouse(char, refSymbol, opts = {}) {
     if (!refSymbol) {
-      refSymbol = Symbol.genericSymbol({size: v3(2,1,2)});
+      refSymbol = Symbol.genericSymbol({size: v3(2,1,2), color: randColor()});
     }
     let { shape: {pos, size, rot, color}, iter } = refSymbol;
     let newChar = iter + 1 > HOUSE_MAX_ITER ? 'T' : char;
@@ -81,7 +85,7 @@ export class Symbol {
       newPos = v3(newPosX, 0, newPosZ);
       newSize = v3(Math.random() * 0.5 + 0.5, Math.random() + 0.5, Math.random() * 0.5 + 0.5).multiply(size);
     }
-    let houseShape = new Shape('box', newPos, newSize, v3(0, 0, 0), randColor());
+    let houseShape = new Shape('box', newPos, newSize, v3(0, 0, 0), color);
     let houseSymbol = new Symbol(newChar, houseShape, iter + 1);
     return houseSymbol;
   }
@@ -103,7 +107,7 @@ export class Symbol {
       newPos = v3(newPosX, 0, newPosZ);
       newSize = v3(Math.random() * 0.5 + 0.5, Math.random() + 0.5, Math.random() * 0.5 + 0.5).multiply(size);
     }
-    let houseShape = new Shape('box', newPos, newSize, v3(0, 0, 0), randColor());
+    let houseShape = new Shape('box', newPos, newSize, v3(0, 0, 0), color);
     let houseSymbol = new Symbol(newChar, houseShape, iter + 1);
     return houseSymbol;
   }

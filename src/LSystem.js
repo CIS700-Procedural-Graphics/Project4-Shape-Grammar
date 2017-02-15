@@ -64,19 +64,22 @@ export default class LSystem {
         break;
       // House Rule: H -> HR(T|H)
       case 'H':
-        successors.push(symbol.copy());
-        if (random < 0.1) {
+        successors.push(Symbol.genHouse('T'));
+        if (random < 0.5) {
           successors.push(Symbol.genSubHouse('h', symbol, {nextLevel: true}));
         } else {
           successors.push(Symbol.genRoof(symbol));
         }
-        if (random < 0.1) {
+        if (random < 0.4) {
           successors.push(Symbol.genSubHouse('h', symbol));
         }
         break;
       // Sub-House Rule:
       case 'h':
-
+        let succ = symbol.copy();
+        succ.char = 'T'
+        successors.push(succ);
+        successors.push(Symbol.genRoof(symbol));
       // Terminal Symbols
       case 'R':
       case 'T':

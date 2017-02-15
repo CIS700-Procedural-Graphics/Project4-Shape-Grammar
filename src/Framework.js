@@ -22,7 +22,7 @@ export default class Framework {
     this.renderer = new THREE.WebGLRenderer( { antialias: true } );
     this.stats = new Stats();
     this.meshes = {}; // imported meshes
-    this.iterations = 4; // default testing
+    this.iterations = 7; // default testing
   }
 
   /***********

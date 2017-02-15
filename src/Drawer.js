@@ -69,10 +69,12 @@ export default class Drawer {
           ];
           break;
         case 'cone':
-          geometry = THREE.ConeGeometry(1, 1, 32);
+          geometry = new THREE.ConeGeometry(1, 1, 32);
           break;
         case 'road':
-          geometry = THREE.CatmullRomCurve3(points);
+          let curve = new THREE.CatmullRomCurve3(points);
+          geometry = new THREE.Geometry();
+          geometry.vertices = curve.getPoints(50);
           break;
       }
       return geometry;
