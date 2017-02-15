@@ -185,7 +185,7 @@ function cleanscene(scene)
 
 function finalgeneration(scene)
 {
-  for(var i=0; i<5; i++)
+  for(var i=0; i<1; i++)
   {
     var l = shapeList.length;
     for(var j=0; j<l; j++)
@@ -206,9 +206,21 @@ function finalgeneration(scene)
       var l = shapeList.length;
       for(var j=0; j<l; j++)
       {
-        shapeList[j].addRoof(shapeList[j], scene, roofCastleTypeMesh);
+        shapeList[j].addRoofcastle(shapeList[j], scene, roofCastleTypeMesh);
       }
-      // roofCastleTypeMesh.name = "undefined";
+  });
+
+  var objLoader7 = new THREE.OBJLoader();
+  objLoader7.load('geometry/window_s.obj', function(obj)
+  {
+      window_sGeo = obj.children[0].geometry;
+      window_sMesh = new THREE.Mesh(window_sGeo, building_Material);
+      var l = shapeList.length;
+      for(var j=0; j<l; j++)
+      {
+        // var floormid = new THREE.Vector3(shapeList[j].pos.x,0,shapeList[j].pos.z);
+        shapeList[j].addWindows(shapeList[j], scene, window_sMesh, 1.0);
+      }
   });
 
 }
@@ -221,40 +233,6 @@ function render(scene)
       shapeList[j].mesh.position.set( shapeList[j].pos.x, shapeList[j].pos.y, shapeList[j].pos.z );
       scene.add(shapeList[j].mesh);
     }
-}
-
-function AfterLoading(scene)
-{
-  //--------------------------- Add starting shapes here -----------------------
-  var shape1 = new Shape(scene, 0, cube);
-  shape1.scale = new THREE.Vector3( 1, 1, 1 );
-  shape1.pos.setY(shape1.scale.y/2.0);
-  shapeList.push(shape1);
-
-  if(flag_loaded == 3)
-  {
-    console.log(balconyMesh);
-    balconyMesh.position.set(10,0,0);
-    scene.add(balconyMesh);
-    console.log("zdzxcv  " + scene.getObjectByName(balconyMesh));
-
-    doorMesh.position.set(8,0,0);
-    scene.add(doorMesh);
-    floorDivisionMesh.position.set(6,0,0);
-    scene.add(floorDivisionMesh);
-    roofCastleTypeMesh.position.set(4,0,0);
-    scene.add(roofCastleTypeMesh);
-    roofChimneyTypeMesh.position.set(2,0,0);
-    scene.add(roofChimneyTypeMesh);
-    window_lMesh.position.set(0,0,0);
-    scene.add(window_lMesh);
-    window_sMesh.position.set(-2,0,0);
-    scene.add(window_sMesh);
-  }
-
-  //--------------------------- Do things to shapes here -----------------------
-  finalgeneration();
-  render(scene);
 }
 
 //------------------------------------------------------------------------------
@@ -270,11 +248,10 @@ function onLoad(framework) {
   changeGUI(gui, camera, scene);
   guiParameters.city_center_x = (-10.0 + Math.random() * 20.0);
   guiParameters.city_center_z = (-10.0 + Math.random() * 20.0);
-  // loadGeometry();
 
   //--------------------------- Add starting shapes here -----------------------
   var shape1 = new Shape(0, cube);
-  shape1.scale = new THREE.Vector3( 10, 2, 10 );
+  shape1.scale = new THREE.Vector3( 10, 1, 10 );
   shape1.pos.setY(shape1.scale.y/2.0);
   shapeList.push(shape1);
 
@@ -285,9 +262,6 @@ function onLoad(framework) {
 
     doorMesh.position.set(8,0,0);
     scene.add(doorMesh);
-
-    floorDivisionMesh.position.set(6,0,0);
-    scene.add(floorDivisionMesh);
 
     roofCastleTypeMesh.position.set(4,0,0);
     scene.add(roofCastleTypeMesh);

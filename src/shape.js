@@ -116,25 +116,71 @@ export default class Shape
       }
     }
 
-    addWindows(shape) //shape should be a floor
+    addWindows(shape, scene, mesh, windowsize) //shape should be a floor
     {
+      var pos = shape.pos;
+      // debugger;
+      var floorsize = 1.0;
+      var numFloors = Math.floor((shape.scale.y)/floorsize); // -1.0 and 0.5 are the spaceing between the top and b0ttom
+      var halffloor = (shape.scale.y*2.0/numFloors)*0.5;
+      var floormid = new THREE.Vector3(shape.pos.x, shape.pos.y - shape.scale.y*0.5, shape.pos.z);
+      var numwindowsx = Math.floor(shape.scale.x/(windowsize));
+      var numwindowsz = Math.floor(shape.scale.z/(windowsize));
 
+      for(var j=1; j<numFloors; j++) //start from 1 to skip the ground floor
+      {
+        var floorY = 2*j*halffloor; // starts from ground where y is zero
+        console.log(numwindowsx);
+        for(var i=0; i<numwindowsx; i++)
+        {
+          var window = mesh.clone();
+          window.rotateY(3.14*0.5);
+          console.log(shape.pos);
+          console.log(shape.scale);
+          console.log(floormid);
+          var wallx = (floormid.x - (shape.scale.x * 0.5))+ i*windowsize + 0.5;
+          console.log(wallx);
+          window.scale.set(1, 1, 1);
+          window.position.set(floormid.x + wallx, floorY , floormid.z + shape.scale.z/2.0);
+          scene.add( window );
+        }
+        // for(var i=0; i<numwindowsz; i++)
+        // {
+        //   var wallz = (floormid.z - (shape.scale.z * 0.5))+ i*windowsize/2.0; // width half of length
+        //   window.scale.set(1, 1, 1);
+        //   window.position.set(floormid.x + wallx, floorY  -1, floormid.z + shape.scale.z/2.0);
+        //   scene.add( window );
+        // }
+      }
     }
 
-    addRoof(shape, scene, mesh) //shape should be a building
+    addRoofcastle(shape, scene, mesh) //shape should be a building
     {
-      // var geometry = new THREE.ConeGeometry( 5, 20, 32 );
-      // var roof = new THREE.Mesh( geometry, building_Material );
       var roof = mesh.clone();
       var pos = shape.pos;
       roof.scale.set(shape.scale.x *0.7, 1, shape.scale.z*0.7);
       roof.position.set(pos.x, pos.y+ shape.scale.y/2.0 , pos.z);
       scene.add( roof );
     }
+    addRoofchimney(shape, scene, mesh) //shape should be a building
+    {
+      var roof = mesh.clone();
+      var pos = shape.pos;
+      roof.scale.set(shape.scale.x *1, 1, shape.scale.z*1);
+      roof.position.set(pos.x, pos.y+ shape.scale.y/2.0 , pos.z);
+      scene.add( roof );
+    }
 
     addDoor(shape) //shape should be a ground floor
     {
+      var door = mesh.clone();
+      var pos = shape.pos;
 
+
+
+      door.scale.set(shape.scale.x *0.7, 1, shape.scale.z*0.7);
+      door.position.set(pos.x, pos.y+ shape.scale.y/2.0 , pos.z);
+      scene.add( door );
     }
 
     addBalcony(shape) //shape should be a floor that is not the ground floor
