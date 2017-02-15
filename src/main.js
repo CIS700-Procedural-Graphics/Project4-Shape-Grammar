@@ -33,9 +33,9 @@ function lerp(a, b, t) {
 }
 
 //2D perlin noise
-function getNoise(u, v) {
-    var xs = u * settings.noiseScale;
-    var ys = v * settings.noiseScale;
+function getNoise(u, v, samples) {
+    var xs = u * samples;
+    var ys = v * samples;
 
     var xlb = Math.floor(xs);
     var ylb = Math.floor(ys);
@@ -59,12 +59,22 @@ function getNoise(u, v) {
     i = pHash[pHash[xlb + 1 + pHash[ylb + 1]]] / 256.0;
     g = gradients[Math.floor(i * 8.0)];
     p = new THREE.Vector2(xs - xlb - 1.0, ys - ylb - 1.0);
+    //console.log(g);
     var dur = g.dot(p);
 
 
     return lerp(lerp(dll, dlr, xs - xlb), lerp(dul, dur, xs - xlb), ys - ylb);
 }
 
+function bias(b, t) {
+    return Math.pow(t, Math.log(b) / Math.log(0.5));
+}
+
+function gain(g, t) {
+
+    if(t < 0.5) return bias(t * 2.0, g) / 2.0;
+    else return bias(t * 2.0 - 1.0,1.0 - g) / 2.0 + 0.5;
+}
 
 // called after the scene loads
 function onLoad(framework) {
@@ -84,12 +94,14 @@ function onLoad(framework) {
   var adamCube = new THREE.Mesh(box, mat);
 
   // set camera position
-  camera.position.set(0, 0, 4);
+  camera.position.set(3, 5, 15);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   // scene.add(adamCube);
   city = new GrammarSystem(scene);
   city.finalizeGrammar();
+
+  makeTerrain(scene);
 
   var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
     directionalLight.color.setHSL(0.1, 1, 0.95);
@@ -111,16 +123,28 @@ function onLoad(framework) {
 }
 
 function makeTerrain(scene) {
-  var planeGeo = new THREE.PlaneGeometry(5, 5, 20, 20);
+  var planeGeo = new THREE.PlaneGeometry(30, 30, 40, 40);
   var planeMat = new THREE.MeshPhongMaterial();
+  planeGeo.applyMatrix( new THREE.Matrix4().makeRotationX(-Math.PI / 2.0));
 
   var verts = planeGeo.vertices;
-  for (int i = 0; i < verts.length; i++) {
-    
+  for (var i = 0; i < verts.length; i++) {
+    var u = (verts[i].x - 15.0) / -30.0;
+    var v = (verts[i].z - 15.0) / -30.0;
+    var bv2 = bias(0.4, v);
+    var bv = bias(0.20 + 0.05 * getNoise(u, v, 6.0), gain(0.25 + 0.15 * getNoise(u, v, 6.0), v));
+    verts[i].y += bv2  * getNoise(u, v, 16.0) + bv2 * 2 * getNoise(u, v, 8.0) - 0.4 + 15.0 * bv;
+    verts[i].z += 0.2 * getNoise(u, gain(0.40, v), 16.0);
 
   }
 
   planeGeo.verticesNeedUpdate = true;
+  planeGeo.computeFaceNormals();
+  planeGeo.computeVertexNormals();
+  planeGeo.normalsNeedUpdate = true;
+
+  var plane = new THREE.Mesh(planeGeo, planeMat);
+  scene.add(plane);
 }
 
 // called on frame updates
