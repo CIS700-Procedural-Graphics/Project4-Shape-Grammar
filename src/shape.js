@@ -9,16 +9,16 @@ function Rule(prob, func) {
 
 var scope;
 
-
 // TODO: shape call for geometric and Tranformation data
 var Shape = function(sym, pos, rot, scale) {
 	this.sym = sym;
-	this.geo = null;
-	this.color = 0x000000;
+	this.color = 0x555555;
+	this.geo = 1;
 	this.pos = pos;
 	this.rot = rot;
 	this.scale = scale;
-	this.terminal = false;
+	this.segments = 4;
+	this.terminal = true;
 }
 
 function copyState(shape) {
@@ -41,7 +41,8 @@ export default class Building {
 		this.grammar = {};
 		this.grammar['B'] = [new Rule(0.25, this.subdivideX(0.5, 0.5)),
 							new Rule(0.25, this.subdivideY(0.5, 0.5)),
-							new Rule(0.5, this.subdivideZ(0.5, 0.5))];
+							new Rule(0.5, this.subdivideZ(0.5, 0.5)),
+							new Rule(0, this.roof())];
 		this.iterations = 1; 
 		this.curr = this.axiom;
 		this.shapes = [this.axiom];
@@ -94,8 +95,8 @@ export default class Building {
 			s2.pos.x = pos2;
 			s2.scale.x = (1-c)*len;
 			// shrink second partition by s
-			s1.scale.y *= s;
-			s1.pos.y = s1.pos.y - (s2.scale.y - s1.scale.y)/2;
+			//s1.scale.z *= s;
+			//s1.pos.z = s1.pos.z - (s2.scale.z - s1.scale.z)/2;
 			// replace current with one division and push the other
 			scope.updateCurr(s1);
 			scope.shapes.push(s2);
@@ -139,11 +140,22 @@ export default class Building {
 			s2.pos.z = pos2;
 			s2.scale.z = (1-c)*len;
 			// shrink second partition by s
-			s1.scale.y *= s;
-			s1.pos.y = s1.pos.y - (s2.scale.y - s1.scale.y)/2;
+			//s1.scale.x *= s;
+			//s1.pos.x = s1.pos.x - (s2.scale.x - s1.scale.x)/2;
 			// replace current with one division and push the other
 			scope.updateCurr(s1);
 			scope.shapes.push(s2);
+		}
+	}
+
+	roof() {
+		return function() {
+			var roof = copyState(scope.curr);
+			roof.scale.multiplyScalar(1.1);
+			roof.pos.y += scope.curr.scale.y/2 + 4; 
+			roof.terminal = false;
+			roof.geo ++;
+			scope.shapes.push(roof);
 		}
 	}
 
@@ -167,7 +179,7 @@ export default class Building {
 			for (var j = 0; j < len; j ++) {
 				this.curr = this.shapes[j];
 				// if a rule exists
-				if (this.grammar[this.shapes[j].sym] !== undefined) {
+				if (this.grammar[this.shapes[j].sym] !== undefined && this.shapes[j].terminal) {
 					var f = this.selectRule(this.shapes[j].sym);
 					f();
 				}
