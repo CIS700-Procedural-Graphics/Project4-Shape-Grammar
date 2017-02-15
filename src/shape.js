@@ -57,19 +57,19 @@ export default class Shape
 
       if(axis == 'x')
       {
-        var half_axis = (pos.x - scale.x/2.0);
+        var half_axis = pos.x - scale.x/2.0;
         shape1.scale.setX(scale.x/2.1);
         shape2.scale.setX(scale.x/2.1);
-        shape1.pos.setX(pos.x - half_axis - 0.5);
-        shape2.pos.setX(pos.x + half_axis + 0.5);
+        shape1.pos.setX(pos.x - half_axis/2.0 + 0.5 * Math.random());
+        shape2.pos.setX(pos.x + half_axis/2.0 - 0.5 * Math.random());
       }
       else
       {
-        var half_axis = (pos.z - scale.z/2.0)/2.0;
+        var half_axis = pos.z - scale.z/2.0;
         shape1.scale.setZ(scale.z/2.1);
         shape2.scale.setZ(scale.z/2.1);
-        shape1.pos.setZ(pos.z - half_axis - 0.5);
-        shape2.pos.setZ(pos.z + half_axis + 0.5);
+        shape1.pos.setZ(pos.z - half_axis/2.0 + 0.5 * Math.random());
+        shape2.pos.setZ(pos.z + half_axis/2.0 - 0.5 * Math.random());
       }
 
       //randomly scale the shape
@@ -84,19 +84,19 @@ export default class Shape
     {
       if(axis == 'x')
       {
-        var temp = Math.random()*scale_factor;
+        var temp = (0.25 + Math.random())*scale_factor;
         shape.pos.setX(shape.pos.x - (shape.scale.x - temp)/2.0);
         shape.scale.x = temp;
       }
       else if(axis == 'y')
       {
-        var temp = Math.random()*scale_factor;
+        var temp = (0.25 + Math.random())*scale_factor;
         shape.pos.setY(shape.pos.y - (shape.scale.y - temp)/2.0);
         shape.scale.y = temp;
       }
       else if(axis == 'z')
       {
-        var temp = Math.random()*scale_factor;
+        var temp = (0.25 + Math.random())*scale_factor;
         shape.pos.setZ(shape.pos.z - (shape.scale.z - temp)/2.0);
         shape.scale.z = temp;
       }
