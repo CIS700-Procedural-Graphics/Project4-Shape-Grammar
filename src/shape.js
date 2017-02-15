@@ -1,5 +1,5 @@
 const THREE = require('three')
-var scale_factor = 30;
+var scale_factor = 15;
 
 export default class Shape
 {
@@ -23,14 +23,10 @@ export default class Shape
 
     createbuilding(shapeList, index)
     {
-      if(Math.random()> 0.5)
-      {
-        this.subDivideBuilding( shapeList, index, 'x');
-      }
-      else
-      {
-        this.subDivideBuilding( shapeList, index, 'z');
-      }
+      var axis = Math.random() * 2.0 - 0.01;
+      axis = Math.floor(axis);
+
+      this.subDivideBuilding( shapeList, index, axis);
       // this.subDivideBuilding( shapeList, index, 'x');
       // this.scaleBuilding( shapeList, index, 'x');
     }
@@ -55,7 +51,7 @@ export default class Shape
       var pos = shapeList[index].pos;
       var scale = shapeList[index].scale;
 
-      if(axis == 'x')
+      if(axis == 0)
       {
         var half_axis = pos.x - scale.x/2.0;
         shape1.scale.setX(scale.x/2.1);
@@ -73,8 +69,8 @@ export default class Shape
       }
 
       //randomly scale the shape
-      this.scaleBuilding(shape1, 'y');
-      this.scaleBuilding(shape2, 'y');
+      this.scaleBuilding(shape1, 1);
+      this.scaleBuilding(shape2, 1);
 
       shapeList.splice(index, 1); //deletion of current building
       shapeList.splice(index, 0, shape1, shape2);//add new buildings
@@ -82,21 +78,21 @@ export default class Shape
 
     scaleBuilding(shape, axis) //axis should be x or z
     {
-      if(axis == 'x')
+      if(axis == 0)
       {
-        var temp = (0.25 + Math.random())*scale_factor;
+        var temp = 1 + Math.random() * scale_factor;
         shape.pos.setX(shape.pos.x - (shape.scale.x - temp)/2.0);
         shape.scale.x = temp;
       }
-      else if(axis == 'y')
+      else if(axis == 1)
       {
-        var temp = (0.25 + Math.random())*scale_factor;
+        var temp = 1 + Math.random() * scale_factor;
         shape.pos.setY(shape.pos.y - (shape.scale.y - temp)/2.0);
         shape.scale.y = temp;
       }
-      else if(axis == 'z')
+      else if(axis == 2)
       {
-        var temp = (0.25 + Math.random())*scale_factor;
+        var temp = 1 + Math.random() * scale_factor;
         shape.pos.setZ(shape.pos.z - (shape.scale.z - temp)/2.0);
         shape.scale.z = temp;
       }
