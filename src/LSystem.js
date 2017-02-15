@@ -1,6 +1,14 @@
 import { Symbol, Shape } from './Symbol';
 
 const THREE = require('three');
+const v3 = (x, y, z) => { return new THREE.Vector3(x, y, z); };
+const WHITE = rgb(255, 255, 255);
+const BLACK = rgb(0, 0, 0);
+
+function rgb(r, g, b) {
+  return {r, g, b};
+}
+
 
 export class Rule {
   constructor(prob, symbol) {
@@ -12,24 +20,72 @@ export class Rule {
 export default class LSystem {
   constructor(axiom, grammar) {
     this.axiom = this._parseAxiom(axiom);
-    this.grammar = this._parseGrammar(grammar);
+    // this.grammar = this._parseGrammar(grammar);
+
+    if (window.mode === window.DEBUGGING) {
+      // let box = new Shape('box', v3(0, 0, 0), v3(2, 1, 2), v3(0, 0, 0), WHITE);
+      // let symbol = new Symbol('H', box);
+      this.axiom = [
+        Symbol.genGround(),
+        Symbol.genHouse('H'),
+      ];
+    }
+    // deep copy
     this.state = this.axiom.map((sym) => {
       return sym.copy();
-    }); // deep copy
+    });
+
     this.cache = {
       0: this.axiom
     };
   }
 
   doIterations(numIters) {
-    if (cache[numIters]) {
-      return cache[numIters];
+    if (this.cache[numIters]) {
+      return this.cache[numIters];
     }
-    let newState = [];
+    let nextState = [];
     this.doIterations(numIters - 1).forEach((sym) => {
-      newState.push(sym.next());
+      // sym.next().forEach((nextSym) => {
+      //   nextState.push(nextSym);
+      // });
+      let successors = this.applyGrammar(sym);
+      if (successors) {
+        successors.forEach((ns) => {
+          nextState.push(ns);
+        });
+      }
     });
-    return newState;
+    return nextState;
+  }
+
+  applyGrammar(symbol) {
+    let { char, shape: {pos, size, rot, color}, iter } = symbol;
+    let random = Math.random();
+    let successors = [];
+    switch (char) {
+      // Ground
+      case 'G':
+        successors.push(Symbol.genGround());
+        break;
+      // House Rule: H -> HR(T|H)
+      case 'H':
+        successors.push(symbol.copy());
+        if (random < 0.1) {
+          successors.push(Symbol.genHouse('H', symbol, {nextLevel: true}));
+        } else {
+          successors.push(Symbol.genRoof(symbol));
+        }
+        if (random < 0.1) {
+          successors.push(Symbol.genHouse('H', symbol));
+        }
+        break;
+      // Terminal Symbols
+      case 'R':
+      case 'T':
+        break;
+    }
+    return successors;
   }
 
   copyState() {
@@ -60,8 +116,8 @@ export default class LSystem {
     }
     let axiom = [];
     //TODO: parse the axioms...
-    let shape = new Shape('cube', new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0));
-    axiom.push(new Symbol('F', shape, ''));
+    // let shape = new Shape('cube', new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0));
+    // axiom.push(new Symbol('F', shape, ''));
     return axiom;
 
   }

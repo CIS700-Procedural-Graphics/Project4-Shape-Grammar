@@ -2,12 +2,12 @@ import Stats from 'stats-js'
 import DAT from 'dat-gui'
 
 import LSystem from './LSystem';
-import Turtle from './Turtle';
+import Drawer from './Drawer';
 
 const THREE = require('three');
 const OrbitControls = require('three-orbit-controls')(THREE)
 
-const defaultAxiom = 'FX';
+const defaultAxiom = 'P';
 const defaultGrammar = ``;
 
 export default class Framework {
@@ -15,14 +15,13 @@ export default class Framework {
     this.scene = new THREE.Scene();
 
     this.lsystem = new LSystem(axiom, grammar);
-    this.turtle = new Turtle(this.scene);
 
     this.gui = new DAT.GUI();
     this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
     this.renderer = new THREE.WebGLRenderer( { antialias: true } );
     this.stats = new Stats();
-    // could be multiple lights
-    this.light = new THREE.DirectionalLight( 0xffffff, 1 );
+
+    this.iterations = 4; // default testing
   }
 
   /***********
@@ -34,14 +33,17 @@ export default class Framework {
       let obj = this.scene.children[i];
       this.scene.remove(obj);
     }
-    this.scene.add(this.light);
+    this.lights.forEach((l) => {
+      this.scene.add(l);
+    });
+    this.scene.background = this.background;
   }
 
-  doLsystem(iterations) {
-    let result = this.lsystem.doIterations(iterations);
-    this.turtle.reset();
-    this.turtle = new Turtle(this.scene);
-    this.turtle.renderSymbols(result);
+  doLsystem() {
+    let result = this.lsystem.doIterations(this.iterations);
+    Framework.printSymbols(result);
+    this.drawer = new Drawer(this.scene);
+    this.drawer.renderSymbols(result);
   }
 
   run() {
@@ -57,6 +59,7 @@ export default class Framework {
    ********************/
   setup() {
     this.cameraSetup();
+    this.sceneSetup();
     this.rendererSetup();
     this.statsSetup();
     this.lightSetup();
@@ -66,6 +69,26 @@ export default class Framework {
   cameraSetup() {
     this.camera.position.set(1, 1, 2);
     this.camera.lookAt(new THREE.Vector3(0,0,0));
+    let controls = new OrbitControls(this.camera, this.renderer.domElement);
+    controls.enableDamping = true;
+    controls.enableZoom = true;
+    controls.target.set(0, 0, 0);
+    controls.rotateSpeed = 0.3;
+    controls.zoomSpeed = 1.0;
+    controls.panSpeed = 2.0;
+  }
+
+  sceneSetup() {
+    let loader = new THREE.CubeTextureLoader();
+    let urlPrefix = 'img/';
+
+    let skymap = new THREE.CubeTextureLoader().load([
+        urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
+        urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
+        urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
+    ] );
+
+    this.background = skymap;
   }
 
   rendererSetup() {
@@ -79,9 +102,13 @@ export default class Framework {
   }
 
   lightSetup() {
-    this.light.color.setHSL(0.1, 1, 0.95);
-    this.light.position.set(1, 3, 2);
-    this.light.position.multiplyScalar(10);
+    let dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    dirLight.color.setHSL(0.1, 1, 0.95);
+    dirLight.position.set(1, 3, 2);
+    dirLight.position.multiplyScalar(10);
+    let ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+
+    this.lights = [dirLight, ambientLight];
   }
 
   guiSetup() {
@@ -108,9 +135,9 @@ export default class Framework {
       // this.doLsystem(this.lsystem, this.lsystem.iterations, turtle);
     });
 
-    this.gui.add(this.guiVars, 'iterations', 0, 12).step(1).onChange((val) => {
-      // clearScene(turtle);
-      // this.doLsystem(this.lsystem, val, turtle);
+    this.gui.add(this, 'iterations', 0, 12).step(1).onChange((val) => {
+      this.clearScene();
+      this.doLsystem();
     });
   }
 
@@ -121,8 +148,9 @@ export default class Framework {
   onLoad() {
     document.body.appendChild(this.stats.domElement);
     document.body.appendChild(this.renderer.domElement);
-    this.clearScene();
     this.setup();
+    this.clearScene();
+    this.doLsystem()
     this.run();
   }
 
@@ -134,6 +162,19 @@ export default class Framework {
 
   onUpdate() {
 
+  }
+
+  /*******************
+   * DEBUGGING TOOLS *
+   *******************/
+
+  static printSymbols(symbols) {
+    let str = "";
+    symbols.forEach((sym) => {
+      str += sym.char;
+    });
+    console.log(str);
+    return str;
   }
 
 }
