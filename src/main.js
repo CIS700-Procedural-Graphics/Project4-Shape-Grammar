@@ -75,18 +75,6 @@ function changeGUI(gui, camera, scene)
   gui.add(guiParameters, 'city_center_z', -50.0, 50.0).onChange(function(newVal) {
     guiParameters.city_center_z = newVal;
   });
-  gui.add(guiParameters, 'levelOfDetail', { Low: 1, Average: 2, High: 3 }).onChange(function(newVal) {
-    guiParameters.levelOfDetail = newVal;
-  });
-  gui.add(guiParameters, 'regenerate', { Yes: 1, No: 0 } ).onChange(function(newVal) {
-    guiParameters.regenerate = newVal;
-    if(guiParameters.regenerate == 1)
-    {
-      //Do all the things to regenerate the damn city
-      cleanscene(scene);
-      finalgeneration();
-    }
-  });
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
@@ -107,27 +95,21 @@ function setupLightsandSkybox(scene, camera)
   var loader = new THREE.CubeTextureLoader();
   var urlPrefix = 'images/skymap/';
   var skymap = new THREE.CubeTextureLoader().load([
-      urlPrefix + 'skyposx.png', urlPrefix + 'skynegx.png',
-      urlPrefix + 'skyposy.png', urlPrefix + 'skynegy.png',
-      urlPrefix + 'skyposz.png', urlPrefix + 'skynegz.png'
+      urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
+      urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
+      urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
   ] );
   scene.background = skymap;
 
   //set plane
-  var geometry = new THREE.PlaneGeometry( 100, 100, 1 );
+  var geometry = new THREE.PlaneGeometry( 10, 10, 1 );
   var material = new THREE.MeshBasicMaterial( {color: 0x696969, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
   plane.rotateX(90 * 3.14/180);
   scene.add( plane );
 
-  //create grid
-  var size = 50;
-  var divisions = 50;
-  var gridHelper = new THREE.GridHelper( size, divisions );
-  scene.add( gridHelper );
-
   // set camera position
-  camera.position.set(0, 5, 30);
+  camera.position.set(0, 5, 5);
   camera.lookAt(new THREE.Vector3(0,0,0));
 }
 
@@ -201,17 +183,34 @@ function cleanscene(scene)
   }
 }
 
-function finalgeneration()
+function finalgeneration(scene)
 {
-  for(var i=0; i<2; i++)
+  for(var i=0; i<5; i++)
   {
     var l = shapeList.length;
     for(var j=0; j<l; j++)
     {
-      shapeList[j].replaceShape(shapeList, j);
+      if((shapeList[j].scale.x > 1.5) && (shapeList[j].scale.z > 1.5))
+      {
+        if (j != 0) j=j+1;
+        shapeList[j].replaceShape(shapeList, j);
+      }
     }
   }
-  // shapeList.splice(0, 3);
+
+  var objLoader4 = new THREE.OBJLoader();
+  objLoader4.load('geometry/roofCastleType.obj', function(obj)
+  {
+      roofCastleTypeGeo = obj.children[0].geometry;
+      roofCastleTypeMesh = new THREE.Mesh(roofCastleTypeGeo, building_Material);
+      var l = shapeList.length;
+      for(var j=0; j<l; j++)
+      {
+        shapeList[j].addRoof(shapeList[j], scene, roofCastleTypeMesh);
+      }
+      // roofCastleTypeMesh.name = "undefined";
+  });
+
 }
 
 function render(scene)
@@ -220,11 +219,6 @@ function render(scene)
     {
       shapeList[j].mesh.scale.set( shapeList[j].scale.x, shapeList[j].scale.y, shapeList[j].scale.z );
       shapeList[j].mesh.position.set( shapeList[j].pos.x, shapeList[j].pos.y, shapeList[j].pos.z );
-      // var c = shapeList[j].mesh.geometry.color;
-      // for(var i=0; i<shapeList[j].mesh.geometry.color.count; i++)
-      // {
-      //   shapeList[j].mesh.geometry.color.setXYZ(shapeList[j].mesh.color.x, shapeList[j].mesh.color.y, shapeList[j].mesh.color.z);
-      // }
       scene.add(shapeList[j].mesh);
     }
 }
@@ -284,31 +278,82 @@ function onLoad(framework) {
   shape1.pos.setY(shape1.scale.y/2.0);
   shapeList.push(shape1);
 
-  // setTimeout(function() {
-  //   balconyMesh.position.set(10,0,0);
-  //   scene.add(balconyMesh);
-  //
-  //   doorMesh.position.set(8,0,0);
-  //   scene.add(doorMesh);
-  //
-  //   floorDivisionMesh.position.set(6,0,0);
-  //   scene.add(floorDivisionMesh);
-  //
-  //   roofCastleTypeMesh.position.set(4,0,0);
-  //   scene.add(roofCastleTypeMesh);
-  //
-  //   roofChimneyTypeMesh.position.set(2,0,0);
-  //   scene.add(roofChimneyTypeMesh);
-  //
-  //   window_lMesh.position.set(0,0,0);
-  //   scene.add(window_lMesh);
-  //
-  //   window_sMesh.position.set(-2,0,0);
-  //   scene.add(window_sMesh);
-  // }, 20); //increase the number of milliseconds if the loadgeometry is taking too long
+/*
+  setTimeout(function() {
+    balconyMesh.position.set(10,0,0);
+    scene.add(balconyMesh);
 
+    doorMesh.position.set(8,0,0);
+    scene.add(doorMesh);
+
+    floorDivisionMesh.position.set(6,0,0);
+    scene.add(floorDivisionMesh);
+
+    roofCastleTypeMesh.position.set(4,0,0);
+    scene.add(roofCastleTypeMesh);
+
+    roofChimneyTypeMesh.position.set(2,0,0);
+    scene.add(roofChimneyTypeMesh);
+
+    window_lMesh.position.set(0,0,0);
+    scene.add(window_lMesh);
+
+    window_sMesh.position.set(-2,0,0);
+    scene.add(window_sMesh);
+  }, 20); //increase the number of milliseconds if the loadgeometry is taking too long
+*/
   //--------------------------- Do things to shapes here -----------------------
-  finalgeneration();
+
+  // var geotorus = new THREE.TorusBufferGeometry( 10, 3, 16, 100 );
+  // var mtorus = new THREE.MeshBasicMaterial( { color: 0xB266FF } );
+  // var torus = new THREE.Mesh( geotorus, mtorus );
+  // torus.position.set(guiParameters.city_center_x, 0, guiParameters.city_center_z);
+  // torus.scale.set(0.3,0.3,0.3);
+  // torus.rotateX(3.14/2.0);
+  // scene.add( torus );
+
+/*
+  var angle = 60 * 3.14/180.0;
+  for(var i=0; i<=3.14 ;i=i+angle)
+  {
+    var r=0.5;
+    var u = Math.cos(i);
+    var v = Math.sin(i);
+    var vec = new THREE.Vector3(u,0,v);
+
+    var axis = new THREE.Vector3( 0, 1, 0 );
+    vec.applyAxisAngle( axis, i );
+
+    u = vec.x;
+    v = vec.z;
+
+    console.log(u);
+    console.log(v);
+    var splineObject = new THREE.Line();
+    var curve = new THREE.SplineCurve( [
+         new THREE.Vector2( guiParameters.city_center_x, guiParameters.city_center_z ),
+         new THREE.Vector2( (r+0.2)*u, (r+0.2)*v ),
+         new THREE.Vector2( (r+0.4)*u, (r+0.4)*v ),
+         new THREE.Vector2( (r+0.7)*u, (r+0.7)*v )
+       ] );
+    var PathLayer1 = new THREE.Path(curve.getPoints(10)); //50 is the numberOfFeathers initially
+    var splineGeom = PathLayer1.createPointsGeometry(10);
+    splineGeom.rotateY(90);
+
+    for(var j=0; j<10 ;j++)
+    {
+      var geoplane = new THREE.PlaneBufferGeometry( 5, 20, 32 );
+      var mplane = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
+      var plane = new THREE.Mesh( geoplane, mplane );
+      plane.position.set(splineGeom.vertices[j].x, splineGeom.vertices[j].y, splineGeom.vertices[j].z);
+      plane.scale.set(0.5,0.5,0.5);
+      plane.rotateX(3.14/2.0);
+      scene.add( plane );
+    }
+  }
+*/
+
+  finalgeneration(scene);
   render(scene);
 }
 
