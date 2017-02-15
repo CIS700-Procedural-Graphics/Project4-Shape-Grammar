@@ -202,7 +202,7 @@ function cleanscene(scene)
 
 function finalgeneration()
 {
-  for(var i=0; i<1; i++)
+  for(var i=0; i<10; i++)
   {
     var l = shapeList.length;
     for(var j=0; j<l; j++)
@@ -273,7 +273,7 @@ function onLoad(framework) {
 
   //--------------------------- Add starting shapes here -----------------------
   var shape1 = new Shape(0, cube);
-  shape1.scale = new THREE.Vector3( 10, 2, 10 );
+  shape1.scale = new THREE.Vector3( 100, 2, 100 );
   shape1.pos.setY(shape1.scale.y/2.0);
   shapeList.push(shape1);
 
