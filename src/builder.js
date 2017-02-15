@@ -97,21 +97,22 @@ export default class Builder {
     }
 
     generateBuilding(options) {
-        var box_length = options.length;
-        var box_width = options.width;
+        var box_length = options.length * 2;
+        var box_width = options.width * 2;
         var box_height = options.height;
         var material = new THREE.MeshLambertMaterial({color: 0x888888});
         var geometry = new THREE.BoxGeometry(box_length, box_height, box_width);
         var mesh = new THREE.Mesh(geometry, material);
 
         var meshes = this.divide3(mesh);
-        var baseGeo = new THREE.PlaneGeometry( options.square_size - 0.01, options.square_size - 0.01, 1 );
+        var baseGeo= new THREE.Geometry();
         for (var i = 0; i < meshes.length; i++) {
             var auxMesh = meshes[i];
             auxMesh.updateMatrix();
             baseGeo.merge(auxMesh.geometry, auxMesh.matrix);
         }
         var mesh = new THREE.Mesh(baseGeo, material);
+        mesh.rotateY(Math.random());
         return mesh;
     }
 
