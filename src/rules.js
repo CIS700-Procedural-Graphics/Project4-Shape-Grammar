@@ -182,7 +182,6 @@ export const GrammarRules =
 			var nodeBox = getBbox(node);
 			tree.position.y += getBbox(tree).y / 2;
 			var xOffset =  (Math.random() * 2 - 1) * nodeBox.x / 2;
-			console.log(xOffset);
 			tree.position.x += xOffset;
 			tree.position.z += (Math.random() * 2 - 1) * nodeBox.z / 2;
 
