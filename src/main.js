@@ -7,8 +7,7 @@ import {getNoise} from './noise.js'
 // the shape grammar
 var city;
 
-
-
+// curve helpers for terrain deformation
 function bias(b, t) {
     return Math.pow(t, Math.log(b) / Math.log(0.5));
 }
@@ -18,6 +17,7 @@ function gain(g, t) {
     if(t < 0.5) return bias(t * 2.0, g) / 2.0;
     else return bias(t * 2.0 - 1.0,1.0 - g) / 2.0 + 0.5;
 }
+
 
 // called after the scene loads
 function onLoad(framework) {
@@ -45,6 +45,19 @@ function onLoad(framework) {
   city.finalizeGrammar();
 
   makeTerrain(scene);
+
+  var audioLoader = new THREE.AudioLoader();
+  var listener = new THREE.AudioListener();
+  var sound = new THREE.Audio(listener);
+  camera.add(listener);
+
+  //Load a sound and set it as the Audio object's buffer
+  audioLoader.load( 'resources/gondor.mp3', function(buffer) {
+    sound.setBuffer(buffer);
+    sound.setLoop(true);
+    sound.setVolume(0.5);
+    sound.play();
+  }); 
 
   var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
     directionalLight.color.setHSL(0.1, 1, 0.95);

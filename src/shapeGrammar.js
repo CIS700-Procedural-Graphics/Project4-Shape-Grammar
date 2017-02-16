@@ -4,7 +4,8 @@ import {getNoise} from './noise.js'
 
 var ShapeEnum = Object.freeze({Ring: 0, Wall: 1, Roof1: 2, 
 								Roof2: 3, Block: 4, Tower: 5, 
-								Wedge: 6, Emplacement: 7, Other: 999});
+								Wedge: 6, Emplacement: 7, Cyl: 8, 
+								Other: 999});
 var material = new THREE.MeshPhongMaterial();
 var objLoader = new THREE.OBJLoader();
 var objLibrary = [];
@@ -48,7 +49,7 @@ export default class GrammarSystem {
 		var mContainer1 = new THREE.Geometry();
 
 		objLibrary.push(mContainer1);
-		objLoader.load('./ring.obj', function(obj) {
+		objLoader.load('./resources/ring.obj', function(obj) {
 			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
 			g.applyMatrix( new THREE.Matrix4().makeScale(8, 8, 8));
 			g.applyMatrix( new THREE.Matrix4().makeTranslation(0, 2, 0));
@@ -60,7 +61,7 @@ export default class GrammarSystem {
 
 		var dummy2 = new THREE.Geometry();
 		objLibrary.push(dummy2);
-		objLoader.load('./emplacement.obj', function(obj) {
+		objLoader.load('./resources/emplacement.obj', function(obj) {
 			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
 			g.applyMatrix( new THREE.Matrix4().makeRotationY(0.5 * Math.PI / 180.0));
 			
@@ -72,7 +73,7 @@ export default class GrammarSystem {
 
 		var dummy3 = new THREE.Geometry();
 		objLibrary.push(dummy3);
-		objLoader.load('./roundroof.obj', function(obj) {
+		objLoader.load('./resources/roundroof.obj', function(obj) {
 			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
 			
 			objLibrary[2].merge(g, g.matrix);
@@ -82,7 +83,7 @@ export default class GrammarSystem {
 
 		var dummy4 = new THREE.Geometry();
 		objLibrary.push(dummy4);
-		objLoader.load('./angleroof.obj', function(obj) {
+		objLoader.load('./resources/angleroof.obj', function(obj) {
 			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
 			g.applyMatrix( new THREE.Matrix4().makeScale(4, 4, 4));
 			objLibrary[3].merge(g, g.matrix);
@@ -161,6 +162,11 @@ export default class GrammarSystem {
 				geom = objLibrary[3].clone();
 				break;
 
+			case ShapeEnum.Cyl:
+				geom = new THREE.CylinderGeometry(8, 8, 2, 20);
+				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 1, 0));
+				break;
+
 			default:
 				geom = new THREE.CylinderGeometry(8, 8, 2, 20);
 				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 1, 0));
@@ -231,10 +237,10 @@ export default class GrammarSystem {
 		var xS = Math.cos(shape.yaw * Math.PI / 180.0);
 		var zS = Math.sin(shape.yaw * Math.PI / 180.0);
 
-		if (Math.random() < 0.1 || shape.scale.x < 0.05 || shape.scale.z < 0.05) {
+		if (Math.random() < 0.1 || shape.scale.x < 0.1 || shape.scale.z < 0.1) {
 			shape.terminal = true;
 			shapeList.push(shape);
-			//this.buildRoof(shape, shapeList);
+			this.buildRoof(shape, shapeList);
 			return;
 		}
 
@@ -272,7 +278,7 @@ export default class GrammarSystem {
 
 		var layer = new Shape(new THREE.Vector3(shape.pos.x, shape.pos.y + 2 * shape.scale.y, shape.pos.z),
 						s,
-						shape.yaw, check? ShapeEnum.Other : ShapeEnum.Ring, check, shape.iter + 1);
+						shape.yaw, check? ShapeEnum.Cyl : ShapeEnum.Ring, false, shape.iter + 1);
 
 
 		var cliff = new Shape(new THREE.Vector3(0, 0, 0),
@@ -295,11 +301,12 @@ export default class GrammarSystem {
 		var arc = 2 * Math.PI * rCenter * 
 		console.log(rCenter);
 		var rScale = 0.5 * 0.25 * (outer - inner);
-		var rowOffset = (Math.random() - 0.5) * 5.0;
-		for (var i = 0; i <= 20; i++) {
+		var topLayer = shape.type == ShapeEnum.Cyl;
+		var rowOffset = (Math.random() - 0.5) * 5.0 + 4.5;
+		for (var i = 0; i < 20; i++) {
 			var offset = (Math.random() - 0.5) * 2.0;
-			var theta = i * 360.0 / 40 + offset + rowOffset + offset;
-
+			var theta = i * 360.0 / 40 + offset + rowOffset + (topLayer? 0 : offset);
+			theta = topLayer ? theta * 2 : theta;
 			if (Math.abs(theta - 90) < 10) continue; // avoid the wedge
 			var rct = rCenter * Math.cos(theta * Math.PI / 180.0);
 			var rst = rCenter * Math.sin(theta * Math.PI / 180.0);
@@ -310,16 +317,30 @@ export default class GrammarSystem {
 
 			var s = new Shape(new THREE.Vector3(rct, shape.pos.y, rst),
 				new THREE.Vector3(1.4 * rScale, 
-					0.3 * inner * (1 + pop) * (rScale), 
-					shape.scale.z * 1.5 * rScale),
+					(topLayer ? 2.0 : 1.0) * 0.3 * inner * (1 + pop) * (rScale), 
+					(topLayer ? 2.0 : 1.0) *shape.scale.z * 1.5 * rScale),
 				-theta, ShapeEnum.Block, 
 				false, shape.iter + 1);
 			shapeList.push(s);
 		}
+
+		if (shape.type == ShapeEnum.Cyl) {
+			shape.terminal = true;
+			shapeList.push(shape);
+		}
 	}
 
+	// places a building atop an existing emplacement
+	buildEmplacement(shape, shapeList) {
+		var pop = 1.0 + populationDensity(shape.pos.x, shape.pos.z);
 
-
+		var s = new Shape(new THREE.Vector3(shape.pos.x, shape.pos.y, shape.pos.z),
+						new THREE.Vector3(shape.scale.x * 0.25, pop * shape.scale.y * 0.25, shape.scale.z * 0.5 * 0.25),
+						shape.yaw, ShapeEnum.Block, false, shape.iter + 1);
+		shapeList.push(s);
+		shape.terminal = true;
+		shapeList.push(shape);
+	}
 
 	// creates a tower on the wall
 	buildWallTower(shape, shapeList) {
@@ -340,7 +361,7 @@ export default class GrammarSystem {
 
 			var s = new Shape(new THREE.Vector3(rct, shape.pos.y + 4 * shape.scale.y, rst), 
 				new THREE.Vector3(shape.scale.x, shape.scale.y + (Math.random() - 0.5) * 0.2, shape.scale.z), 
-				90-theta, ShapeEnum.Emplacement, true, shape.iter + 1);
+				90-theta, ShapeEnum.Emplacement, false, shape.iter + 1);
 			shapeList.push(s);
 		}
 
@@ -396,6 +417,12 @@ export default class GrammarSystem {
 					case ShapeEnum.Wall:
 						this.buildWallTower(this.allShapes[i], newShapes);
 						break;
+					case ShapeEnum.Cyl:
+						this.placeRadial(this.allShapes[i], newShapes);
+						break;
+					case ShapeEnum.Emplacement:
+						this.buildEmplacement(this.allShapes[i], newShapes);
+						break;
 					default:
 						newShapes.push(this.allShapes[i]);
 						break;
@@ -403,7 +430,7 @@ export default class GrammarSystem {
 			} else {
 				// this shape is terminal. Simply add it to the list
 				if (this.allShapes[i].type == ShapeEnum.Block) {
-					this.buildRoof(this.allShapes[i], newShapes);
+					//this.buildRoof(this.allShapes[i], newShapes);
 				}
 				newShapes.push(this.allShapes[i]);
 			}
