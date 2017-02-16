@@ -1,5 +1,14 @@
 const THREE = require('three');
 
+class Bounds
+{
+	constructor(min, max)
+	{
+		this.min = min;
+		this.max = max;
+	}
+}
+
 class Shape
 {
 	constructor(size)
@@ -66,29 +75,31 @@ class Profile
 
 class MassShape
 {
-	constructor()
+	constructor(lot, profile)
 	{
+		this.lot = lot;
+		this.profile = profile;
 	}
 
-	generateMesh(lot, profile)
+	generateMesh()
 	{
-		lot.buildNormals();
+		this.lot.buildNormals();
 
 		var material = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x333333 });
 		var geometry = new THREE.Geometry();
 
-		var boundaryVertexCount = lot.points.length;
+		var boundaryVertexCount = this.lot.points.length;
 		var offset = 0;
 		
-		for(var i = 0; i < profile.points.length; i++)
+		for(var i = 0; i < this.profile.points.length; i++)
 		{
-			var profilePoint = profile.points[i];
-			var profileDiff = (i == 0) ? new THREE.Vector2(0,0) : (profilePoint.clone().sub(profile.points[i-1]));
+			var profilePoint = this.profile.points[i];
+			var profileDiff = (i == 0) ? new THREE.Vector2(0,0) : (profilePoint.clone().sub(this.profile.points[i-1]));
 
 			for(var j = 0; j < boundaryVertexCount; j++)
 			{
-				var boundaryPoint = lot.points[j];
-				var boundaryNormal = lot.normals[j];
+				var boundaryPoint = this.lot.points[j];
+				var boundaryNormal = this.lot.normals[j];
 
 				var vertex = new THREE.Vector3(boundaryPoint.x, profilePoint.y, boundaryPoint.y);
 
@@ -120,21 +131,77 @@ class MassShape
 			}
 		}
 
-		// Implement cap here!
-
 		geometry.mergeVertices();
 		geometry.computeFlatVertexNormals();
 
 		var mesh = new THREE.Mesh(geometry, material);
+
+		this.geometry = geometry;
+		this.mesh = mesh;
 		return mesh;
 	}
 }
 
 class Rule
 {
-	evaluate(shape)
+	constructor()
 	{
+		this.componentWise = false;
+	}
 
+	evaluateOverall(shape)
+	{
+	}
+
+	evaluateComponent(shape, scope)
+	{
+	}
+
+	evaluate(shape, scene)
+	{
+		if(this.componentWise)
+		{
+			var material = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x333333 });
+			var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			for(var f = 0; f < shape.geometry.faces.length; f += 2)
+			{
+				var face = shape.geometry.faces[f];
+
+				var v1 = shape.geometry.vertices[face.b];
+				var v2 = shape.geometry.vertices[face.a];
+				var v3 = shape.geometry.vertices[face.c];
+
+				var height = v2.clone().sub(v1).length();
+				var width = v3.clone().sub(v1).length();
+
+				var u = v2.clone().sub(v1).normalize();
+				var v = v3.clone().sub(v1).normalize();
+
+				var repetitionsU = 4;
+				var repetitionsV = 4;
+
+				if(face.normal.y > .1 || height < .5)
+					continue;
+
+				for(var r = 0; r < repetitionsU; r++)
+				{
+					for(var rV = 0; rV < repetitionsV; rV++)
+					{
+						var cube = new THREE.Mesh( geometry, material );
+						var t = r / repetitionsU;
+						var tV = rV / repetitionsV;
+						cube.position.copy(u.clone().multiplyScalar(t * height).add(v.clone().multiplyScalar(tV * width).add(v1)));
+						cube.scale.set(.1 * width, .1 * height, .1);
+						cube.lookAt(cube.position.clone().add(face.normal));
+						scene.add( cube );
+					}
+				}
+			}
+		}
+		else
+		{
+			evaluateOverall(shape);
+		}
 	}
 }
 

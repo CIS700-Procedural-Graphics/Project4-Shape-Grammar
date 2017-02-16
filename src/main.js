@@ -4,6 +4,7 @@ const Random = require("random-js");
 import Framework from './framework'
 import * as Building from './building.js'
 import * as Rubik from './rubik.js'
+import * as City from './city.js'
 
 var UserSettings = 
 {
@@ -63,25 +64,29 @@ function onLoad(framework)
   profile.addPoint(.8, 1.0);
 
   profile.addPoint(0.7, 1.0);
-  profile.addPoint(0.7, 2.0);
+  profile.addPoint(0.6, 2.0);
   profile.addPoint(0.0, 2.0);
 
   var lot = new Building.BuildingLot();
-  var subdivs = 15;
+  var subdivs = 25;
   for(var i = 0; i < subdivs; i++)
   {
     var a = i * Math.PI * 2 / subdivs;
-    var r = Math.pow(Math.sin(a * 10) * .5 + .5, 5.0) * .5 + 1.0 ;
+    var r = 1.0 - Math.pow(Math.sin(a * 10) * .5 + .5, 5.0) * .5 + 1.0 ;
     lot.addPoint(Math.cos(a) * r, Math.sin(a) * r);
   }
 
-  var shape = new Building.MassShape();
-  var mesh = shape.generateMesh(lot, profile);
-
+  var shape = new Building.MassShape(lot, profile);
+  var mesh = shape.generateMesh();
   // scene.add(mesh);
 
+  var rule = new Building.Rule();
+  rule.componentWise = true;
+  // rule.evaluate(shape, scene);
+
   Engine.rubik = new Rubik.Rubik();
-  scene.add(Engine.rubik.build());
+  var rubikMesh = Engine.rubik.build();
+  // scene.add(rubikMesh);
 
   // Init Engine stuff
   Engine.scene = scene;
@@ -93,6 +98,10 @@ function onLoad(framework)
   var random = new Random(Random.engines.mt19937().seed(2545));
 
   var speed = .15;
+
+
+  var city = new City.Generator();
+  city.build(scene);
 
   var callback = function() {
     Engine.rubik.animate(random.integer(0, 2), random.integer(0, 2), speed, callback);

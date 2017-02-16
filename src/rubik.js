@@ -176,12 +176,12 @@ class Rubik
 				for(var z = 0; z < 3; z++)
 				{
 					var mat = new THREE.MeshLambertMaterial( {color: 0x000000} );
-					mat.color = new THREE.Color( (y + z) / 3, 0.0, 0.0 );
+					mat.color = new THREE.Color( (y + z + .5) / 2, 0.0, 0.0 );
 
 					if(x == 1)
-						mat.color = new THREE.Color( 0.0, (y + z) / 3,  0.0 );
+						mat.color = new THREE.Color( 0.0, (y + z + .5) / 2,  0.0 );
 					else if(x == 2)
-						mat.color = new THREE.Color(0.0, 0.0, (y + z) / 3);
+						mat.color = new THREE.Color(0.0, 0.0, (y + z + .5) / 2);
 
 					var cube = new THREE.Mesh( boxGeo, mat );
 					cube.position.copy(new THREE.Vector3( x - 1, y - 1, z - 1));
