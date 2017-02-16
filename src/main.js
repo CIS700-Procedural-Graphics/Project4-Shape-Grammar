@@ -1,10 +1,15 @@
 
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
-import Lsystem, {LinkedListToString} from './lsystem.js'
-import Turtle from './turtle.js'
+import RenderEngine from './renderengine'
+import ShapeGrammar from './shapegrammar.js'
+import CityBuilder from './citybuilder.js'
+//const OBJLoader = require('three-obj-loader')(THREE)
 
-var turtle;
+
+var re;
+var sg;
+var cb;
 
 // called after the scene loads
 function onLoad(framework) {
@@ -25,39 +30,16 @@ function onLoad(framework) {
   camera.position.set(1, 1, 2);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
-  // initialize LSystem and a Turtle to draw
-  var lsys = new Lsystem();
-  turtle = new Turtle(scene);
-
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
 
-  gui.add(lsys, 'axiom').onChange(function(newVal) {
-    lsys.UpdateAxiom(newVal);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
+  cb = new CityBuilder('M');
+  sg = new ShapeGrammar();
+  re = new RenderEngine(scene);
 
-  gui.add(lsys, 'iterations', 0, 12).step(1).onChange(function(newVal) {
-    clearScene(turtle);
-    doLsystem(lsys, newVal, turtle);
-  });
-}
-
-// clears the scene by removing all geometries added by turtle.js
-function clearScene(turtle) {
-  var obj;
-  for( var i = turtle.scene.children.length - 1; i > 3; i--) {
-      obj = turtle.scene.children[i];
-      turtle.scene.remove(obj);
-  }
-}
-
-function doLsystem(lsystem, iterations, turtle) {
-    var result = lsystem.DoIterations(iterations);
-    turtle.clear();
-    turtle = new Turtle(turtle.scene);
-    turtle.renderSymbols(result);
+  re.init_scene();
+  re.build_scene(cb.midtown_buildings);
 }
 
 // called on frame updates
