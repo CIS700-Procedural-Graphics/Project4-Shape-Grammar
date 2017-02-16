@@ -206,24 +206,24 @@ export default class Builder {
       return [];
     }
 
-    evalShapes(scene, shapes) {
+    evalShapes(scene, shapes, pos) {
       var col = 0;
       for (var i = 0; i < shapes.length; i++) {
         var shape = shapes[i];
         switch (shape.type) {
           case SHAPES.BOX:
             var geometry = new THREE.BoxGeometry(shape.l, shape.h, shape.w);
+
+            geometry.applyMatrix(new THREE.Matrix4().makeTranslation(shape.x, shape.y, shape.z));
             geometry.rotateX(shape.rx);
             geometry.rotateY(shape.ry);
             geometry.rotateZ(shape.rz);
-            geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, shape.y, 0));
-
             var material = col == 0 ? new THREE.MeshBasicMaterial({color: 0x0000ff}) :
             col == 1 ? new THREE.MeshBasicMaterial({color: 0xff0000}) :
             new THREE.MeshBasicMaterial({color: 0x00ff00});
             col = (col + 1) % 4;
             var mesh = new THREE.Mesh(geometry, material);
-            mesh.position.set(shape.x, 0, shape.z);
+            mesh.position.set(pos.x, 0, pos.z);
             scene.add(mesh);
             break;
         }
@@ -241,11 +241,11 @@ export default class Builder {
           l: options.length,
           w: options.width,
           h: options.height,
-          x: options.x,
+          x: 0,
           y: 0.5 * options.height,
-          z: options.z,
+          z: 0,
           rx: 0,
-          ry: 0,
+          ry: 1,
           rz: 0
         };
 
@@ -260,7 +260,7 @@ export default class Builder {
         // var t3 = this.billboard(s2);
 
 
-        this.evalShapes(scene, shapes);
+        this.evalShapes(scene, shapes, {x: options.x, z: options.z});
 
         return;
     }
