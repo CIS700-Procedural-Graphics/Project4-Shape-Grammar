@@ -2,15 +2,19 @@
 import { Rule, GrammarRules } from './rules'
 
 export default class ShapeGrammar {
-  constructor (initial_set, iterations) {
+  constructor (city, iterations) {
     this.grammar = GrammarRules;
     this.shapeSet = new Set();
 
-    if (initial_set) {
-      initial_set.forEach((s) => this.shapeSet.add(s));
+    // if (initial_set) {
+    //   initial_set.forEach((s) => this.shapeSet.add(s));
+    // }
+    if(city) {
+      this.city = city;
+      this.shapeSet = city.makeCity();
     }
 
-    this.iterations = iterations ? iterations : 30; // Defaults to 30 iters
+    this.iterations = iterations ? iterations : 50; // Defaults to 50 iters
   }
 
 
@@ -55,7 +59,7 @@ export default class ShapeGrammar {
 
           if (rule) {
             var maxHeight = 5; //TODO: generate this from noise
-            var successors = rule.getSuccessors(node, 5); // Apply rule
+            var successors = rule.getSuccessors(node, i); // Apply rule
             this.shapeSet.delete(node);
             successors.forEach((s) => succ.add(s)); 
           }

@@ -21,7 +21,7 @@ const terminalRule = (node) => {
  * Helper function that creates a new node with the given shape
  * and initializes its position, rotation, and scale to the oldNode
  */
-function copyNodePos(oldNode, shape) {
+function copyNodePos(oldNode, shape, iter) {
 	var newNode = new Node(shape);
 	newNode.position.set(
 		oldNode.position.x,
@@ -36,6 +36,9 @@ function copyNodePos(oldNode, shape) {
 		oldNode.scale.y,
 		oldNode.scale.z);
 
+	newNode.maxHeight = oldNode.maxHeight;
+	newNode.iteration = iter;
+
 	return newNode;
 }
 
@@ -45,7 +48,11 @@ function copyNodePos(oldNode, shape) {
  * i.e. [width, height, length]
  */
 function getBbox(node) {
-	return Geometry[node.shape].obj.bbox.getSize();
+	var box = Geometry[node.shape].obj.bbox.getSize();
+	box.x *= node.scale.x;
+	box.y *= node.scale.y;
+	box.z *= node.scale.z;
+	return box;
 }
 
 
@@ -53,24 +60,26 @@ function getBbox(node) {
  * Generates a rule that terminates the current node and adds 
  * a roofName on top 
  */
-function roofRule(node, roofName) {
+function roofRule(node, roofName, iter) {
 	node.terminate();
 	var set = new Set();
-	var roof = copyNodePos(node, roofName);
+	var roof = copyNodePos(node, roofName, iter);
+
 	roof.terminate();
 	var nodeBox = getBbox(node);
+	var roofBox = getBbox(roof);
 
-	roof.position.y += nodeBox.y;
+	roof.position.y += nodeBox.y / 2 + roofBox.y /2;
 
 	set.add(node);
 	set.add(roof);
 	return set;
 }
 
-function growUpwardsRule(node, shape) {
+function growUpwardsRule(node, shape, iter) {
 	node.terminate();
 	var set = new Set();
-	var floor = copyNodePos(node, shape);
+	var floor = copyNodePos(node, shape, iter);
 	var nodeBox = getBbox(node);
 
 	floor.position.y += nodeBox.y;
@@ -87,10 +96,10 @@ export const GrammarRules =
 {
 	// ----------- Apartment buildings ------------- //
 	'GROUND_FLOOR_APT': [ 
-		new Rule(1, (node) => { 
+		new Rule(1, (node, iter) => { 
 			var set = new Set();
-			var big = copyNodePos(node, 'FLOOR_APT');
-			var little = copyNodePos(node, 'FLOOR_APT');
+			var big = copyNodePos(node, 'FLOOR_APT', iter);
+			var little = copyNodePos(node, 'FLOOR_APT', iter);
 			var nodeBox = getBbox(node);
 
 			var n = Math.floor(((Math.random() * 4) % 4));
@@ -114,11 +123,11 @@ export const GrammarRules =
 		}),
 	],
 	'FLOOR_APT' :[
-		new Rule(0.8, (node, maxHeight) => { //Grow upwards
-			if (node.position.y > maxHeight * Geometry['FLOOR_APT'].sizeRatio) {
-				return roofRule(node, 'ROOF_APT');
+		new Rule(0.8, (node, iter) => { //Grow upwards
+			if (node.position.y > node.maxHeight * Geometry['FLOOR_APT'].sizeRatio) {
+				return roofRule(node, 'ROOF_APT', iter);
 			} else {
-				return growUpwardsRule(node, 'FLOOR_APT');
+				return growUpwardsRule(node, 'FLOOR_APT', iter);
 			}
 		}),
 	],
@@ -126,12 +135,12 @@ export const GrammarRules =
 	// ----------- Skyscrapers -------------
 	'GROUND_FLOOR_SKY':[ 
 		//TODO: add rule to replace this with shops n stuff ?? 
-		new Rule(1, (node, maxHeight) => {
+		new Rule(1, (node, iter) => {
 			node.terminate();
 			var set = new Set();
-			var floor = copyNodePos(node, 'FLOOR_SKY');
+			var floor = copyNodePos(node, 'FLOOR_SKY', iter);
 
-			var scale = 1 * maxHeight/4;//Math.random() + 1;
+			var scale = 1 * node.maxHeight/3;//Math.random() + 1;
 			floor.scale.x *= scale;
 			floor.scale.z *= scale;
 
@@ -140,17 +149,17 @@ export const GrammarRules =
 		}),	
 	],
 	'FLOOR_SKY': [
-		new Rule(0.80, (node, maxHeight) => { //Grow upwards
-			if (node.position.y > maxHeight * Geometry['FLOOR_SKY'].sizeRatio) {
-				return roofRule(node, 'ROOF_SKY');
+		new Rule(0.8, (node, iter) => { //Grow upwards
+			if (node.position.y > node.maxHeight * Geometry['FLOOR_SKY'].sizeRatio) {
+				return roofRule(node, 'ROOF_SKY', iter);
 			} else {
-				return growUpwardsRule(node, 'FLOOR_SKY');
+				return growUpwardsRule(node, 'FLOOR_SKY', iter);
 			}
 		}),
-		new Rule(0.07, (node) => { //Get smaller
+		new Rule(0.07, (node, iter) => { //Get smaller
 			node.terminate();
 			var set = new Set();
-			var floor = copyNodePos(node, 'FLOOR_SKY');
+			var floor = copyNodePos(node, 'FLOOR_SKY', iter);
 
 			var nodeBox = getBbox(node);
 			floor.position.y += nodeBox.y;

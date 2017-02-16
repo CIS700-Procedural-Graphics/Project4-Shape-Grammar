@@ -2,39 +2,28 @@ const THREE = require('three');
 
 export class Node {
 	constructor(shape, iter) {
-		this.prev = null;
-		this.next = null;
+		// this.prev = null;
+		// this.next = null;
 		this.scale = new THREE.Vector3(1, 1, 1);
 		this.position = new THREE.Vector3(0, 0, 0);
 		this.rotation = new THREE.Vector3(0, 0, 0);
 		this.terminal = false;
-		// this.id = (new Date()).getTime();
-
-
-		if (shape) {
-			this.shape = shape;
-		} else {
-			this.shape = 'GROUND_FLOOR';
-		}
-
-		if(iter) {
-			this.iteration = iter;
-		} else {
-			this.iteration = 0;
-		}
+		this.maxHeight = 5;
+		this.shape = shape ? shape : 'GROUND_FLOOR_APT';
+		this.iteration = iter ? iter : 0;		
 	}
 
-	setPrev(prev) {
-		this.prev = prev;
-	}
+	// setPrev(prev) {
+	// 	this.prev = prev;
+	// }
 
-	setNext(next) {
-		this.next = next;
-	}
+	// setNext(next) {
+	// 	this.next = next;
+	// }
 
-	setIteration(iter) {
-		this.iter = iter;
-	}
+	// setIteration(iter) {
+	// 	this.iter = iter;
+	// }
 
 	terminate() {
 		this.terminal = true;

@@ -29,7 +29,7 @@ export const Geometry = {
     obj: {},
   },
   ROOF_APT: {
-    path: 'tall_tower.obj', //TODO: replace
+    path: 'skyscraper_roof.obj', //TODO: replace
     obj: {}
   },
   FLOOR_SKY: {
@@ -42,7 +42,7 @@ export const Geometry = {
     obj: {},
   },
   ROOF_SKY: {
-    path: 'slant_section.obj', //TODO: replace
+    path: 'skyscraper_roof.obj', //TODO: replace
     obj: {}
   }
   // STORE_FRONT: { // -> can function as GROUND_FLOOR_APT or GROUND_FLOOR_SKY
@@ -55,6 +55,7 @@ export const Geometry = {
 
 var loaded = 0; // Are the geometries loaded? 
 var rendered = false; // Have the shapes been rendered?
+var initRender = true;
 
 var scene;
 var shapeGrammar;
@@ -85,16 +86,15 @@ function onLoad(framework) {
   loadGeometries();
   resetShapeGrammar();
 
-
-
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
 
-  gui.add(shapeGrammar, 'iterations', 0, 50).step(1).onChange(function(newVal){
+  gui.add(shapeGrammar, 'iterations', 0, 70).step(1).onChange(function(newVal){
     shapeGrammar.iterations = newVal;
     clearScene();
-    resetShapeGrammar();
+    // resetShapeGrammar();
+    initRender = false;
     rendered = false;
   });
 
@@ -126,20 +126,9 @@ function resetShapeGrammar() {
     var iter = shapeGrammar.iterations;
   }
 
-  // var shapes = new Set();
-
-  // var apt = new Node('GROUND_FLOOR_APT', 0)
-  // apt.position.set(0, 0, 0);
-
-  // var skyscraper = new Node('GROUND_FLOOR_SKY');
-  // skyscraper.position.set(3, 0, 3);
-
-  // shapes.add(apt);
-  // shapes.add(skyscraper);
-
   var shapes = city.makeCity();
 
-  shapeGrammar = new ShapeGrammar(shapes);
+  shapeGrammar = new ShapeGrammar(city);
 
   if (iter) {
     shapeGrammar.iterations = iter;
@@ -195,7 +184,7 @@ function loadGeometries() {
   * Renders the given shapeGrammar
   */
 function renderShapeGrammar(iterations) {
-  var set = shapeGrammar.doIterations(iterations);
+  var set = initRender ? shapeGrammar.doIterations(iterations) : shapeGrammar.shapeSet;
   set.forEach((node) => {
     var geo = Geometry[node.shape].obj.clone();
 
@@ -203,7 +192,9 @@ function renderShapeGrammar(iterations) {
     geo.scale.set(node.scale.x, node.scale.y, node.scale.z);
     geo.position.set(node.position.x, node.position.y, node.position.z);
     
-    scene.add(geo);
+    if (node.iteration <= iterations) {
+     scene.add(geo);
+    }
     rendered = true;
   });
 }
