@@ -81,7 +81,7 @@ export default class Layout {
 		this.grammar = {};
 		this.grammar['B'] = [new Rule(0.5, this.subdivide(0, 1)),
 							new Rule(0.5, this.subdivide(1, 1))];
-		this.iterations = 3; 
+		this.iterations = 2; 
 		this.curr = this.axiom;
 		this.blocks = [this.axiom];
 

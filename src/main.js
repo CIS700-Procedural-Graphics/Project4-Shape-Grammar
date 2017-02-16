@@ -5,39 +5,39 @@ OBJLoader(THREE)
 import Framework from './framework'
 import Building from './shape.js'
 import Shape from './shape.js'
+import Draw from './draw.js'
 import Layout from './block.js'
 import Block from './block.js'
 import {popMap} from './perlin.js'
 
+// paramters
 var sx = 0.5; var sz = 0.5;
 var cityX = 30; var cityZ = 30;
-var treeGeo;
-var roofGeo;
 var roadWidth = 2;
+var numCars = 6;
+
 var scene;
 var building; // object
 var layout;
 
+// loaded objects
+var treeGeo;var roofGeo;var carGeo;var brickGeo;
+var doorGeo;var fancyGeo; var roadGeo; var chimGeo;
+
+// arrays of pos, scale, rot of individual object types
+var arrRoof = []; var arrBrick = []; var arrDoor = []; 
+var arrFancy = []; var arrTree = []; var arrCar = [];
+var arrRoad = []; var arrChim = [];
+
 // geometries
-var totalGeo = new THREE.Geometry(); 
-var totalRoad = new THREE.Geometry();
-var totalTree = new THREE.Geometry();
-var materials = []; // all materials
+var totalGeo = new THREE.BufferGeometry(); 
+var totalRoad = new THREE.BufferGeometry();
+var totalTree = new THREE.BufferGeometry();
 
 // meshes
 var town; 
-var ground;
-var trees;
 
-// materials
-var green = new THREE.MeshLambertMaterial( {color: 0x003300} );
-// var mat = {
-//   uniforms: {
-//     ground: {value: popMap(cityX, cityZ) }
-//     },
-//   vertexShader: require('./shaders/ground-vert.glsl'),
-//   fragmentShader: require('./shaders/ground-frag.glsl')
-// };
+var line = new THREE.LineBasicMaterial({ color: 0xffffff });
 
 // called after the scene loads
 function onLoad(framework) {
@@ -58,73 +58,128 @@ function onLoad(framework) {
   camera.position.set(30,30,0);
   camera.lookAt(new THREE.Vector3(15,0,15));
 
-    var loader = new THREE.CubeTextureLoader();
-    var urlPrefix = 'images/skymap/';
+  var loader = new THREE.CubeTextureLoader();
+  var urlPrefix = 'images/skymap/';
 
-    var skymap = new THREE.CubeTextureLoader().load([
-        urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
-        urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
-        urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
+  var skymap = new THREE.CubeTextureLoader().load([
+    urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
+    urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
+    urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
     ] );
 
-    scene.background = skymap;
+  scene.background = skymap;
 
-  var objLoader = new THREE.OBJLoader();
-    var obj1 = objLoader.load('tree.obj', function(obj1) {
-        var obj2 = objLoader.load('roof.obj', function(obj2) {
-          treeGeo = obj1.children[0].geometry;
-          roofGeo = obj2.children[0].geometry;
-          // ground
-          var geometry = new THREE.PlaneGeometry( 30,30 );
-          geometry.rotateX(Math.PI/2);
-          geometry.translate(15,-0.5,15);
-          var material = new THREE.MeshBasicMaterial( {color: 0x005500, side: THREE.DoubleSide} );
-          var plane = new THREE.Mesh( geometry, material );
-          scene.add( plane );
+  // ground plane
+  var geometry = new THREE.PlaneGeometry( 40, 40 );
+  geometry.rotateX(Math.PI/2);
+  geometry.translate(15,-0.5,15);
+  var material = new THREE.MeshBasicMaterial( {color: 0x005500, side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+  scene.add( plane );
 
-          // create town with buildings
-          layout = new Layout(scene);
-          layout.doIterations();
-          cityPlan(layout);
-        });
+  roadGeo = new THREE.PlaneBufferGeometry( 0.5, 0.5 );
+  chimGeo = new THREE.BoxBufferGeometry(1,1,1);
+
+  layout = new Layout(scene);
+  layout.doIterations();
+
+  for (var i = 0; i < layout.blocks.length; i++) {
+    layoutBlock(layout.blocks[i]);
+  }
+
+    // draw trees
+    var objLoader = new THREE.OBJLoader();
+  var obj = objLoader.load('tree.obj', function(obj) {
+      treeGeo = obj.children[0].geometry;
+      treeGeo.computeVertexNormals();
+      //treeGeo.normalsNeedUpdate = true;
+      var mat = new THREE.MeshLambertMaterial( {color: 0x003300} );
+    drawTrees(layout);
+    build(arrTree, treeGeo, mat);
+  });
+
+    // draw cars
+    var obj = objLoader.load('car.obj', function(obj) {
+      carGeo = obj.children[0].geometry;
+      carGeo.computeVertexNormals();
+      //carGeo.normalsNeedUpdate = true;
+
+      drawCars(layout);
+      carGeo.scale(0.4, 0.4, 0.4);
+      var mat = new THREE.MeshLambertMaterial( {color: 0x003300} );
+      build(arrCar, carGeo, mat);    
+  });
+
+    var obj = objLoader.load('brick.obj', function(obj) {
+      brickGeo = obj.children[0].geometry;
+      brickGeo.computeVertexNormals();
+      //brickGeo.normalsNeedUpdate = true;
+      var mat = new THREE.MeshLambertMaterial( {color: 0x555555} );
+      build(arrBrick, brickGeo, mat);
     });
 
-  
+    var obj = objLoader.load('door.obj', function(obj) {
+      doorGeo = obj.children[0].geometry;
+      doorGeo.computeVertexNormals();
+      //doorGeo.normalsNeedUpdate = true; 
+      var mat = new THREE.MeshLambertMaterial( {color: 0x555555} );   
+      build(arrDoor, doorGeo, mat);
+    });
+
+    var obj = objLoader.load('fancy.obj', function(obj) {
+      fancyGeo = obj.children[0].geometry; 
+      fancyGeo.computeVertexNormals();
+      //fancyGeo.normalsNeedUpdate = true; 
+      var mat = new THREE.MeshLambertMaterial( {color: 0x555555} );   
+      build(arrFancy, fancyGeo, mat);
+    });
+
+    var obj = objLoader.load('roof.obj', function(obj) {
+      roofGeo = obj.children[0].geometry;  
+      roofGeo.computeVertexNormals();
+      //roofGeo.normalsNeedUpdate = true;  
+      var mat = new THREE.MeshLambertMaterial( {color: 0x553333} );
+      build(arrRoof, roofGeo, mat);
+    });
+
+    
+    build(arrRoad, roadGeo,new THREE.MeshLambertMaterial( {color: 0x000000} )); 
+    town = new THREE.Mesh(totalGeo);
+    console.log(totalGeo);
+    console.log(town);
+
+    //ground = new THREE.Mesh(totalRoad, new THREE.MeshLambertMaterial({color: 0x444444}))
+  layout.scene.add(town); // draw one geo
+  //layout.scene.add(ground);
 }
 
 // add shapes into total geometry
-function build(shapes) {
+function build(shapes, geo, mat) {
+  var quat = new THREE.Quaternion();
+  var mat4 = new THREE.Matrix4();
+  var mat5 = new THREE.Matrix4();
   for (var i = 0; i < shapes.length; i ++) {
-    var geometry;
-    if (shapes[i].geo == 1) geometry = new THREE.BoxGeometry(3,3,3);
-    else {
-      geometry = roofGeo;
-    }
-    geometry.scale(shapes[i].scale.x, shapes[i].scale.y, shapes[i].scale.z);
-    var mat = new THREE.MeshLambertMaterial( {color: shapes[i].color, emissive: 0x111111} )
+      geo.rotateY(shapes[i].rot.y);
+      geo.scale(shapes[i].scale.x, shapes[i].scale.y, shapes[i].scale.z);
 
-    var geo = new THREE.Mesh(geometry, mat);
+      var Wline = new THREE.Line(geo, line);
+      layout.scene.add(Wline);
+      var mesh = new THREE.Mesh(geo, mat);
+
+      //rotation and translation
+      //geo.rotation.set(shapes[i].rot.x, shapes[i].rot.y, shapes[i].rot.z);
       
-    //Orient the flower to the turtle's current direction
-    var quat = new THREE.Quaternion();
-    quat.setFromUnitVectors(new THREE.Vector3(0,1,0), shapes[i].rot);
-    var mat4 = new THREE.Matrix4();
-    mat4.makeRotationFromQuaternion(quat);
-    geo.applyMatrix(mat4);
+      //Move the flower so its base rests at the turtle's current position
+      var mat5 = new THREE.Matrix4();
+      mat5.makeTranslation(shapes[i].pos.x, shapes[i].pos.y, shapes[i].pos.z);
+      mesh.applyMatrix(mat5);
 
-    //Move the flower so its base rests at the turtle's current position
-    var mat5 = new THREE.Matrix4();
-    mat5.makeTranslation(shapes[i].pos.x, shapes[i].pos.y, shapes[i].pos.z);
-    geo.applyMatrix(mat5);
-
-    if (shapes[i].geo == 1) totalGeo.merge(geo.geometry, geo.matrix);
-    else layout.scene.add(geo);
+      totalGeo.merge(mesh.geometry, mesh.matrix);
   }
 }
 
 // construction 
 function layoutBlock(block) {
-  
   var rot = new THREE.Vector3();
   var scale = new THREE.Vector3();
   // shrink points to fit within block
@@ -139,63 +194,73 @@ function layoutBlock(block) {
   // each side of the quadrilateral block
   for (var i = 0; i < 4; i++) {
     var dir = scaledP[(i+1)%4].clone().sub(scaledP[i]);
-    rot.y = Math.atan2(dir.z, dir.x);
-    var len = dir.length()/2;
+    rot.y = -Math.atan2(dir.z, dir.x);
+    var len = dir.length();
     var pos;
-    var roadPos;
+    var houses = len/3;
     // number of houses on a block edge
-    for (var j = 1; j < len; j++) {
-      pos = scaledP[i].clone().lerp(scaledP[(i+1)%4],j/len);
+    for (var j = 1; j < houses; j++) {
+      var jitter = 0.8* (Math.random() - 0.5);
+      pos = scaledP[i].clone().lerp(scaledP[(i+1)%4],(j)/houses);
       var x = Math.floor(pos.x);
       var y = Math.floor(pos.z);
       scale = new THREE.Vector3(sx,1,sz);
       building = new Building(scene, pos, rot, scale);
       building.doIterations();
-      build(building.shapes);
+      for (var l =0; l < building.shapes.length; l++) {
+        switch (building.shapes[l].sym) {
+          case 'BRICK':
+          arrBrick.push(building.shapes[l].obj); break;
+          case 'DOOR':
+          arrDoor.push(building.shapes[l].obj); break;
+          case 'FANCY':
+          arrFancy.push(building.shapes[l].obj); break;
+          case 'ROOF':
+          arrRoof.push(building.shapes[l].obj); break;
+          case 'CHIM':
+          arrChim.push(building.shapes[l].obj);
+        }
+      }
     }
     //roads
-    for (var k = 0; k < 3 * len; k ++) {
-      roadPos = block.p[i].clone().lerp(block.p[(i+1)%4],k/len/3);
-      var geometry = new THREE.PlaneGeometry( 0.5, 0.5 );
-      geometry.rotateX(-Math.PI/2);
-      var material = new THREE.MeshBasicMaterial( { color: 0xffffff } );
-      var circle = new THREE.Mesh( geometry, material );
-      var mat5 = new THREE.Matrix4();
-      mat5.makeTranslation(roadPos.x, -0.499, roadPos.z);
-      circle.applyMatrix(mat5);
-      totalRoad.merge(circle.geometry, circle.matrix);
+    var road = 3 * len;
+    for (var k = 0; k < road; k ++) {
+      var roadPos = block.p[i].clone().lerp(block.p[(i+1)%4],k/road); roadPos.y = -0.499;
+      var roadScale = new THREE.Vector3(1,1,1);
+      var roadRot = new THREE.Vector3(rot.x-Math.PI/2, rot.y, rot.z);
+      arrRoad.push(new Draw(roadPos, roadRot, roadScale));
     }
+  }
+}
 
-    // trees added in block center 
-    // larger area -> more trees
-    // more random offset with larger block/width
-    var min = Math.min(block.length, block.width);
+// trees added in block center; larger area -> more trees; more random offset with larger block/width
+function drawTrees(layout) {
+  for (var i = 0; i < layout.blocks.length; i++) { 
+    var min = Math.min(layout.blocks[i].length, layout.blocks[i].width);
     if (min > 6) {
       for (var l = 0; l < min/2; l++) {
-        var x = block.center.x + (Math.random()-0.5)*block.length/2;
-        var z = block.center.z + (Math.random()-0.5)*block.width/2;
-        var tree = new THREE.Mesh(treeGeo, green);
-        var mat5 = new THREE.Matrix4();
-        mat5.makeTranslation(x, -0.499, z);
-        tree.applyMatrix(mat5);
-        layout.scene.add(tree);
+        var x = layout.blocks[i].center.x + (Math.random()-0.5)*layout.blocks[i].length/2;
+        var z = layout.blocks[i].center.z + (Math.random()-0.5)*layout.blocks[i].width/2;
+        var pos = new THREE.Vector3(x, -0.499, z);
+        var rot = new THREE.Vector3();
+        var scale = new THREE.Vector3(1,1,1);
+        arrTree.push(new Draw(pos,rot,scale));
       }
     }
   }
 }
 
-// construct entire city
-function cityPlan(layout) {
-  console.log(layout.blocks);
-  for (var i = 0; i < layout.blocks.length; i++) {
-    layoutBlock(layout.blocks[i]);
+function drawCars(layout) {
+  for (var i = 0; i < numCars; i ++) {
+    var b = Math.floor(10*Math.random());
+    var s = Math.floor(4*Math.random());
+    var l = Math.random();
+    var loc = layout.blocks[b%layout.blocks.length].p[s].clone(); loc.y = -0.2;
+    var rot = new THREE.Vector3();
+    var scale = new THREE.Vector3(1,1,1);
+    if (s == 0 || s == 2) rot.y = Math.PI/2;
+    arrCar.push(new Draw(loc, rot, scale));
   }
-  town = new THREE.Mesh(totalGeo, new THREE.MeshLambertMaterial({color: 0x555555}));
-  ground = new THREE.Mesh(totalRoad, new THREE.MeshLambertMaterial({color: 0x444444}))
-  //trees = new THREE.Mesh(totalTree, new THREE.MeshLambertMaterial({color: 0x001100}))
-  layout.scene.add(town); // draw one geo
-  layout.scene.add(ground);
-  //layout.scene.add(trees);
 }
 
 // called on frame updates
