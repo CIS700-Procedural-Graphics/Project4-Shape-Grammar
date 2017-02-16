@@ -35,7 +35,7 @@ function onLoad(framework) {
     geomArr.push(cubeGeo);
   });
 
-// load a door. make it into a grammar rule somehow... 
+// load a door.
   objLoader.load('geo/door.obj', function(obj) {
     var cubeGeo = obj.children[0].geometry;
     var cubeMat = new THREE.MeshLambertMaterial( {color: 0xaf1212} );
@@ -52,8 +52,45 @@ function onLoad(framework) {
     var cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
     cubeMesh.scale.set(0.125,0.40,0.25);
     cubeMesh.position.set(0.65,0.8,0);
-    // scene.add(cubeMesh); 
+    // scene.add(cubeMesh); pls build frkn cities
     geomArr.push(cubeGeo);
+  });
+
+  // noise function 
+  function noise(x, y) {
+    x = (x << 13) ^ x;
+    // return x;
+    var ret = (1.0 - (x * (y * y * 15731.0 + 789221.0) + 1376312589.0) & 140737488355327) / 10737741824.0; 
+    return ret;
+  }
+
+  // place and load trees based on noise 
+  objLoader.load('geo/tree.obj', function(obj) {
+    var cubeGeo = obj.children[0].geometry;
+    var cubeMat = new THREE.MeshLambertMaterial( {color: 0x91b66d} );
+
+    for (var x = -17; x < 20; x += 3) {
+      for (var z = -20; z < 0; z += 3) {
+        var noX = noise(x, z);
+        var cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+        cubeMesh.position.set(x + noX * 5, -0.75, z - noX * 5);
+        cubeMesh.scale.set(0.7, 0.7, 0.7);
+        cubeMesh.rotation.set(0,noX * 10,0);
+        scene.add(cubeMesh);
+      }
+    }
+
+    for (var x = -20; x < -10; x += 3) {
+      for (var z = 0; z < 20; z += 3) {
+        var noX = noise(x, z);
+        var cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+        cubeMesh.rotation.set(0,noX * 10,0);
+        cubeMesh.position.set(x + noX * 5, -0.75, z - noX * 5);
+        cubeMesh.scale.set(0.7, 0.7, 0.7);
+        scene.add(cubeMesh);
+      }
+    }
+
   });
 
   // set background color
@@ -70,7 +107,7 @@ function onLoad(framework) {
   scene.add(light);
 
   // set camera position
-  camera.position.set(10, 5, 10);
+  camera.position.set(1, -.5, 10);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   // add in ground plane
@@ -85,7 +122,7 @@ function onLoad(framework) {
   var geometry = new THREE.CircleGeometry( 30, 30 );
   var cylinder = new THREE.Mesh( geometry, material );
   cylinder.rotateX(-Math.PI/2);
-  cylinder.position.set(0,-1.1,0);
+  cylinder.position.set(0,-1.1, 0);
   scene.add( cylinder );
 
   // add in "pool"
@@ -103,15 +140,15 @@ function onLoad(framework) {
   });
 
   var guiItems = function() {
-    this.draw = 0; 
+    this.draw = function() {
+        var lsys = new Lsystem(scene, geomArr);
+        // only one iteration possible
+        doLsystem(lsys, 1 , turtle , scene); 
+    };
   }
   var guio = new guiItems(); 
 
-  gui.add(guio, 'draw', 0, 1).step(1).onChange(function(newVal) {
-    var lsys = new Lsystem(scene, geomArr);
-    // only one iteration possible
-    doLsystem(lsys, 1 , turtle , scene); 
-  });
+  gui.add(guio, 'draw');
 }
 
 // clears the scene by removing all geometries added by turtle.js

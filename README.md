@@ -1,18 +1,14 @@
-# L-System 
+# Shape Grammar 
 
-For this project I generated an L-System parser, and used it to visualize a bamboo plant. 
+For this project I used a shape grammar system to build a town and its surrounding environment.
 
-![Alt text](references/size-view.png?raw=true)
-*basic bamboo plant*
+![Alt text](references/side-view.png?raw=true)
+*shape grammar for houses*
 
 ![Alt text](references/top-view.png?raw=true)
-*leaves modeled in Maya*
+*models made in Maya*
 
-![Alt text](references/multiple-branches.png?raw=true)
-*branching behavior*
+# Project Description 
 
-# Description 
-
-To implement the L-system, I used a linked list to store each symbol for efficient replacements in each iteration. The grammar is then mapped to produce visualizations of base branches, dividers, small branches, and leaves. The rules that I made affected the angle at which the bamboo grows, the amount of leaves produced, and the ability for the bamboo plant to branch. 
-
+I have five rules which operate on a basic house mesh to subdivide, scale, and move the the house generated. Then, I placed the houses on spline curves that surround a lake. Finally, I used a noise function to generate positions for trees in the surrounding forest. 
 
