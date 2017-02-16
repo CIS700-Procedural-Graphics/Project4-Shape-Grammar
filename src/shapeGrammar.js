@@ -1,13 +1,20 @@
 const THREE = require('three')
 const OBJLoader = require('three-obj-loader')(THREE)
+import {getNoise} from './noise.js'
 
 var ShapeEnum = Object.freeze({Ring: 0, Wall: 1, Roof1: 2, 
-								Roof2: 3, Block: 4, Tower: 5, Wedge: 6});
+								Roof2: 3, Block: 4, Tower: 5, 
+								Wedge: 6, Emplacement: 7});
 var material = new THREE.MeshPhongMaterial();
 var objLoader = new THREE.OBJLoader();
 var objLibrary = [];
 
-
+// used to scale or cull building placements
+function populationDensity(x, z) {
+	var u = (x - 10.0) / -20.0;
+	var v = (z - 10.0) / -20.0;
+	return getNoise(u, v, 8.0);
+}
 
 /*
 State of a single shape in the grammar.
@@ -35,15 +42,13 @@ The exported GrammarSystem class.
 */
 export default class GrammarSystem {
 	
+	// adds dummies to the list of objs, then reloads when obj is ready
+	// usually takes only a few ms
 	loadAllObjs(selfRef) {
 		var mContainer1 = new THREE.Geometry();
-		mContainer1.applyMatrix( new THREE.Matrix4().makeTranslation(0, 2, 0));
-		mContainer1.applyMatrix( new THREE.Matrix4().makeScale(8, 1, 8));
+
 		objLibrary.push(mContainer1);
 		objLoader.load('./ring.obj', function(obj) {
-			//console.log(obj);
-			//console.log(obj.children);
-
 			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
 			g.applyMatrix( new THREE.Matrix4().makeScale(8, 8, 8));
 			g.applyMatrix( new THREE.Matrix4().makeTranslation(0, 2, 0));
@@ -51,8 +56,31 @@ export default class GrammarSystem {
 			objLibrary[0].merge(g, objLibrary[0].matrix);
 
 			selfRef.clearIterations();
-
 		});
+
+		var dummy2 = new THREE.Geometry();
+		objLibrary.push(dummy2);
+		objLoader.load('./emplacement.obj', function(obj) {
+			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+			g.applyMatrix( new THREE.Matrix4().makeRotationY(0.5 * Math.PI / 180.0));
+			
+			objLibrary[1].merge(g, g.matrix);
+
+			selfRef.clearIterations();
+		});
+
+
+		var dummy3 = new THREE.Geometry();
+		objLibrary.push(dummy3);
+		objLoader.load('./roundRoof.obj', function(obj) {
+			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+			g.applyMatrix( new THREE.Matrix4().makeRotationY(0.5 * Math.PI / 180.0));
+			
+			objLibrary[2].merge(g, g.matrix);
+
+			selfRef.clearIterations();
+		});
+
 	}
 
 	constructor(scene) {
@@ -106,9 +134,24 @@ export default class GrammarSystem {
 				break;
 
 			case ShapeEnum.Tower:
-				geom = new THREE.CylinderGeometry(0.3,0.25, 6);
-				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 3, 0));
+				//geom = new THREE.CylinderGeometry(0.3,0.25, 5);
+				//geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 2.5, 0));
+
+				var g1 = new THREE.BoxGeometry(0.6, 2, 0.6);
+				g1.applyMatrix(new THREE.Matrix4().makeTranslation(0, 2, 0));
+				geom = new THREE.BoxGeometry(0.5, 2, 0.5);
+				geom.applyMatrix(new THREE.Matrix4().makeTranslation(0, 4, 0));
+				geom.merge(g1, g1.matrix);
 				break;
+
+			case ShapeEnum.Emplacement:
+				geom = objLibrary[1].clone();
+				break;
+
+			case ShapeEnum.Roof1:
+				geom = objLibrary[2].clone();
+				break;
+
 			default:
 				geom = new THREE.CylinderGeometry(8, 8, 2, 20);
 				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 1, 0));
@@ -145,6 +188,9 @@ export default class GrammarSystem {
 		this.resetGrammar();
 		this.addShape(new THREE.Vector3(0, 0, 0), 
 			new THREE.Vector3(1, 1, 1), 0.0, ShapeEnum.Ring, false, 1);
+		var outerWall = new Shape(new THREE.Vector3(0, -2, 0), new THREE.Vector3(1.2, 1, 1.2),
+			0, ShapeEnum.Wall, false, 1);
+		this.addWholeShape(outerWall);
 		this.finalizeGrammar();
 	}
 
@@ -174,10 +220,10 @@ export default class GrammarSystem {
 		}
 
 		s1 = new Shape(new THREE.Vector3(shape.pos.x + d.x,
-				shape.pos.y, shape.pos.z - d.y), s.multiply(new THREE.Vector3(1, 1.0 - Math.random() * 0.5, 1)),
+				shape.pos.y, shape.pos.z - d.y), s.multiply(new THREE.Vector3(1, 1.0 - Math.random() * 0.2, 1)),
 				 shape.yaw, ShapeEnum.Block, false, shape.iter + 1);
 		s2 = new Shape(new THREE.Vector3(shape.pos.x - d.x,
-				shape.pos.y, shape.pos.z + d.y), s.multiply(new THREE.Vector3(1, 1.0 - Math.random() * 0.5, 1)),
+				shape.pos.y, shape.pos.z + d.y), s.multiply(new THREE.Vector3(1, 1.0 - Math.random() * 0.2, 1)),
 				 shape.yaw, ShapeEnum.Block, false, shape.iter + 1);
 			
 		shapeList.push(s1);
@@ -225,10 +271,12 @@ export default class GrammarSystem {
 			var rst = rCenter * Math.sin(theta * Math.PI / 180.0);
 			//console.log(theta);
 
+			var pop = populationDensity(rct, rst);
+			if (pop < -0.2) continue; // not populous enough for a building
 
 			var s = new Shape(new THREE.Vector3(rct, shape.pos.y, rst),
 				new THREE.Vector3(1.4 * rScale, 
-					0.5 * inner * (1 + Math.random()) * (rScale), 
+					0.3 * inner * (1 + pop) * (rScale), 
 					shape.scale.z * 1.5 * rScale),
 				-theta, ShapeEnum.Block, 
 				false, shape.iter + 1);
@@ -244,22 +292,55 @@ export default class GrammarSystem {
 
 	// creates a tower on the wall
 	buildWallTower(shape, shapeList) {
-		var rad = 7.9 * shape.scale.z;
+		var rad = 8 * shape.scale.z;
 		var numTowers = Math.floor(Math.random() * 5.0);
 		var offset = Math.random() * 180.0 / numTowers;
-		for (var i = 0; i < numTowers; i++) {
-			var theta = i * 180.0 / numTowers + offset;
 
+		// wall emplacements
+		for (var i = 0; i < 10; i++) {
+			if (Math.random() < 0.6) continue;
+			var theta = i * 18.0 + 9.0;
 			if (Math.abs(theta - 90) < 10) continue; // avoid the wedge
-			var rct = rad * Math.cos(theta * Math.PI / 180.0);
-			var rst = rad * Math.sin(theta * Math.PI / 180.0);
+			var ct = Math.cos(theta * Math.PI / 180.0)
+			var st = Math.sin(theta * Math.PI / 180.0)
 
-			var s = new Shape(new THREE.Vector3(rct, shape.pos.y, rst), 
-				new THREE.Vector3(1, 1, 1), -theta, ShapeEnum.Tower, true, shape.iter + 1);
+			var rct = rad * ct;
+			var rst = rad * st;
+
+			var s = new Shape(new THREE.Vector3(rct, shape.pos.y + 4 * shape.scale.y, rst), 
+				new THREE.Vector3(shape.scale.x, shape.scale.y + (Math.random() - 0.5) * 0.2, shape.scale.z), 
+				90-theta, ShapeEnum.Emplacement, true, shape.iter + 1);
 			shapeList.push(s);
 		}
 
+		// wall towers
+		for (var i = 0; i <= 10; i++) {
+			if (Math.random() < 0.7) continue;
+			var theta = i * 18.0;
+			if (Math.abs(theta - 90) < 10) continue; // avoid the wedge
+			var ct = Math.cos(theta * Math.PI / 180.0)
+			var st = Math.sin(theta * Math.PI / 180.0)
 
+			var rct = rad * ct;
+			var rst = rad * st;
+
+			var o = 1 + (Math.random() - 0.5) * 0.3;
+
+			var s = new Shape(new THREE.Vector3(rct, shape.pos.y, rst), 
+				new THREE.Vector3(shape.scale.x, o * shape.scale.y, shape.scale.z),
+				 -theta, ShapeEnum.Tower, true, shape.iter + 1);
+			shapeList.push(s);
+
+			var r = new Shape(new THREE.Vector3(rct, shape.pos.y + 5 * o * shape.scale.y, rst), 
+				new THREE.Vector3(0.7 * shape.scale.x, 0.7 * shape.scale.x, 0.7 * shape.scale.z),
+				 -theta, ShapeEnum.Roof1, true, shape.iter + 1);
+			shapeList.push(r);
+		}
+
+		if (shape.type == ShapeEnum.Wall) {
+			shape.terminal = true;
+			shapeList.push(shape);
+		}
 
 	}
 
@@ -309,9 +390,7 @@ export default class GrammarSystem {
 			this.addWholeShape(newShapes[i]);
 		}
 
-		var outerWall = new Shape(new THREE.Vector3(0, -2, 0), new THREE.Vector3(1.2, 1, 1.2),
-			0, ShapeEnum.Wall, false, 1);
-		this.addWholeShape(outerWall);
+
 
 		// render the new shape grammar
 		this.numIterations = newIter;
