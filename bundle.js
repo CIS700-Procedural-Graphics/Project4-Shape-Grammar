@@ -50,20 +50,24 @@
 	
 	var _framework2 = _interopRequireDefault(_framework);
 	
-	var _lsystem = __webpack_require__(9);
+	var _shapegrammar = __webpack_require__(9);
 	
-	var _lsystem2 = _interopRequireDefault(_lsystem);
+	var _shapegrammar2 = _interopRequireDefault(_shapegrammar);
 	
-	var _turtle = __webpack_require__(10);
+	var _city = __webpack_require__(10);
 	
-	var _turtle2 = _interopRequireDefault(_turtle);
+	var _city2 = _interopRequireDefault(_city);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var THREE = __webpack_require__(6); // older modules are imported like this. You shouldn't have to worry about this much
 	
 	
-	var turtle;
+	var objLoader = new THREE.OBJLoader();
+	var treeGeo;
+	objLoader.load('tree.obj', function (obj) {
+	  treeGeo = obj.children[0].geometry;
+	});
 	
 	// called after the scene loads
 	function onLoad(framework) {
@@ -74,7 +78,7 @@
 	  var gui = framework.gui;
 	  var stats = framework.stats;
 	
-	  // initialize a simple box and material
+	  // Scene set up
 	  var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 	  directionalLight.color.setHSL(0.1, 1, 0.95);
 	  directionalLight.position.set(1, 3, 2);
@@ -82,63 +86,17 @@
 	
 	  scene.add(directionalLight);
 	
-	  //var loader = new THREE.CubeTextureLoader();
-	  //var urlPrefix = '';
-	  //
-	  //var skymap = new THREE.CubeTextureLoader().load([
-	  //    urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
-	  //    urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
-	  //    urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
-	  //] );
-	  //
-	  //scene.background = skymap;
-	
-	  // set camera position
-	  camera.position.set(1, 1, 20);
+	  camera.position.set(1, 1, 5);
 	  camera.lookAt(new THREE.Vector3(0, 0, 0));
 	  camera.updateProjectionMatrix();
 	
-	  // initialize LSystem and a Turtle to draw
-	  var lsystem = new _lsystem2.default.Lsystem();
-	  turtle = new _turtle2.default(scene);
+	  var city = new _city2.default.City(scene);
+	  city.render();
 	
+	  // Gui variables
 	  gui.add(camera, 'fov', 0, 180).onChange(function (newVal) {
 	    camera.updateProjectionMatrix();
 	  });
-	
-	  gui.add(lsystem, 'axiom').onChange(function (newVal) {
-	    lsystem.updateAxiom(newVal);
-	    doLsystem(lsystem, lsystem.iterations, turtle);
-	  });
-	
-	  gui.add(lsystem, 'iterations', 0, 12).step(1).onChange(function (newVal) {
-	    clearScene(turtle);
-	    doLsystem(lsystem, newVal, turtle);
-	  });
-	
-	  gui.add(turtle, 'angle', 15, 120).step(1).onChange(function (newVal) {
-	    clearScene(turtle);
-	    doLsystem(lsystem, lsystem.iterations, turtle);
-	  });
-	}
-	
-	// clears the scene by removing all geometries added by turtle.js
-	function clearScene(turtle) {
-	  var obj;
-	  for (var i = turtle.scene.children.length - 1; i > 3; i--) {
-	    obj = turtle.scene.children[i];
-	    turtle.scene.remove(obj);
-	  }
-	}
-	
-	function doLsystem(lsystem, iterations, turtle) {
-	  var result = lsystem.doIterations(iterations);
-	  turtle.clear();
-	  var angle = turtle.angle;
-	  turtle = new _turtle2.default(turtle.scene);
-	  console.log(turtle);
-	  turtle.angle = angle;
-	  turtle.renderSymbols(result);
 	}
 	
 	// called on frame updates
@@ -197,7 +155,7 @@
 	    var renderer = new THREE.WebGLRenderer({ antialias: true });
 	    renderer.setPixelRatio(window.devicePixelRatio);
 	    renderer.setSize(window.innerWidth, window.innerHeight);
-	    renderer.setClearColor(0xfcd1fa, 1);
+	    renderer.setClearColor(0x0a3a87, 1);
 	
 	    var controls = new OrbitControls(camera, renderer.domElement);
 	    controls.enableDamping = true;
@@ -48332,173 +48290,392 @@
 
 /***/ },
 /* 9 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
+	var THREE = __webpack_require__(6);
+	
+	var objLoader = new THREE.OBJLoader();
+	var geo1;
+	var geo2;
+	objLoader.load('Build11_obj.obj', function (obj) {
+	
+		// LOOK: This function runs after the obj has finished loading
+		geo1 = obj.children[0].geometry;
+	});
+	objLoader.load('Build10_obj.obj', function (obj) {
+	
+		// LOOK: This function runs after the obj has finished loading
+		geo2 = obj.children[0].geometry;
+	});
+	
+	var GEO1SCALE = new THREE.Vector3(1 / 125, 1 / 200, 1 / 130);
+	var GEO2SCALE = new THREE.Vector3(1 / 350, 1 / 400, 1 / 230);
+	// Materials
+	var flatMat = new THREE.MeshPhongMaterial({ color: 0x000000, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+	flatMat.shading = THREE.FlatShading;
+	var lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+	
 	// A class that represents a symbol replacement rule to
 	// be used when expanding an L-system grammar.
-	function Rule(prob, str) {
-		this.probability = prob; // The probability that this Rule will be used when replacing a character in the grammar string
-		this.successorString = str; // The string that will replace the char that maps to this Rule
+	function SymbolNode(symbol, geometry) {
+		this.parent = null;
+		this.symbol = symbol;
+		this.geometry = geometry;
+		this.position = new THREE.Vector3(0, 0, 0);
+		this.scale = new THREE.Vector3(1, 1, 1);
+		this.rotation = new THREE.Vector3(0, 0, 0);
+		this.material = null;
+		this.geomScale = new THREE.Vector3(1, 1, 1);
 	}
 	
-	// TODO: Implement a linked list class and its requisite functions
-	// as described in the homework writeup
-	function LinkedList() {
-		this.head = null;
-		this.tail = null;
-		this.dictionary = null;
+	// A -> AB
+	function subdivideX(parent) {
+		var newShapes = [];
+		var left = new SymbolNode('A', geo1);
+		var right = new SymbolNode('B', geo2);
+		left.geomScale = GEO1SCALE;
+		right.geomScale = GEO2SCALE;
 	
-		this.link = function (a, b) {
-			a.next = b;
-			b.prev = a;
-		};
+		// Switches up geom
+		var RV = Math.random();
 	
-		this.expand = function (node, iteration) {
-			var rules = this.dictionary[node.symbol];
+		if (RV < 0.25) {
+			left = new SymbolNode('A', geo2);
+			right = new SymbolNode('B', geo1);
+			left.geomScale = GEO2SCALE;
+			right.geomScale = GEO1SCALE;
+		} else if (RV < 0.5) {
+			left = new SymbolNode('A', geo1);
+			right = new SymbolNode('B', geo1);
+			left.geomScale = GEO1SCALE;
+			right.geomScale = GEO1SCALE;
+		} else if (RV < 0.75) {
+			left = new SymbolNode('A', geo2);
+			right = new SymbolNode('B', geo2);
+			left.geomScale = GEO2SCALE;
+			right.geomScale = GEO2SCALE;
+		}
 	
-			// Randomly chooses the rule to expand from
-			var rv = Math.random();
-			var chosenRule;
-			var sum = 0.0;
-			if (typeof rules !== "undefined") {
-				for (var i = 0; i < rules.length; i++) {
-					if (rv <= sum + rules[i].probability) {
-						chosenRule = rules[i];
-						break;
-					} else {
-						sum += rules[i].probability;
+		left.material = flatMat;
+		right.material = flatMat;
+	
+		// Determine scale randomly
+		var ly = Math.random();
+		var lz = Math.random();
+		var ry = Math.random();
+		var rz = Math.random();
+	
+		if (ly < 0.6) {
+			ly = 0.6;
+		}
+		if (lz < 0.6) {
+			lz = 0.6;
+		}
+		if (ry < 0.6) {
+			ry = 0.6;
+		}
+		if (rz < 0.6) {
+			rz = 0.6;
+		}
+		// 
+		left.scale = new THREE.Vector3(parent.scale.x / 2, parent.scale.y, lz * parent.scale.z);
+		right.scale = new THREE.Vector3(parent.scale.x / 2, parent.scale.y, rz * parent.scale.z);
+	
+		// Determine displacement
+		left.position.z = parent.position.z;
+		right.position.z = parent.position.z;
+		left.position.x = parent.position.x - parent.scale.x / 2 + left.scale.x / 2;
+		right.position.x = parent.position.x + parent.scale.x / 2 - right.scale.x / 2;
+		left.position.y = parent.position.y;
+		right.position.y = parent.position.y;
+	
+		newShapes.push(left);
+		newShapes.push(right);
+	
+		return newShapes;
+	}
+	
+	// B -> A
+	function noTrans(parent) {
+		parent.symbol = 'B';
+		return [parent];
+	}
+	
+	// C -> AA
+	// Creates two stacked components
+	function stack(parent) {
+		var newShapes = [];
+		var up = new SymbolNode('A', geo2);
+		var down = new SymbolNode('A', geo1);
+		up.material = flatMat;
+		down.material = flatMat;
+		newShapes.push(up);
+		newShapes.push(down);
+	
+		up.scale.x = 0.75 * parent.scale.x;
+		down.scale.x = parent.scale.x;
+		up.scale.y = 0.5 * parent.scale.y;
+		down.scale.y = 0.5 * parent.scale.y;
+		up.scale.z = 0.75 * parent.scale.z;
+		down.scale.z = parent.scale.z;
+		up.position.y = parent.position.y + up.scale.y / 2;
+		down.position.y = parent.position.y;
+		up.position.x = parent.position.x;
+		down.position.x = parent.position.x;
+		up.position.z = parent.position.z;
+		down.position.z = parent.position.z;
+	
+		newShapes.push(up);
+		newShapes.push(down);
+		return newShapes;
+	}
+	
+	// D -> A
+	// D -> C
+	// D -> AEA
+	function buildBaseOrBridge(parent) {
+		var newShapes = [];
+		var baseBottom = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+		var baseMiddle = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+		var baseTop = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+	
+		// Build base and main building
+		var buildingMain;
+		buildingMain = new SymbolNode('A', geo1);
+		buildingMain.geomScale = GEO1SCALE;
+	
+		baseBottom.material = flatMat;
+		baseMiddle.material = flatMat;
+		baseTop.material = flatMat;
+		buildingMain.material = flatMat;
+	
+		buildingMain.scale = parent.scale;
+		buildingMain.scale.x = parent.scale.x * 0.8;
+		buildingMain.scale.z = parent.scale.z * 0.8;
+		buildingMain.position.x = parent.position.x;
+		buildingMain.position.y = parent.position.y;
+		buildingMain.position.z = parent.position.z;
+	
+		baseBottom.scale.y = 0.25;
+		baseBottom.position.x = parent.position.x;
+		baseBottom.position.y = parent.position.y;
+		baseBottom.position.z = parent.position.z;
+	
+		baseMiddle.scale.y = 0.5;
+		baseMiddle.scale.x = 0.75;
+		baseMiddle.scale.z = 0.75;
+		baseMiddle.position.x = parent.position.x;
+		baseMiddle.position.y = parent.position.y;
+		baseMiddle.position.z = parent.position.z;
+	
+		baseTop.scale.y = 0.75;
+		baseTop.scale.x = 0.50;
+		baseTop.scale.z = 0.50;
+		baseTop.position.x = parent.position.x;
+		baseTop.position.z = parent.position.z;
+		baseTop.position.y = parent.position.y;
+	
+		//Decides whether this building is normal, based, or bridged
+		var RV = Math.random();
+		if (RV < 0.3333) {
+			//builds with base
+			if (Math.random() < 0.4) {
+				newShapes.push(baseBottom);
+				newShapes.push(baseMiddle);
+				newShapes.push(baseTop);
+			}
+			newShapes.push(buildingMain);
+		} else if (RV < 0.75) {
+			//No base or bridge
+			buildingMain.symbol = 'C';
+			buildingMain.scale = parent.scale;
+			newShapes.push(buildingMain);
+		} else {
+			var left = new SymbolNode('A', geo1);
+			var right = new SymbolNode('B', geo2);
+			var bridge = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+			left.geomScale = GEO1SCALE;
+			right.geomScale = GEO2SCALE;
+	
+			// Switches up geom
+			var RV = Math.random();
+	
+			if (RV < 0.25) {
+				left = new SymbolNode('A', geo2);
+				right = new SymbolNode('B', geo1);
+				left.geomScale = GEO2SCALE;
+				right.geomScale = GEO1SCALE;
+			} else if (RV < 0.5) {
+				left = new SymbolNode('A', geo1);
+				right = new SymbolNode('B', geo1);
+				left.geomScale = GEO1SCALE;
+				right.geomScale = GEO1SCALE;
+			} else if (RV < 0.75) {
+				left = new SymbolNode('A', geo2);
+				right = new SymbolNode('B', geo2);
+				left.geomScale = GEO2SCALE;
+				right.geomScale = GEO2SCALE;
+			}
+	
+			left.material = flatMat;
+			right.material = flatMat;
+			bridge.material = flatMat;
+	
+			// Determine scale randomly
+			var ly = Math.random();
+			var lz = Math.random();
+			var ry = Math.random();
+			var rz = Math.random();
+	
+			if (ly < 0.6) {
+				ly = 0.6;
+			}
+			if (lz < 0.6) {
+				lz = 0.6;
+			}
+			if (ry < 0.6) {
+				ry = 0.6;
+			}
+			if (rz < 0.6) {
+				rz = 0.6;
+			}
+	
+			left.scale = new THREE.Vector3(parent.scale.x / 3, parent.scale.y, lz * parent.scale.z);
+			right.scale = new THREE.Vector3(parent.scale.x / 3, parent.scale.y, rz * parent.scale.z);
+	
+			// Determine displacement
+			left.position.z = parent.position.z;
+			right.position.z = parent.position.z;
+			left.position.x = parent.position.x - parent.scale.x / 2 + left.scale.x / 3;
+			right.position.x = parent.position.x + parent.scale.x / 2 - right.scale.x / 3;
+			left.position.y = parent.position.y;
+			right.position.y = parent.position.y;
+			bridge.scale.x = parent.scale.x * 0.75;
+			bridge.scale.y = parent.scale.y / 12;
+			bridge.scale.z = Math.min(left.scale.z, right.scale.z) / 4;
+			bridge.position.x = parent.position.x;
+			bridge.position.z = parent.position.z;
+			bridge.position.y = parent.position.y + parent.scale.y / 2;
+			newShapes.push(left);
+			newShapes.push(right);
+			newShapes.push(bridge);
+		}
+		return newShapes;
+	}
+	
+	// Encapsulate grammar methods
+	function ShapeGrammar(axiom, scene, iterations, origin, height) {
+		this.axiom = axiom;
+		this.material = flatMat.clone();
+		this.grammar = [];
+		this.iterations = iterations;
+		this.scene = scene;
+		this.height = height;
+		// Init grammar for shapes
+		for (var i = 0; i < this.axiom.length; i++) {
+			var node = new SymbolNode(axiom.charAt(i), new THREE.BoxGeometry(1, 1, 1));
+			node.scale = new THREE.Vector3(1, height, 1);
+			node.position.x = origin.x;
+			node.position.z = origin.y;
+			node.position.y = origin.z;
+			node.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+			var mesh = new THREE.Mesh(node.geometry, node.material);
+			mesh.position.x += 1;
+			this.grammar[i] = node;
+		}
+		// Function to compute shape grammar for a number of iterations
+		this.compute = function () {
+			// Repeats for number of iterations
+			for (var k = 0; k < this.iterations; k++) {
+	
+				/*
+	    * Adds children instances to a resulting array 
+	    * and replaces grammar with new list
+	    */
+				var newArr = [];
+				for (var i = 0; i < this.grammar.length; i++) {
+					var symbolNode = this.grammar[i];
+					// Subdivide rule
+					if (symbolNode.symbol == 'A') {
+						this.grammar.splice(i, 1);
+						//var newSymbols = subdivideX(symbolNode);
+						var newSymbols = subdivideX(symbolNode);
+						// Add new symbols to the grammar
+						for (var j = 0; j < newSymbols.length; j++) {
+							newArr.push(newSymbols[j]);
+						}
 					}
+					// Self rule
+					else if (symbolNode.symbol == 'B') {
+							this.grammar.splice(i, 1);
+							var newSymbols = noTrans(symbolNode);
+							// Add new symbols to the grammar
+							for (var j = 0; j < newSymbols.length; j++) {
+								newArr.push(newSymbols[j]);
+							}
+						} else if (symbolNode.symbol == 'C') {
+							this.grammar.splice(i, 1);
+							var newSymbols = stack(symbolNode);
+							// Add new symbols to the grammar
+							for (var j = 0; j < newSymbols.length; j++) {
+								newArr.push(newSymbols[j]);
+							}
+						} else if (symbolNode.symbol == 'D') {
+							this.grammar.splice(i, 1);
+							var newSymbols = buildBaseOrBridge(symbolNode);
+							// Add new symbols to the grammar
+							for (var j = 0; j < newSymbols.length; j++) {
+								newArr.push(newSymbols[j]);
+							}
+						}
 				}
-	
-				// Replaces node with the new list
-				replaceNode(this, node, chosenRule.successorString, iteration);
-			}
-		};
-	}
-	function Node(sym) {
-		this.next = null;
-		this.prev = null;
-		this.symbol = sym;
-		this.iteration = 1;
-	}
-	
-	// TODO: Turn the string into linked list 
-	function stringToLinkedList(input_string) {
-		// ex. assuming input_string = "F+X"
-		// you should return a linked list where the head is 
-		// at Node('F') and the tail is at Node('X')
-		var ll = new LinkedList();
-		ll.head = new Node(input_string.charAt(0));
-		var currNode = ll.head;
-		for (var i = 1; i < input_string.length; i++) {
-			var n = new Node(input_string.charAt(i));
-			currNode.next = n;
-			n.prev = currNode;
-			currNode = currNode.next;
-		}
-		ll.tail = currNode;
-		return ll;
-	}
-	
-	// TODO: Return a string form of the LinkedList
-	function linkedListToString(linkedList) {
-		// ex. Node1("F")->Node2("X") should be "FX"
-		var result = "";
-		var currNode = linkedList.head;
-		while (currNode != null) {
-			result += currNode.symbol;
-			currNode = currNode.next;
-		}
-		return result;
-	}
-	
-	// TODO: Given the node to be replaced, 
-	// insert a sub-linked-list that represents replacementString
-	function replaceNode(linkedList, node, replacementString, iteration) {
-		// Creates a linkedlist from the rule 
-		var expanded = stringToLinkedList(replacementString);
-		var currNode = expanded.head;
-		while (currNode != null) {
-			// Store iteration for each node after replacement
-			currNode.iteration = iteration;
-			currNode = currNode.next;
-		}
-		var next = node.next;
-		expanded.tail.next = next;
-		if (node.prev != null) {
-			node.prev.next = expanded.head;
-		}
-	}
-	
-	function Lsystem(axiom, grammar, iterations) {
-		// default LSystem
-		this.axiom = "123";
-		this.grammar = {};
-		this.grammar['1'] = [new Rule(0.33333, 'FFFFFFA[-2]3[+3]'), new Rule(0.33333, 'FFFFFFA[W2]3[Q3]'), new Rule(0.33333, 'FFFFFFA[R2]3[E3]')];
-		this.grammar['2'] = [new Rule(0.33333, 'FAF+F-F-F[FF3][+3]-F-F3'), new Rule(0.33333, 'FAFQFWFWF[FF3][Q3]WFWF3'), new Rule(0.33333, 'FAFEFRFRF[FFF3][E3]RFRF3')];
-		this.grammar['3'] = [new Rule(0.33333, 'FF-F+F+F[2][-2]+F+FA2'), new Rule(0.33333, 'FFWFQFQF[2][W2]QFQFA2'), new Rule(0.33333, 'FFRFEFEF[2][R2]EFEFA2')];
-		this.iterations = 0;
-	
-		// Set up the axiom string
-		if (typeof axiom !== "undefined") {
-			this.axiom = axiom;
-		}
-	
-		// Set up the grammar as a dictionary that 
-		// maps a single character (symbol) to a Rule.
-		if (typeof grammar !== "undefined") {
-			this.grammar = Object.assign({}, grammar);
-		}
-	
-		// Set up iterations (the number of times you 
-		// should expand the axiom in DoIterations)
-		if (typeof iterations !== "undefined") {
-			this.iterations = iterations;
-		}
-	
-		// A function to alter the axiom string stored 
-		// in the L-system
-		this.updateAxiom = function (axiom) {
-			// Setup axiom
-			if (typeof axiom !== "undefined") {
-				this.axiom = axiom;
+				for (var j = 0; j < newArr.length; j++) {
+					this.grammar.push(newArr[j]);
+				}
 			}
 		};
 	
-		// TODO
-		// This function returns a linked list that is the result 
-		// of expanding the L-system's axiom n times.
-		// The implementation we have provided you just returns a linked
-		// list of the axiom.
-		this.doIterations = function (n) {
-			this.iterations = n;
-			var lSystemLL = stringToLinkedList(this.axiom);
-			lSystemLL.dictionary = this.grammar;
-			var currNode = lSystemLL.head;
+		// Function to render resulting shape grammar
+		this.render = function () {
+			this.compute();
 	
-			for (var i = 1; i <= this.iterations; i++) {
-				var currNode = lSystemLL.head;
-				while (currNode != null) {
-					var next = currNode.next;
-					lSystemLL.expand(currNode, i);
-					currNode = next;
-				}
+			for (var i = 0; i < this.grammar.length; i++) {
+				var node = this.grammar[i];
+				//this.material.color.r += this.height / 15;
+				//this.material.color.g += Math.pow(this.height, 2) / 40;
+				var bcomp = this.grammar.length / 55;
+				//console.log(bcomp);
+				//this.material.color.r += bcomp;
+				//this.material.color.g += bcomp;
+				this.material.color.b += bcomp;
+				//console.log(this.height/5);
+				var mesh = new THREE.Mesh(node.geometry, this.material);
+				var geo = new THREE.EdgesGeometry(node.geometry);
+				var wireframe = new THREE.LineSegments(geo, lineMat);
+				mesh.add(wireframe);
+				// Set position
+				mesh.position.set(node.position.x, node.position.y, node.position.z);
+	
+				// Set rotation
+				mesh.rotation.set(node.rotation.x, node.rotation.y, node.rotation.z);
+	
+				// Set scale
+				mesh.scale.set(node.geomScale.x * node.scale.x, node.geomScale.y * node.scale.y, node.geomScale.y * node.scale.z);
+	
+				mesh.updateMatrix();
+				this.scene.add(mesh);
 			}
-			console.log(lSystemLL);
-			return lSystemLL;
 		};
 	}
 	
 	exports.default = {
-		LinkedList: LinkedList,
-		Lsystem: Lsystem,
-		stringToLinkedList: stringToLinkedList,
-		linkedListToString: linkedListToString
+		ShapeGrammar: ShapeGrammar,
+		SymbolNode: SymbolNode
 	};
 
 /***/ },
@@ -48508,209 +48685,159 @@
 	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+		value: true
 	});
 	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	var _shapegrammar = __webpack_require__(9);
 	
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	var _shapegrammar2 = _interopRequireDefault(_shapegrammar);
+	
+	var _noise = __webpack_require__(11);
+	
+	var _noise2 = _interopRequireDefault(_noise);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var THREE = __webpack_require__(6);
 	
-	var objLoader = new THREE.OBJLoader();
-	var flowGeometry;
-	objLoader.load('lotus_OBJ_low.obj', function (obj) {
 	
-	    // LOOK: This function runs after the obj has finished loading
-	    flowGeometry = obj.children[0].geometry;
+	var flatMat = new THREE.MeshPhongMaterial({ color: 0x000000, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+	flatMat.shading = THREE.FlatShading;
+	var lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+	
+	function City(scene) {
+		this.shapeGrammars = [];
+	
+		// Create plane 
+		var planeWidth = 15;
+		var geometry = new THREE.PlaneGeometry(planeWidth, planeWidth, planeWidth - 1, planeWidth * 1.5 - 1);
+		var material = new THREE.MeshBasicMaterial({ color: 0x0a0c30, side: THREE.DoubleSide, wireframe: false });
+		this.plane = new THREE.Mesh(geometry, material);
+		this.plane.rotateX(90 * Math.PI / 180);
+		this.scene = scene;
+	
+		this.render = function () {
+			this.scene.add(this.plane);
+			// Create new shape grammar at each vertex on the plane
+			for (var i = 0; i < this.plane.geometry.vertices.length; i++) {
+				var vertex = this.plane.geometry.vertices[i];
+				if (_noise2.default.generateNoise(vertex.x, vertex.y, vertex.y) > 1.4) {
+					var building = new _shapegrammar2.default.ShapeGrammar('D', this.scene, 5, vertex, 1.5 * _noise2.default.generateNoise(vertex.x, vertex.z, vertex.y));
+					building.render();
+				}
+			}
+			this.plane.scale.x = 200 * this.plane.scale.x;
+			this.plane.scale.y = 200 * this.plane.scale.y;
+		};
+	}
+	exports.default = {
+		City: City
+	};
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
 	});
+	var THREE = __webpack_require__(6);
 	
-	// A class used to encapsulate the state of a turtle at a given moment.
-	// The Turtle class contains one TurtleState member variable.
-	// You are free to add features to this state class,
-	// such as color or whimiscality
-	var TurtleState = function TurtleState(pos, dir) {
-	    return {
-	        pos: new THREE.Vector3(pos.x, pos.y, pos.z),
-	        dir: new THREE.Vector3(dir.x, dir.y, dir.z)
-	    };
+	var random = function random(a, b, c) {
+	    var vec1 = new THREE.Vector3(a, b, c);
+	    var vec2 = new THREE.Vector3(12.9898, 78.233, 198.233);
+	    return Math.abs(Math.sin(vec1.dot(vec2) * 43758.5453));
 	};
 	
-	var Turtle = function () {
-	    function Turtle(scene, grammar) {
-	        _classCallCheck(this, Turtle);
+	var lerp = function lerp(a, b, t) {
+	    return a * (1.0 - t) + b * t;
+	};
 	
-	        this.state = new TurtleState(new THREE.Vector3(0, -5, -10), new THREE.Vector3(0, 1, 0));
-	        this.scene = scene;
-	        this.stack = [];
-	        this.angle = 15;
-	        this.iteration = 1;
-	        // TODO: Start by adding rules for '[' and ']' then more!
-	        // Make sure to implement the functions for the new rules inside Turtle
-	        if (typeof grammar === "undefined") {
-	            this.renderGrammar = {
-	                '+': this.rotateTurtle.bind(this, 0, 0, 0, -1, 0, 0),
-	                '-': this.rotateTurtle.bind(this, 0, 0, 0, 1, 0, 0),
-	                'F': this.makeCylinder.bind(this, 2, 0.1),
-	                '[': this.saveState.bind(this),
-	                ']': this.restoreState.bind(this),
-	                'Q': this.rotateTurtle.bind(this, 0, 0, 0, 0, -1, 0),
-	                'W': this.rotateTurtle.bind(this, 0, 0, 0, 0, 1, 0),
-	                'E': this.rotateTurtle.bind(this, 0, 0, 0, 0, 0, -1),
-	                'R': this.rotateTurtle.bind(this, 0, 0, 0, 0, 0, 1),
-	                'A': this.drawFlower.bind(this, 2, 0.1)
-	            };
-	        } else {
-	            this.renderGrammar = grammar;
-	        }
+	var cerp = function cerp(a, b, t) {
+	    var cos_t = (1.0 - Math.cos(t * 3.14159)) * 0.5;
+	    return lerp(a, b, cos_t);
+	};
+	
+	var interpolateNoise = function interpolateNoise(x, y, z) {
+	    var x0, y0, z0, x1, y1, z1;
+	
+	    // Find the grid voxel that this point falls in
+	    x0 = Math.floor(x);
+	    y0 = Math.floor(y);
+	    z0 = Math.floor(z);
+	
+	    x1 = x0 + 1.0;
+	    y1 = y0 + 1.0;
+	    z1 = z0 + 1.0;
+	
+	    // Generate noise at each of the 8 points
+	    var FUL, FUR, FLL, FLR, BUL, BUR, BLL, BLR;
+	
+	    // front upper left
+	    FUL = random(x0, y1, z1);
+	
+	    // front upper right
+	    FUR = random(x1, y1, z1);
+	
+	    // front lower left
+	    FLL = random(x0, y0, z1);
+	
+	    // front lower right
+	    FLR = random(x1, y0, z1);
+	
+	    // back upper left
+	    BUL = random(x0, y1, z0);
+	
+	    // back upper right
+	    BUR = random(x1, y1, z0);
+	
+	    // back lower left
+	    BLL = random(x0, y0, z0);
+	
+	    // back lower right
+	    BLR = random(x1, y0, z0);
+	
+	    // Find the interpolate t values
+	    var n0, n1, m0, m1, v;
+	    var tx = x - x0;
+	    var ty = y - y0;
+	    var tz = z - z0;
+	    tx = x - x0;
+	    ty = y - y0;
+	    tz = z - z0;
+	
+	    // interpolate along x and y for back
+	    n0 = cerp(BLL, BLR, tx);
+	    n1 = cerp(BUL, BUR, tx);
+	    m0 = cerp(n0, n1, ty);
+	
+	    // interpolate along x and y for front
+	    n0 = cerp(FLL, FLR, tx);
+	    n1 = cerp(FUL, FUR, tx);
+	    m1 = cerp(n0, n1, ty);
+	
+	    // interpolate along z
+	    v = cerp(m0, m1, tz);
+	
+	    return v;
+	};
+	
+	var generateNoise = function generateNoise(x, y, z) {
+	    var total = 0.0;
+	    var persistence = 1.0 / 2.0;
+	    for (var i = 0; i < 32; i++) {
+	        var freq = Math.pow(2.0, i);
+	        var ampl = Math.pow(persistence, i);
+	        total += interpolateNoise(freq * x, freq * y, freq * z) * ampl;
 	    }
+	    return total;
+	};
 	
-	    _createClass(Turtle, [{
-	        key: 'drawFlower',
-	        value: function drawFlower(len, width) {
-	            //var tmp_turtle = this;
-	            if (this.iteration > 0) {
-	                //this.scene.add(mesh);
-	                //
-	                //var quat = new THREE.Quaternion();
-	                //quat.setFromUnitVectors(new THREE.Vector3(0,1,0), this.state.dir);
-	                //var mat4 = new THREE.Matrix4();
-	                //mat4.makeRotationFromQuaternion(quat);
-	                //mesh.applyMatrix(mat4);
-	                //
-	                //var mat5 = new THREE.Matrix4();
-	                //var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * len));
-	                //mat5.makeTranslation(trans.x, trans.y, trans.z);
-	                //mesh.applyMatrix(mat5);
-	
-	                //this.moveForward(len/2);
-	            }
-	        }
-	    }, {
-	        key: 'saveState',
-	        value: function saveState() {
-	            var newPos = this.state.pos;
-	            var newDir = this.state.dir;
-	            var newState = new TurtleState(newPos, newDir);
-	            this.stack.push(newState);
-	        }
-	    }, {
-	        key: 'restoreState',
-	        value: function restoreState() {
-	            this.state = this.stack.pop();
-	        }
-	        // Resets the turtle's position to the origin
-	        // and its orientation to the Y axis
-	
-	    }, {
-	        key: 'clear',
-	        value: function clear() {
-	            this.state = new TurtleState(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 1, 0));
-	        }
-	
-	        // A function to help you debug your turtle functions
-	        // by printing out the turtle's current state.
-	
-	    }, {
-	        key: 'printState',
-	        value: function printState() {
-	            console.log(this.state.pos);
-	            console.log(this.state.dir);
-	        }
-	
-	        // Rotate the turtle's _dir_ vector by each of the 
-	        // Euler angles indicated by the input.
-	
-	    }, {
-	        key: 'rotateTurtle',
-	        value: function rotateTurtle(x, y, z, signx, signy, signz) {
-	            var e = new THREE.Euler(signx * this.angle * 3.14 / 180, signy * this.angle * 3.14 / 180, signz * this.angle * 3.14 / 180);
-	            this.state.dir.applyEuler(e);
-	        }
-	
-	        // Translate the turtle along the input vector.
-	        // Does NOT change the turtle's _dir_ vector
-	
-	    }, {
-	        key: 'moveTurtle',
-	        value: function moveTurtle(x, y, z) {
-	            var new_vec = THREE.Vector3(x, y, z);
-	            this.state.pos.add(new_vec);
-	        }
-	    }, {
-	        key: 'moveForward',
-	
-	
-	        // Translate the turtle along its _dir_ vector by the distance indicated
-	        value: function moveForward(dist) {
-	            var newVec = this.state.dir.multiplyScalar(dist);
-	            this.state.pos.add(newVec);
-	        }
-	    }, {
-	        key: 'makeCylinder',
-	
-	
-	        // Make a cylinder of given length and width starting at turtle pos
-	        // Moves turtle pos ahead to end of the new cylinder
-	        value: function makeCylinder(len, width) {
-	            var geometry = new THREE.CylinderGeometry(1.5 / this.iteration, 1.5 / this.iteration, len);
-	            var material = new THREE.MeshLambertMaterial({ color: 0xba8964, side: THREE.DoubleSide });
-	            var cylinder = new THREE.Mesh(geometry, material);
-	            var materialBlue = new THREE.MeshLambertMaterial({ color: 0x00ccff, side: THREE.DoubleSide });
-	            var mesh = new THREE.Mesh(flowGeometry, materialBlue);
-	            this.scene.add(cylinder);
-	            if (Math.random() < 0.25 && this.iteration > 1) {
-	                this.scene.add(mesh);
-	            }
-	
-	            //Orient the cylinder to the turtle's current direction
-	            var quat = new THREE.Quaternion();
-	            quat.setFromUnitVectors(new THREE.Vector3(0, 1, 0), this.state.dir);
-	            var mat4 = new THREE.Matrix4();
-	            mat4.makeRotationFromQuaternion(quat);
-	            cylinder.applyMatrix(mat4);
-	            mesh.applyMatrix(mat4);
-	
-	            //Move the cylinder so its base rests at the turtle's current position
-	            var mat5 = new THREE.Matrix4();
-	            var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * len));
-	            mat5.makeTranslation(trans.x, trans.y, trans.z);
-	            cylinder.applyMatrix(mat5);
-	            mesh.applyMatrix(mat5);
-	            //Scoot the turtle forward by len units
-	            this.moveForward(len / 2);
-	        }
-	    }, {
-	        key: 'renderSymbol',
-	
-	
-	        // Call the function to which the input symbol is bound.
-	        // Look in the Turtle's constructor for examples of how to bind 
-	        // functions to grammar symbols.
-	        value: function renderSymbol(symbolNode) {
-	            var func = this.renderGrammar[symbolNode.symbol];
-	            this.iteration = symbolNode.iteration;
-	            if (func) {
-	                func();
-	            }
-	        }
-	    }, {
-	        key: 'renderSymbols',
-	
-	
-	        // Invoke renderSymbol for every node in a linked list of grammar symbols.
-	        value: function renderSymbols(linkedList) {
-	            var currentNode;
-	            for (currentNode = linkedList.head; currentNode != null; currentNode = currentNode.next) {
-	                this.renderSymbol(currentNode);
-	            }
-	        }
-	    }]);
-	
-	    return Turtle;
-	}();
-	
-	exports.default = Turtle;
+	exports.default = {
+	    generateNoise: generateNoise
+	};
 
 /***/ }
 /******/ ]);
