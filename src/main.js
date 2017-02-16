@@ -109,7 +109,7 @@ function setupLightsandSkybox(scene, camera)
   scene.add( plane );
 
   // set camera position
-  camera.position.set(0, 5, 5);
+  camera.position.set(0, 5, -8);
   camera.lookAt(new THREE.Vector3(0,0,0));
 }
 
@@ -183,7 +183,7 @@ function cleanscene(scene)
 function finalgeneration(scene)
 {
   //actual cubes and buildings
-  for(var i=0; i<4; i++)
+  for(var i=0; i<5; i++)
   {
     var l = shapeList.length;
     for(var j=0; j<l; j++)
