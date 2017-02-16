@@ -132,7 +132,7 @@ export const GrammarRules =
 		}),
 	],
 
-	// ----------- Skyscrapers -------------
+	
 	'GROUND_FLOOR_SKY':[ 
 		//TODO: add rule to replace this with shops n stuff ?? 
 		new Rule(1, (node, iter) => {
@@ -171,7 +171,27 @@ export const GrammarRules =
 			set.add(node);
 			set.add(floor);
 			return set;
-		}),
-		new Rule(0.001, terminalRule)
+		})
+	],
+
+	// ----------- Parks -------------
+	'PARK': [
+		new Rule(0.9, (node, iter) => {
+			var set = new Set();
+			var tree = copyNodePos(node, 'TREE', iter);
+			var nodeBox = getBbox(node);
+			tree.position.y += getBbox(tree).y / 2;
+			var xOffset =  (Math.random() * 2 - 1) * nodeBox.x / 2;
+			console.log(xOffset);
+			tree.position.x += xOffset;
+			tree.position.z += (Math.random() * 2 - 1) * nodeBox.z / 2;
+
+			//TODO: random rotation
+
+			set.add(node);
+			set.add(tree);
+			return set;
+		}), 
+		new Rule(0.1, terminalRule),
 	],
 }

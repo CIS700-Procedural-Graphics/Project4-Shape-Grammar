@@ -44,6 +44,14 @@ export const Geometry = {
   ROOF_SKY: {
     path: 'skyscraper_roof.obj', //TODO: replace
     obj: {}
+  },
+  PARK: {
+    path: 'park.obj',
+    obj: {},
+  },
+  TREE: {
+    path: 'tree.obj',
+    obj:{},
   }
   // STORE_FRONT: { // -> can function as GROUND_FLOOR_APT or GROUND_FLOOR_SKY
   //   path: '', //TODO
@@ -93,7 +101,6 @@ function onLoad(framework) {
   gui.add(shapeGrammar, 'iterations', 0, 70).step(1).onChange(function(newVal){
     shapeGrammar.iterations = newVal;
     clearScene();
-    // resetShapeGrammar();
     initRender = false;
     rendered = false;
   });
@@ -129,6 +136,7 @@ function resetShapeGrammar() {
   var shapes = city.makeCity();
 
   shapeGrammar = new ShapeGrammar(city);
+  initRender = true;
 
   if (iter) {
     shapeGrammar.iterations = iter;

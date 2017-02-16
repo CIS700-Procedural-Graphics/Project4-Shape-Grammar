@@ -71,16 +71,32 @@ export default class City {
 	makeCity() {
 		var apt = 'GROUND_FLOOR_APT';
 		var sky = 'GROUND_FLOOR_SKY';
+		var park = 'PARK';
 		var set = new Set();
-		var lot = 4;
+		var lotSize = 4;
 
-		for (var x = 0; x < 10; x++) {
-			for (var z = 0; z < 10; z++) {
-				var building = Math.random() > 0.5 ? apt : sky;
+		var citySize = 12;
+
+		for (var x = 0; x < citySize; x++) {
+			for (var z = 0; z < citySize; z++) {
+				var building;
+				var rand = Math.random();
+				if (rand < 0.1) {
+					building = park;
+				} else if (rand < 0.55) {
+					building = apt;
+				} else {
+					building = sky;
+				}
+
 				var node = new Node(building, 0);
 				node.maxHeight = this.getMaxHeight(x, x * z, z);
-				node.position.set(x * lot, 0, z * lot);
-				set.add(node);
+				node.position.set(x * lotSize, 0, z * lotSize);
+
+				var pr = 1;//1.3 - Math.max(Math.abs(0.5 - x / (citySize-1)), Math.abs(0.5 - z / (citySize-1)));
+				if (Math.random() < pr) {
+					set.add(node);
+				}
 			}
 		}
 		return set;
