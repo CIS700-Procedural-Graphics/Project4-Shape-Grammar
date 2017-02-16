@@ -8,10 +8,14 @@ function Rule(prob, str) {
     this.successorString = str; // The string that will replace the char that maps to this Rule
 }
 
+function getRandom(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
 class Shape {
     constructor() {
-        this.position = { x: 0.0, y: 0.0, z: 0.0}; 
-        this.scale = { x: 1.0, y: 1.0, z: 1.0};
+        this.position = { x: getRandom(-25,25), y: 0, z: getRandom(-25,25)}; 
+        this.scale = { x: getRandom(1,4), y: 1.0, z: getRandom(1, 2)};
         this.symbol = ''; // name of the associated geometry for this symbol
         this.geom = {}; 
     }

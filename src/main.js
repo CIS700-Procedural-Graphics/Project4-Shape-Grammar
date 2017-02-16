@@ -23,6 +23,17 @@ function onLoad(framework) {
   camera.position.set(1, 1, 2);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
+  var geometry = new THREE.PlaneGeometry( 100, 100 );
+  var material = new THREE.MeshBasicMaterial( {color: 0xffffff, side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+
+  var xAxis = new THREE.Vector3(1,0,0);
+  var yAxis = new THREE.Vector3(0,1,0);
+  var zAxis = new THREE.Vector3(0,0,1);
+  plane.rotateOnAxis(xAxis, 1.5708);
+  console.log(plane.position);
+  scene.add( plane );
+
   var sys = new ShapeSystem(scene);
   sys.doIterations(2);
 
