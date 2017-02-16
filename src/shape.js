@@ -250,31 +250,33 @@ export default class Shape
       door.rotateY(3.14); // it now faces you, i.e +z
 
       var p = Math.random(); //to randomly pick a wall
+      var offset = 0.1;
       if(p<0.25)
       {
         //+x
         door.rotateY(3.14*0.5);
-        var jitter = -scale.z/2.0  + 0.5 + Math.random()*(scale.z - 0.5);
+        var jitter = -scale.z/2.0  + offset + Math.random()*(scale.z - offset);
         door.position.set(pos.x + scale.x/2.0, 0, pos.z + jitter);
       }
       else if(p<0.50)
       {
         //-x
         door.rotateY(3.14*1.5);
-        var jitter = -scale.z/2.0  + 0.5 + Math.random()*(scale.z - 0.5);
+        var jitter = -scale.z/2.0  + offset + Math.random()*(scale.z - offset);
         door.position.set(pos.x - scale.x/2.0, 0, pos.z + jitter);
       }
       else if(p<0.75)
       {
         //+z
-        var jitter = -scale.x/2.0  + 0.5 + Math.random()*(scale.x - 0.5);
-        door.position.set(pos.x + jitter, 0, pos.z + scale.z/2.0);
+        door.rotateY(3.14);
+        var jitter = -scale.x/2.0  + offset + Math.random()*(scale.x - offset);
+        door.position.set(pos.x + jitter, 0, pos.z - scale.z/2.0);
       }
       else
       {
-        //-z
-        var jitter = -scale.x/2.0  + 0.5 + Math.random()*(scale.x - 0.5);
-        door.position.set(pos.x + jitter, 0, pos.z - scale.z/2.0);
+        //-z        
+        var jitter = -scale.x/2.0  + offset + Math.random()*(scale.x - offset);
+        door.position.set(pos.x + jitter, 0, pos.z + scale.z/2.0);
       }
       scene.add(door);
     }
