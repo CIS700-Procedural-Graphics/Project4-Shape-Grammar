@@ -1,0 +1,2 @@
+const THREE = require('three');
+

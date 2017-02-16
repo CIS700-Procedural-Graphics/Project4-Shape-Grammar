@@ -52,6 +52,7 @@ export default class LinkedList {
 	};
 
 	// Returns a string version of the LL
+	// Assuming that the value is a letter
 	toString() {
 		if (this.head === null) {
 			return '';
