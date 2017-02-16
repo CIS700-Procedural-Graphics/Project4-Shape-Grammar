@@ -1,10 +1,7 @@
 
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
-import Lsystem, {stringToLinkedList, linkedListToString, replaceNode} from './lsystem.js'
-import Turtle from './turtle.js'
-
-var turtle;
+import ShapeSystem, {stringToLinkedList, linkedListToString, replaceNode} from './shapegrammar.js'
 
 // called after the scene loads
 function onLoad(framework) {
@@ -26,33 +23,12 @@ function onLoad(framework) {
   camera.position.set(1, 1, 2);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
-  // initialize LSystem and a Turtle to draw
-  var lsys = new Lsystem();
-  turtle = new Turtle(scene);
-  doLsystem(lsys, 1, turtle);
+  var sys = new ShapeSystem(scene);
+  sys.doIterations(2);
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
-
-  gui.add(lsys, 'axiom').onChange(function(newVal) {
-    lsys.updateAxiom(newVal);
-    doLsystem(lsys, lsys.iterations, turtle);
-  });
-
-  gui.add(lsys, 'iterations', 0, 12).step(1).onChange(function(newVal) {
-    clearScene(turtle);
-    doLsystem(lsys, newVal, turtle);
-  });
-}
-
-// clears the scene by removing all geometries added by turtle.js
-function clearScene(turtle) {
-  var obj;
-  for( var i = turtle.scene.children.length - 1; i > 3; i--) {
-      obj = turtle.scene.children[i];
-      turtle.scene.remove(obj);
-  }
 }
 
 function doLsystem(lsystem, iterations, turtle) {

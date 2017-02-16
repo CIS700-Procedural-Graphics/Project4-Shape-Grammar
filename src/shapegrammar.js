@@ -1,3 +1,6 @@
+const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
+import Framework from './framework'
+
 // A class that represents a symbol replacement rule to
 // be used when expanding an L-system grammar.
 function Rule(prob, str) {
@@ -5,11 +8,12 @@ function Rule(prob, str) {
     this.successorString = str; // The string that will replace the char that maps to this Rule
 }
 
-class ShapeSymbol {
+class Shape {
     constructor() {
         this.position = { x: 0.0, y: 0.0, z: 0.0}; 
-        this.scale = 1.0; 
-        this.model = ''; // name of the associated geometry for this symbol
+        this.scale = { x: 1.0, y: 1.0, z: 1.0};
+        this.symbol = ''; // name of the associated geometry for this symbol
+        this.geom = {}; 
     }
 }
 
@@ -17,14 +21,14 @@ class Node {
     constructor() {
         this.prevNode = null;
         this.nextNode = null;
-        this.symbol = '';
-        this.shapeSymbol = {};
+        this.shape = new Shape();
     }
-    getSymbol() {
-        return this.symbol;
+    getShape() {
+        return this.shape;
     }
-    setSymbol(newSymbol) {
-        this.symbol = newSymbol;
+    setShape(newShape) {
+        this.shape = new Shape();
+        this.shape.symbol = newShape;
     }
     getNext() {
         return this.nextNode;
@@ -47,10 +51,10 @@ class LinkedList {
     }
 
     // adds a node to the end of the linked list
-    addNodeWithSymbol(nodeSymbol) {
+    addNodeWithShape(nodeShape) {
         if (this.length == 0) {
             var newNode = new Node();
-            newNode.setSymbol(nodeSymbol);
+            newNode.setShape(nodeShape);
             this.startNode = newNode;
         } else {
             var temp = this.startNode;
@@ -58,7 +62,7 @@ class LinkedList {
                 temp = temp.getNext();
             }
             var newNode = new Node();
-            newNode.setSymbol(nodeSymbol);
+            newNode.setShape(nodeShape);
             newNode.setPrev(temp);
             temp.setNext(newNode);
         } 
@@ -99,28 +103,32 @@ class LinkedList {
         }
     }
 
+    addGeometries(scene) {
+        
+    }
+
     // given the desired node to replace and an array of replacement symbols
-    expandNode(nodeToExpand, replacementSymbols) {
-        var symbol = nodeToExpand.getSymbol();
-        if (replacementSymbols.length > 0) {
+    expandNode(scene, nodeToExpand, replacementShapes) {
+        if (replacementShapes.length > 0) {
             var nullNode = new Node();
             var prevNode = nodeToExpand.getPrev();
             var nextNode = nodeToExpand.getNext();
             this.deleteNode(nodeToExpand);
             var simpleAdd = true;
             if (this.length > 0) simpleAdd = !simpleAdd;
-            for (var i = 0; i < replacementSymbols.length; i++) {
+            for (var i = 0; i < replacementShapes.length; i++) {
                 if (!simpleAdd) {
                     var newNode = new Node();
-                    newNode.setSymbol(replacementSymbols[i]);
+                    newNode.setShape(replacementShapes[i]);
                     this.linkNodes(prevNode, newNode);
                     prevNode = newNode;
-                    if (i == replacementSymbols.length - 1) {
+                    if (i == replacementShapes.length - 1) {
                         this.linkNodes(newNode, nextNode);
                     }
                 } else {
-                    this.addNodeWithSymbol(replacementSymbols[i]);
+                    var newNode = this.addNodeWithShape(replacementShapes[i]);
                 }
+                
                 this.length++;
             }
         }
@@ -133,12 +141,11 @@ export function stringToLinkedList(input_string) {
     // ex. assuming input_string = "F+X"
     // you should return a linked list where the head is 
     // at Node('F') and the tail is at Node('X')
-    var symbols = input_string.split("");
+    var shapes = input_string.split("");
     var ll = new LinkedList();
-    for (var i = 0; i < symbols.length; i++) {
-        ll.addNodeWithSymbol(symbols[i]);
+    for (var i = 0; i < shapes.length; i++) {
+        ll.addNodeWithShape(shapes[i]);
     }
-    console.log(ll);
     return ll;
 }
 
@@ -148,7 +155,7 @@ export function linkedListToString(linkedList) {
     var result = "";
     var temp = linkedList.getStartNode();
     while (temp != null) {
-        result += temp.getSymbol();
+        result += temp.getShape().symbol;
         temp = temp.getNext();
     }
     return result;
@@ -156,20 +163,16 @@ export function linkedListToString(linkedList) {
 
 // TODO: Given the node to be replaced, 
 // insert a sub-linked-list that represents replacementString
-function replaceNode(linkedList, node, replacementString) {
+function replaceNode(scene, linkedList, node, replacementString) {
     var replacementStringArray = replacementString.split("");
-    linkedList.expandNode(node, replacementStringArray);
+    linkedList.expandNode(scene, node, replacementStringArray);
 }
 
-export default function Lsystem(axiom, grammar, iterations) {
+export default function ShapeSystem(scene, axiom, grammar, iterations) {
     // default LSystem
     this.axiom = "X";// FX";
     this.grammar = {};
-    // this.grammar['X'] = [
-    //     new Rule(1.0, '[-FX][+FX]')
-    // ];
-    this.grammar['F'] = [new Rule(0.7, 'FF'), new Rule(0.3, '[-FK][+FK]F[-FK][+FK]')];//new Rule(0.2, '[-F][F][+F]'), new Rule(0.5, 'F[+F]F[-F]F'), new Rule(0.3, '[+F]F[-F][F]')];
-    this.grammar['X'] = [new Rule(1.0, 'F−[[X]+X]+F[+FX]−X')];
+    this.grammar['X'] = [new Rule(1.0, 'FFF')];
     this.iterations = 0; 
     
     // Set up the axiom string
@@ -209,8 +212,10 @@ export default function Lsystem(axiom, grammar, iterations) {
             var temp = lSystemLL.getStartNode();
             var lSystemLength = lSystemLL.getLength();
             for (var j = 0; j < lSystemLength; j++) {
+                console.log(temp);
                 if (temp == null) break;
-                var grammarRuleArray = this.grammar[temp.getSymbol()];
+                console.log(temp.getShape());
+                var grammarRuleArray = this.grammar[temp.getShape().symbol];
                 if (grammarRuleArray != null) {
                     var replacementString = '';
                     var determineRule = Math.random();
@@ -225,11 +230,30 @@ export default function Lsystem(axiom, grammar, iterations) {
                         } 
                         tempMin += grammarRuleArray[k].probability; 
                     }
-                    replaceNode(lSystemLL, temp, replacementString);
+                    replaceNode(scene, lSystemLL, temp, replacementString);
                 } 
                 temp = temp.getNext(); 
             }
         }
+        console.log(lSystemLL);
+
+        var node = lSystemLL.getStartNode();
+        var ctr = 0.0; 
+        do {
+            console.log("making cube");
+            //based on values in shape attributes
+            var geometry = new THREE.BoxGeometry( node.shape.scale.x, node.shape.scale.y, node.shape.scale.z);
+            var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+            var cube = new THREE.Mesh( geometry, material );
+            cube.position.setX(node.shape.position.x + ctr);
+            cube.position.setY(node.shape.position.y);
+            cube.position.setZ(node.shape.position.z);
+            scene.add( cube );
+            ctr += 10;
+            node = node.getNext();
+        } while (node.getNext() != null) 
+        console.log(scene);
+
         return lSystemLL;
     }
 }
