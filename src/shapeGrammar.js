@@ -4,7 +4,7 @@ import {getNoise} from './noise.js'
 
 var ShapeEnum = Object.freeze({Ring: 0, Wall: 1, Roof1: 2, 
 								Roof2: 3, Block: 4, Tower: 5, 
-								Wedge: 6, Emplacement: 7});
+								Wedge: 6, Emplacement: 7, Other: 999});
 var material = new THREE.MeshPhongMaterial();
 var objLoader = new THREE.OBJLoader();
 var objLibrary = [];
@@ -72,11 +72,20 @@ export default class GrammarSystem {
 
 		var dummy3 = new THREE.Geometry();
 		objLibrary.push(dummy3);
-		objLoader.load('./roundRoof.obj', function(obj) {
+		objLoader.load('./roundroof.obj', function(obj) {
 			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
-			g.applyMatrix( new THREE.Matrix4().makeRotationY(0.5 * Math.PI / 180.0));
 			
 			objLibrary[2].merge(g, g.matrix);
+
+			selfRef.clearIterations();
+		});
+
+		var dummy4 = new THREE.Geometry();
+		objLibrary.push(dummy4);
+		objLoader.load('./angleroof.obj', function(obj) {
+			var g = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+			g.applyMatrix( new THREE.Matrix4().makeScale(4, 4, 4));
+			objLibrary[3].merge(g, g.matrix);
 
 			selfRef.clearIterations();
 		});
@@ -110,7 +119,6 @@ export default class GrammarSystem {
 		switch(type) {
 			case ShapeEnum.Ring: 
 				var ring = objLibrary[0].clone();
-
     			geom = new THREE.CylinderGeometry(8, 8, 2, 20);
 				geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 1, 0));
 				geom.merge(ring, ring.matrix);
@@ -134,9 +142,6 @@ export default class GrammarSystem {
 				break;
 
 			case ShapeEnum.Tower:
-				//geom = new THREE.CylinderGeometry(0.3,0.25, 5);
-				//geom.applyMatrix( new THREE.Matrix4().makeTranslation(0, 2.5, 0));
-
 				var g1 = new THREE.BoxGeometry(0.6, 2, 0.6);
 				g1.applyMatrix(new THREE.Matrix4().makeTranslation(0, 2, 0));
 				geom = new THREE.BoxGeometry(0.5, 2, 0.5);
@@ -150,6 +155,10 @@ export default class GrammarSystem {
 
 			case ShapeEnum.Roof1:
 				geom = objLibrary[2].clone();
+				break;
+
+			case ShapeEnum.Roof2:
+				geom = objLibrary[3].clone();
 				break;
 
 			default:
@@ -195,14 +204,37 @@ export default class GrammarSystem {
 	}
 
 
+	// caps this shape with a roof and terminates it
+	buildRoof(shape, shapeList) {
+		var longestSide = Math.max(shape.scale.x, shape.scale.z);
+		var roof;
+		if (shape.scale.x > shape.scale.z) {
+			roof = new Shape(new THREE.Vector3(shape.pos.x, 4 * shape.scale.y +shape.pos.y, shape.pos.z), 
+				new THREE.Vector3(shape.scale.z, shape.scale.x, shape.scale.x),
+				 shape.yaw + 90, ShapeEnum.Roof2, true, shape.iter + 1);
+
+		} else {
+			roof = new Shape(new THREE.Vector3(shape.pos.x, 4 * shape.scale.y +shape.pos.y, shape.pos.z), 
+				new THREE.Vector3(shape.scale.x, shape.scale.z, shape.scale.z),
+				 shape.yaw, ShapeEnum.Roof2, true, shape.iter + 1);
+		}
+
+
+		//console.log("snorf");
+		shapeList.push(roof);
+	}
+
+	// creates a tower on this building
+
 	// divides this shape and adds the new ones to the list
 	subdivide(shape, shapeList) {
 		var xS = Math.cos(shape.yaw * Math.PI / 180.0);
 		var zS = Math.sin(shape.yaw * Math.PI / 180.0);
 
-		if (Math.random() < 0.1) {
+		if (Math.random() < 0.1 || shape.scale.x < 0.05 || shape.scale.z < 0.05) {
 			shape.terminal = true;
 			shapeList.push(shape);
+			//this.buildRoof(shape, shapeList);
 			return;
 		}
 
@@ -230,15 +262,17 @@ export default class GrammarSystem {
 		shapeList.push(s2);
 	}
 
+
 	// creates another layer of the city
 	buildLayer(shape, shapeList) {
 		var x = (8.0 - 1.5 * shape.iter) / 8.0;
 		var y = (8.0 - 0.5 * shape.iter) / 8.0;
 		var s = new THREE.Vector3(x, y, x)
+		var check = this.numIterations > 3;
 
 		var layer = new Shape(new THREE.Vector3(shape.pos.x, shape.pos.y + 2 * shape.scale.y, shape.pos.z),
 						s,
-						shape.yaw, ShapeEnum.Ring, this.numIterations > 3, shape.iter + 1);
+						shape.yaw, check? ShapeEnum.Other : ShapeEnum.Ring, check, shape.iter + 1);
 
 
 		var cliff = new Shape(new THREE.Vector3(0, 0, 0),
@@ -284,11 +318,8 @@ export default class GrammarSystem {
 		}
 	}
 
-	// creates a more detailed wall segment on the ring
 
-	// caps this shape with a roof and terminates it
 
-	// creates a tower on this building
 
 	// creates a tower on the wall
 	buildWallTower(shape, shapeList) {
@@ -342,19 +373,13 @@ export default class GrammarSystem {
 			shapeList.push(shape);
 		}
 
-	}
-
-	// creates a more centrally located tower
+	}	
 
 	// apply a rule to each non - terminal shape in the grammar
 	iterateGrammar() {
-		
-
 		// begin a new list of shapes
 		var newShapes = [];
 		var newIter = this.numIterations + 1;
-
-
 
 		// for each shape, apply an appropriate rule
 		for (var i = 0; i < this.allShapes.length; i++) {
@@ -377,6 +402,9 @@ export default class GrammarSystem {
 				}
 			} else {
 				// this shape is terminal. Simply add it to the list
+				if (this.allShapes[i].type == ShapeEnum.Block) {
+					this.buildRoof(this.allShapes[i], newShapes);
+				}
 				newShapes.push(this.allShapes[i]);
 			}
 
