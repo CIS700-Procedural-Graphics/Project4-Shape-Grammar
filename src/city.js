@@ -2,6 +2,16 @@ const THREE = require('three');
 const Random = require("random-js");
 
 
+
+class Voronoi
+{
+	constructor()
+	{
+
+	}
+
+}
+
 class Generator
 {
 	constructor()
@@ -12,7 +22,9 @@ class Generator
 	// N + N^2 * 27 * 2
 	build(scene)
 	{
+		// count * count final points
 		var count = 20;
+		var scale = 2;
   		var random = new Random(Random.engines.mt19937().autoSeed());
 
   		var geometry = new THREE.Geometry();
@@ -29,24 +41,34 @@ class Generator
 
   			for(var y = 0; y < count; y++)
   			{
-  				var p = new THREE.Vector2( x + .5 + random.real(-randomAmplitude,randomAmplitude), y + .5 + random.real(-randomAmplitude,randomAmplitude));
+  				var r1 = random.real(-1, 1) * randomAmplitude * scale;
+  				var r2 = random.real(-1, 1) * randomAmplitude * scale;
+
+  				var p = new THREE.Vector2( x * scale + .5 + r1, y * scale + .5 + r2);
   				points[x].push(p);
   				pointsGeo.vertices.push(new THREE.Vector3( p.x, 0, p.y ));
   			}
   		}
 
-  		// Build half planes
+  		// Build half planes, and finding their convex hulls
   		var segments = [];
+  		var hulls = [];
+  		var hullPoints = [];
+
   		for(var x = 0; x < count; x++)
   		{
   			segments.push(new Array());
+  			hulls.push(new Array());
+  			hullPoints.push(new Array());
 
   			for(var y = 0; y < count; y++)
   			{
   				segments[x].push(new Array());
+  				hullPoints[x].push(new Array());
 
   				var p = points[x][y];
 
+  				// Find all planes for all close neighbors within 3 cells
   				for(var i = -2; i < 3; i++)
   				{
   					for(var j = -2; j < 3; j++)
@@ -104,6 +126,9 @@ class Generator
 						if(!insideHull)
 							continue;
 
+						hullPoints[x][y].push(newPoint);
+						pointsGeo.vertices.push(new THREE.Vector3( newPoint.x, 0, newPoint.y ));
+
 						s1.min = Math.min(s1.min, u);
 						s1.max = Math.max(s1.max, u);
 						s1.valid = true;
@@ -123,9 +148,36 @@ class Generator
 					
 					geometry.vertices.push(new THREE.Vector3( from.x, 0, from.y ))
 					geometry.vertices.push(new THREE.Vector3( to.x, 0, to.y ))
-				}  				
+				}
   			}
   		}
+
+  		// var mapCenter = new THREE.Vector3( count * .5, 0, count * .5);
+
+		// for(var i = 0; i < geometry.vertices.length; i++)
+		// {
+		// 	// Deform it in an interesting way...
+		// 	var v = geometry.vertices[i];
+
+		// 	var toCenter = v.clone().sub(mapCenter);
+		// 	var dist = Math.pow(toCenter.length() / (count * count), 1.35) * count * count;
+
+		// 	geometry.vertices[i] = mapCenter.clone().add(toCenter.multiplyScalar(dist));
+		// }
+
+		for(var x = 0; x < 10; x++)
+		{
+			var t = x / 9;
+			geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, 0 ));
+			geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, count * scale ));
+		}
+
+		for(var y = 0; y < 10; y++)
+		{
+			var t = y / 9;
+			geometry.vertices.push(new THREE.Vector3(0,0, t * count * scale));
+			geometry.vertices.push(new THREE.Vector3(count * scale, 0, t * count * scale));
+		}
 
   		console.log(geometry.vertices.length);
 
