@@ -15,7 +15,7 @@ var TurtleState = function(pos, dir) {
 export default class Turtle {
     
     constructor(scene, mesh, angle, grammar) {
-        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));
+        this.state = new TurtleState((0,0,0), new THREE.Vector3(0,1,0));
         this.scene = scene;
         this.stack = [];
         this.mesh = mesh;

@@ -4,19 +4,10 @@ import Framework from './framework'
 import Lsystem, {LinkedListToString} from './lsystem.js'
 import Turtle from './turtle.js'
 
-// create new feather material 
-    var featherMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-      u_color: {value : 0.0 },
-    },
-    vertexShader: require('./shaders/feather-vert.glsl'),
-    fragmentShader: require('./shaders/feather-frag.glsl')
-  });
-
 var turtle;
-var lMesh; 
+var geomArr = [];
 var branchAngle = 8.0;
-var branching = 1; 
+var branching = 1;
 
 // called after the scene loads
 function onLoad(framework) {
@@ -26,10 +17,49 @@ function onLoad(framework) {
   var gui = framework.gui;
   var stats = framework.stats;
 
-  // set background
+  // load basic house
+  var objLoader = new THREE.OBJLoader();
+  objLoader.load('geo/house.obj', function(obj) {
+    var cubeGeo = obj.children[0].geometry;
+    var cubeMat = new THREE.MeshLambertMaterial( {color: 0xaf1212} );
+    var cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+    geomArr.push(cubeGeo);
+  });
+
+  // load modern house
+  objLoader.load('geo/anglehouse.obj', function(obj) {
+    var cubeGeo = obj.children[0].geometry;
+    var cubeMat = new THREE.MeshLambertMaterial( {color: 0xaf1212} );
+    var cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+    // scene.add(cubeMesh); 
+    geomArr.push(cubeGeo);
+  });
+
+// load a door. make it into a grammar rule somehow... 
+  objLoader.load('geo/door.obj', function(obj) {
+    var cubeGeo = obj.children[0].geometry;
+    var cubeMat = new THREE.MeshLambertMaterial( {color: 0xaf1212} );
+    var cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+    cubeMesh.position.set(0,0,-.07);
+    // scene.add(cubeMesh); 
+    geomArr.push(cubeGeo);
+  });
+
+  // load a chimney
+  objLoader.load('geo/cube.obj', function(obj) {
+    var cubeGeo = obj.children[0].geometry;
+    var cubeMat = new THREE.MeshLambertMaterial( {color: 0xaf1212} );
+    var cubeMesh = new THREE.Mesh(cubeGeo, cubeMat);
+    cubeMesh.scale.set(0.125,0.40,0.25);
+    cubeMesh.position.set(0.65,0.8,0);
+    // scene.add(cubeMesh); 
+    geomArr.push(cubeGeo);
+  });
+
+  // set background color
   renderer.setClearColor (0xf2caba, 1);
 
-  // initialize a simple box and material
+  // initialize simple lighting
   var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
   directionalLight.color.setHSL(0.1, 1, 0.95);
   directionalLight.position.set(1, 2, 2);
@@ -44,37 +74,44 @@ function onLoad(framework) {
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   // add in ground plane
-  var material = new THREE.MeshLambertMaterial( { color: 0xfdfcfc , side: THREE.DoubleSide} );
-  var geometry = new THREE.PlaneGeometry( 100, 100, 30 );
-  var plane = new THREE.Mesh( geometry, material );
-  plane.rotateX(-Math.PI/2);
-  // plane.translateZ(-0.5);
-  scene.add( plane );
+  // var material = new THREE.MeshLambertMaterial( { color: 0xacaaa5 , side: THREE.DoubleSide} );
+  // var geometry = new THREE.PlaneGeometry( 50, 50, 30 );
+  // var plane = new THREE.Mesh( geometry, material );
+  // plane.rotateX(-Math.PI/2);
+  // plane.position.set(0,-1.1,0);
+  // scene.add(plane);
 
-  // load leaf mesh
-  // var objLoader = new THREE.OBJLoader();
-  // objLoader.load('geo/cube.obj', function(obj) {
-  //   var leafGeo = obj.children[0].geometry;
-  //   var leafMat = new THREE.MeshLambertMaterial( {color: 0x9ab021} );
-  //   var leafMesh = new THREE.Mesh(leafGeo, leafMat);
-  //   lMesh = leafMesh;
-  //   lMesh.position.set(0,1,0); 
-  //   scene.add(lMesh);
-  // });
+  var material = new THREE.MeshLambertMaterial( { color: 0xcbccb8, side: THREE.DoubleSide } );
+  var geometry = new THREE.CircleGeometry( 30, 30 );
+  var cylinder = new THREE.Mesh( geometry, material );
+  cylinder.rotateX(-Math.PI/2);
+  cylinder.position.set(0,-1.1,0);
+  scene.add( cylinder );
 
-  // initialize LSystem and a Turtle to draw  
-  var lsys = new Lsystem();
+  // add in "pool"
+  var poolGeom = new THREE.CircleGeometry( 5, 32 );
+  var mat = new THREE.MeshBasicMaterial( { color: 0xabdbde, side: THREE.DoubleSide} );
+  var circle = new THREE.Mesh( poolGeom, mat );
+  circle.position.set(0,-1.0,10.0);
 
-  turtle = new Turtle(scene, lMesh, branchAngle);
-
-  doLsystem(lsys,1,turtle, scene); 
-  // clearScene(turtle);
+  circle.rotateX(-Math.PI/2);
+  scene.add( circle );
 
   // GUI stuff
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
 
+  var guiItems = function() {
+    this.draw = 0; 
+  }
+  var guio = new guiItems(); 
+
+  gui.add(guio, 'draw', 0, 1).step(1).onChange(function(newVal) {
+    var lsys = new Lsystem(scene, geomArr);
+    // only one iteration possible
+    doLsystem(lsys, 1 , turtle , scene); 
+  });
 }
 
 // clears the scene by removing all geometries added by turtle.js
@@ -88,20 +125,7 @@ function clearScene(turtle) {
 
 // completes the lsystem
 function doLsystem(lsystem, iterations, turtle, scene) {
-  var material = new THREE.MeshLambertMaterial( { color: 0x9ab021 } );
-    var result = lsystem.doIterations(iterations);
-    // turtle.clear();
-    // turtle = new Turtle(turtle.scene, lMesh, branchAngle);
-    // turtle.renderSymbols(result);
-
-    // HW4 trying to render something
-    for (var i = 0; i < result.length; i++) {
-      // console.log("loop "  + i + ": "  + result[i]);
-      var mesh = new THREE.Mesh( result[i].geom, material );
-      mesh.position.set(result[i].pos.x,result[i].pos.y,result[i].pos.z);
-      mesh.scale.set(result[i].scale.x, result[i].scale.y, result[i].scale.z);
-      scene.add(mesh);
-    }
+  lsystem.doIterations(iterations);
 }
 
 // called on frame updates
