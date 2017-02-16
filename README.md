@@ -2,7 +2,7 @@
 
 For this project I used a shape grammar system to build a town and its surrounding environment.
 
-![Alt text](references/side-view.png?raw=true)
+![Alt text](references/front-view.png?raw=true)
 *shape grammar for houses*
 
 ![Alt text](references/top-view.png?raw=true)
