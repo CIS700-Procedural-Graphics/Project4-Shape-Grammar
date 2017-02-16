@@ -3,6 +3,7 @@ const THREE = require('three'); // older modules are imported like this. You sho
 import Framework from './framework'
 import Builder from './builder.js'
 import OBJLoader from './OBJLoader.js'
+import MTLLoader from './MTLLoader.js'
 import Turtle from './turtle.js'
 import CTurtle from './cturtle.js'
 import Lsystem, {LinkedListToString} from './lsystem.js'
@@ -12,9 +13,9 @@ var settings = {
     resetCamera: function() {},
     newSeed: function(newVal) { settings.seed = Math.random(); },
     size: 10.0,
-    resolution: 64,
+    resolution: 128,
     split: 0.0,
-    numBuildings: 500
+    numBuildings: 10000
 }
 
 var lsystem_settings = {
@@ -73,14 +74,14 @@ function onLoad(framework) {
   scene.add(directionalLight);
 
   // set camera position
-  camera.position.set(0, 10, 10);
+  camera.position.set(0,10,10);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
   });
   gui.add(settings, 'resetCamera').onChange(function() {
-      camera.position.set(0, 10, 10);
+    camera.position.set(0,10,10);
       camera.lookAt(new THREE.Vector3(0,0,0));
   });
   gui.add(settings, 'newSeed');
@@ -134,10 +135,10 @@ function generateTexture() {
   // generate grass texture
   for (var i = 0; i < size; i++) {
     for (var j = 0; j < size; j++) {
-      var r = Math.floor(50 * Math.random()) + 100;
+      var r = Math.floor(50 * Math.random());
       var g = Math.floor(50 * Math.random()) + 150;
       var b = Math.floor(50 * Math.random());
-      context.fillStyle = 'rgb(' + [r, g, b].join( ',' )  + ')';
+      context.fillStyle = 'rgb(' + [r, r, r].join( ',' )  + ')';
       context.fillRect( i, j, 1, 1 );
     }
   }
@@ -173,8 +174,6 @@ function loadMapFromCanvas(framework, key, canvas) {
   plane.name = key;
   scene.add(plane);
   city.maps[key] = canvas;
-  console.log(city.maps);
-  console.log(key+" is done");
   return canvas;
 }
 
@@ -255,12 +254,13 @@ function regenerateCity(framework) {
         console.error("Failed!", error);
       });
 
-
     var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
     scene.add(light);
     var light = new THREE.PointLight( 0xffffff, 10, 100 );
     light.position.set( 50, 50, 50 );
     scene.add(light);
+
+    // scene.fog = new THREE.FogExp2( 0xcccccc, 0.01 );
 }
 
 
@@ -309,145 +309,111 @@ function generateBuildings(framework) {
     var offset = settings.size / 2.0 - square_size / 2.0;
     var builder = new Builder();
 
-    var building_sizes = {
-      small: [
-        [0.5,0.5,0.5],
-        [0.5,1,0.5]
-      ],
-      medium: [
-        [3,3,6],
-        [3,3,10],
-      ],
-      large: [
-        [3,4,35],
-        [4,4,40]
-      ]
-    }
 
-    var canvas = document.createElement('canvas');
-    canvas.width = settings.resolution;
-    canvas.height = settings.resolution;
-    var context = canvas.getContext('2d');
-    context.fillStyle = '#ffffff';
-    context.fillRect(0,0,settings.resolution, settings.resolution);
-    context.fillStyle = '#000000';
+    builder.loadResources()
+      .then(function(response) {
+        try {
 
-    var debug = document.getElementById('debug');
-    debug.appendChild(canvas);
+          console.log("hey");
 
-    for (var n = 0; n < settings.numBuildings; n++) {
-      // randomly pick points
-      var norm_i = Math.random();
-      var norm_j = Math.random();
+          var building_sizes = {
+            small: [
+              [0.5,0.5,0.5],
+              [0.5,1,0.5]
+            ],
+            medium: [
+              [3,3,6],
+              [3,3,10],
+            ],
+            large: [
+              [9,9,20],
+              [9,9,30],
+              [9,9,30]
+            ]
+          }
 
-      // keep point based on probability (relative to population)
-      var rgba = getMapValue(city.maps['population'], norm_i, norm_j);
+          var canvas = document.createElement('canvas');
+          canvas.width = settings.resolution;
+          canvas.height = settings.resolution;
+          var context = canvas.getContext('2d');
+          context.fillStyle = '#ffffff';
+          context.fillRect(0,0,settings.resolution, settings.resolution);
+          context.fillStyle = '#000000';
 
-      var keep = Math.random() * 255;
-      if (keep > rgba.x) {
+          var debug = document.getElementById('debug');
+          debug.appendChild(canvas);
 
-        // pick a building size semi-randomly
-        if (keep < 100) {
-          var building_size = building_sizes.large[Math.floor(Math.random()*4)%2]
-        } else if (keep < 200) {
-          var building_size = building_sizes.medium[Math.floor(Math.random()*4)%2]
-        } else {
-          continue;
-        }
+          for (var n = 0; n < settings.numBuildings; n++) {
+            // randomly pick points
+            var norm_i = Math.random();
+            var norm_j = Math.random();
 
-        // check that the building fits in the location
-        var i = Math.floor(norm_i * settings.resolution);
-        var j = Math.floor(settings.resolution - norm_j * settings.resolution);
-        console.log(i+", "+j);
-        var bbox_x = [-Math.floor((building_size[0]+1)/2), Math.floor((building_size[0]+1)/2)];
-        var bbox_z = [-Math.floor((building_size[1]+1)/2), Math.floor((building_size[1]+1)/2)];
-        var isVacant = true;
-        for (var q = bbox_x[0]; q < bbox_x[1]; q++) {
-          for (var r = bbox_z[0]; r < bbox_z[1]; r++) {
+            // keep point based on probability (relative to population)
+            var rgba = getMapValue(city.maps['population'], norm_i, norm_j);
 
-            // bbox must not be out of grid and must not be occupied
-            if ((q+i).clamp(0,settings.resolution-1) != q+i ||
-                (r+j).clamp(0,settings.resolution-1) != r+j ||
-                city.grid[q+i][r+j].status != STATUS.VACANT.value) {
-                isVacant = false;
-                break;
+            var keep = Math.random() * 255;
+            if (keep > rgba.x) {
+
+              // pick a building size semi-randomly
+              if (keep < 100) {
+                var building_size = building_sizes.large[Math.floor(Math.random()*6)%3]
+              } else if (keep < 101) {
+                var building_size = building_sizes.medium[Math.floor(Math.random()*4)%2]
+              } else {
+                continue;
+              }
+
+              // check that the building fits in the location
+              var i = Math.floor(norm_i * settings.resolution);
+              var j = Math.floor(settings.resolution - norm_j * settings.resolution);
+              var bbox_x = [-Math.floor((building_size[0]+1)/2), Math.floor((building_size[0]+1)/2)];
+              var bbox_z = [-Math.floor((building_size[1]+1)/2), Math.floor((building_size[1]+1)/2)];
+              var isVacant = true;
+              for (var q = bbox_x[0]; q < bbox_x[1]; q++) {
+                for (var r = bbox_z[0]; r < bbox_z[1]; r++) {
+
+                  // bbox must not be out of grid and must not be occupied
+                  if ((q+i).clamp(0,settings.resolution-1) != q+i ||
+                      (r+j).clamp(0,settings.resolution-1) != r+j ||
+                      city.grid[q+i][r+j].status != STATUS.VACANT.value) {
+                      isVacant = false;
+                      break;
+                  }
+                }
+              }
+
+              if (isVacant) {
+                // generate building
+                var scale_factor = settings.size / settings.resolution; // 0.5 bc box size is half size width
+                var density = Math.pow((255 - rgba.x) / 255, 2) * 20;
+                var density = 0.4;
+                var options = {
+                    iterations: 3,
+                    length: scale_factor * building_size[0],
+                    width: scale_factor * building_size[1],
+                    height: scale_factor * (building_size[2] + (Math.random() * building_size[2])),
+                    x: i * square_size - offset,
+                    z: j * square_size - offset
+                };
+                var building = builder.generateBuilding(scene, options);
+
+                // Update the grid
+                for (var q = bbox_x[0]; q < bbox_x[1]; q++) {
+                  for (var r = bbox_z[0]; r < bbox_z[1]; r++) {
+                    city.grid[q+i][r+j].status = STATUS.OCCUPIED.value;
+                  }
+                }
+              }
             }
           }
+
+        } catch (error) {
+          console.log("error " + error);
         }
 
-        console.log(isVacant);
-        if (isVacant) {
-          // generate building
-          var scale_factor = 0.5 * settings.size / settings.resolution; // 0.5 bc box size is half size width
-          var density = Math.pow((255 - rgba.x) / 255, 2) * 20;
-          var density = 0.4;
-          var options = {
-              length: scale_factor * building_size[0],
-              width: scale_factor * building_size[1],
-              height: scale_factor * (building_size[2] + (Math.random() * building_size[2]))
-          };
-          var building = builder.generateBuilding(options);
-          building.position.set(i * square_size - offset, 0, j * square_size - offset);
-          scene.add(building);
-
-          for (var q = bbox_x[0]; q < bbox_x[1]; q++) {
-            for (var r = bbox_z[0]; r < bbox_z[1]; r++) {
-              city.grid[q+i][r+j].status = STATUS.OCCUPIED.value;
-            }
-          }
-          console.log(city.grid);
-        }
-      }
-    }
-
-
-
-
-
-
-    // var roads = city.maps['roads'];
-    //
-    //
-    // for (var i = 0; i < settings.resolution; i++) {
-    //     for (var j = 0; j < settings.resolution; j++) {
-    //
-    //
-    //       var isClear = true;
-    //       for (var k = -1; k < 2; k++) {
-    //         for (var m = -1; m < 2; m++) {
-    //           var norm_i = (i + k) / settings.resolution;
-    //           var norm_j = (settings.resolution - (j + m)) / settings.resolution;
-    //           var rgba = getMapValue(roads, norm_i, norm_j);
-    //           if (rgba.x != 255) {
-    //             isClear = false;
-    //             break;
-    //           }
-    //         }
-    //       }
-    //
-    //       if (isClear) {
-    //         if (Math.random() < 0.3) {
-    //             continue;
-    //         }
-    //
-    //         var norm_i = i / settings.resolution;
-    //         var norm_j = (settings.resolution - j) / settings.resolution;
-    //         var rgba = getMapValue(city.maps['population'], norm_i, norm_j);
-    //
-    //         var density = Math.pow((255 - rgba.x) / 255, 2) * 20;
-    //         var options = {
-    //             zone: city.grid[i][j].zone,
-    //             length: settings.size / settings.resolution,
-    //             width: settings.size / settings.resolution,
-    //             height: density * settings.size / settings.resolution * Math.random()
-    //         };
-    //         var building = builder.generateBuilding(options);
-    //         building.position.set(i * square_size - offset, 0, j * square_size - offset);
-    //         scene.add(building);
-    //       }
-    //     }
-    // }
-
+      }, function(error) {
+        console.error("Failed!", error);
+      });
 }
 
 function within(x, low, high) {
