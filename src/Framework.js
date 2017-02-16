@@ -3,6 +3,7 @@ import DAT from 'dat-gui'
 
 import LSystem from './LSystem';
 import Drawer from './Drawer';
+import { v3, rgb, randColor, randGray, randSign, upperRand, randRange } from './Utils'
 
 const THREE = require('three');
 const OrbitControls = require('three-orbit-controls')(THREE)
@@ -102,6 +103,7 @@ export default class Framework {
     objLoader.load('obj/lpt_0.obj', loadObj.bind(this, 'lpt_0', 0x888888));
     objLoader.load('obj/lpt_1.obj', loadObj.bind(this, 'lpt_1', 0x888888));
     objLoader.load('obj/lpt_2.obj', loadObj.bind(this, 'lpt_2', 0x888888));
+    objLoader.load('obj/door.obj', loadObj.bind(this, 'door', 0x888888));
     objLoader.load('obj/window.obj', loadObj.bind(this, 'window', 0xffffff));
 
   }

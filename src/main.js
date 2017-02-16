@@ -1,7 +1,7 @@
 import Framework from './Framework';
 
-window.DEBUGGING = 1;
-window.mode = window.DEBUGGING;
+window.DEMO = 1;
+window.mode = window.DEMO;
 
 (function main() {
   let framework = new Framework();
