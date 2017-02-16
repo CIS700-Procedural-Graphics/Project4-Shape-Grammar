@@ -292,91 +292,13 @@ function renderbuildings(scene)
 
 //------------------------------------------------------------------------------
 
-function createCityoldfailedfunction(scene)
-{
-  var radius = 6;
-  var tube = 1;
-  var arc = 6.3; //in radians
-  var geotorus = new THREE.TorusBufferGeometry( radius, tube, 6, 15, arc); // (radius, tube, radialSegments, tubularSegments, arc)
-  var mtorus = new THREE.MeshBasicMaterial( { color: (new THREE.Color(Math.random(), Math.random(), Math.random())).getHex() } );
-  var torus = new THREE.Mesh( geotorus, mtorus );
-  torus.position.set(guiParameters.city_center_x, tube*0.5, guiParameters.city_center_z);
-  torus.rotateX(3.14 * 0.5);
-  scene.add( torus );
-
-  // var geocyl = new THREE.CylinderGeometry( radius-2, radius, 6, 10 );
-  // var matcyl = new THREE.MeshBasicMaterial( { color: 0x9933FF } );
-  // var cylinder = new THREE.Mesh( geocyl, matcyl );
-  // cylinder.position.set(guiParameters.city_center_x, 3, guiParameters.city_center_z);
-  // cylinder.scale.set(0.8,0.8,0.8);
-  // scene.add( cylinder );
-  //
-  // var points = [];
-  // for ( var i = 0; i < 10; i ++ )
-  // {
-  // 	points.push( new THREE.Vector2( Math.sin( i * 0.2 ) * 10 + 5, ( i - 5 ) * 2 ) );
-  // }
-  // var geolathe = new THREE.LatheGeometry( points );
-  // var matlathe = new THREE.MeshBasicMaterial( { color: 0x3399FF } );
-  // var lathe = new THREE.Mesh( geolathe, matlathe );
-  // lathe.position.set(guiParameters.city_center_x, 1.4, guiParameters.city_center_z);
-  // lathe.rotateX(3.14);
-  // lathe.scale.set(0.35,0.2,0.35);
-  // scene.add( lathe );
-
-  //generate square plane of uniform points
-  var samplesize = guiParameters.levelOfDetail;
-  for(var i=0; i<samplesize ; i = i+(1.0/samplesize))
-  {
-    for(var j=0; j<samplesize ; j = j+(1.0/samplesize))
-    {
-      sampler.push(new THREE.Vector2(i,j));
-    }
-  }
-
-  //convert square into disc
-  var angle = 6.28/samplesize;
-  var samplestep = 0.0;
-  for(var i=angle*0.5; i<6.28 ; i=i+angle, samplestep = samplestep + samplesize )
-  {
-    var r = 6; //scaling
-    r = r + Math.sqrt(sampler[samplestep].x);
-    var theta = 6.28 * sampler[samplestep].y;
-    var gridx = r * Math.cos(theta);
-    var gridz = r * Math.sin(theta);
-    //gridz is 0;
-
-    var splineStart = new THREE.Vector2( gridx, gridz );
-    var center = new THREE.Vector2( torus.position.x,  torus.position.z);
-    splineStart.rotateAround ( center, angle )
-    var curve = new THREE.SplineCurve( [
-         new THREE.Vector2( splineStart.x, splineStart.y ),
-         new THREE.Vector2( splineStart.x * 2, splineStart.y *2)
-       ] );
-    var path = new THREE.Path(curve.getPoints(5));
-    var roadpoints = path.createPointsGeometry(5);
-
-    for(var j=0; j<5 ;j++)
-    {
-      var geo = new THREE.PlaneGeometry( 1, 1, 1 );
-      var mat = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
-      var roadplane = new THREE.Mesh( geo, mat );
-      roadplane.rotateX(3.14 * 0.5);
-      roadplane.position.set(roadpoints.vertices[j].x, 1, roadpoints.vertices[j].y);
-      roadplane.scale.set(2,2,2);
-      // plane.rotateX(3.14/2.0);
-      scene.add( roadplane );
-    }
-  }
-}
-
 function createCity(scene)
 {
   var circleList = [];
-  var curveList = [];
+  var curvePointsList = [];
   var radius = guiParameters.towerRadius;
 
-  var radius = 6;
+  // var radius = 6;
   var tube = 1;
   var arc = 6.3; //in radians
   var geotorus = new THREE.TorusBufferGeometry( radius, tube, 6, 15, arc); // (radius, tube, radialSegments, tubularSegments, arc)
@@ -389,48 +311,88 @@ function createCity(scene)
   //-------------------------------- create circle Layers ---------------------------
   var numberOfLayers = 3;
   var segments = guiParameters.levelOfDetail;
+  var numroadplanes = 10;
+
   for(var i=0; i<numberOfLayers ;i++)
   {
-    var circlegeo = new THREE.CircleGeometry( radius + i*8, segments*5 );
+    var circlegeo = new THREE.CircleGeometry( radius + i*8, segments );
+    circlegeo.rotateX(-3.14*0.5);
     var mat = new THREE.MeshBasicMaterial( { color:  (new THREE.Color(Math.random(), Math.random(), Math.random())).getHex() , side: THREE.DoubleSide} );
     var circle = new THREE.Mesh( circlegeo, mat ); // first vertex is the center the others are points on the circle,
                                                   // starting alligned with the +x axis
-    circle.rotateX(-3.14*0.5);
     circle.position.set(guiParameters.city_center_x, 0.01 *(numberOfLayers-i) + 0.05, guiParameters.city_center_z);
     circleList.push(circle);
     scene.add( circleList[circleList.length-1] );
   }
-  //
-  // console.log(numberOfLayers);
-  // console.log(segments);
+
   for(var i=0; i<numberOfLayers-1 ;i++)
   {
     for(var j=0; j<segments ;j++)
     {
       var curve = new THREE.SplineCurve( [
-        new THREE.Vector2( circleList[i].geometry.vertices[j+1].x, circleList[i].geometry.vertices[j+1].y ),
-        new THREE.Vector2( circleList[i+1].geometry.vertices[j+1].x, circleList[i+1].geometry.vertices[j+1].y )
+        new THREE.Vector2( circleList[i].geometry.vertices[j+1].x, circleList[i].geometry.vertices[j+1].z ),
+        new THREE.Vector2( circleList[i+1].geometry.vertices[j+1].x, circleList[i+1].geometry.vertices[j+1].z )
       ] );
 
-      // console.log(curve.getPoint(0));
-      // console.log(curve.getPoint(1));
+      var path = new THREE.Path( curve.getPoints( numroadplanes ) );
+      var roadpoints = path.createPointsGeometry( numroadplanes );
+      curvePointsList.push(roadpoints);
 
-      var path = new THREE.Path( curve.getPoints( 5 ) );
-      var roadpoints = path.createPointsGeometry( 5 );
-      var pathMat = new THREE.LineBasicMaterial( { color : 0x0000ff } );
-      var splineObject = new THREE.Line( roadpoints, pathMat );
-      splineObject.position.set(guiParameters.city_center_x, 0.1, guiParameters.city_center_z);
-      scene.add(splineObject);
-
-      for(var j=0; j<5 ;j++)
+      for(var k=0; k<numroadplanes ;k++)
       {
         var geo = new THREE.PlaneGeometry( 1, 1, 1 );
         var mat = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
         var roadplane = new THREE.Mesh( geo, mat );
         roadplane.rotateX(3.14 * 0.5);
-        roadplane.position.set(roadpoints.vertices[j].x, 0.1, roadpoints.vertices[j].z);
-        roadplane.scale.set(2,2,2);
-        // plane.rotateX(3.14/2.0);
+        roadplane.position.set(roadpoints.vertices[k].x + guiParameters.city_center_x, 0.1, roadpoints.vertices[k].y + guiParameters.city_center_z);
+        roadplane.scale.set(1.5,1.5,1.5);
+        scene.add( roadplane );
+      }
+    }
+  }
+
+  for(var i=0; i<curvePointsList.length ;i++)
+  {
+    var prob = Math.random() * 2;
+    prob = Math.floor(prob);
+
+    if(prob)
+    {
+      var curve;
+      var t = guiParameters.towerRadius;
+      if(i == (t*2 - 1))
+      {
+        curve = new THREE.SplineCurve( [
+          new THREE.Vector2( curvePointsList[i].vertices[numroadplanes].x, curvePointsList[i].vertices[numroadplanes].y ),
+          new THREE.Vector2( curvePointsList[t].vertices[numroadplanes].x, curvePointsList[t].vertices[numroadplanes].y )
+          ] );
+      }
+      else if(i == t-1)
+      {
+        curve = new THREE.SplineCurve( [
+          new THREE.Vector2( curvePointsList[i].vertices[numroadplanes].x, curvePointsList[i].vertices[numroadplanes].y ),
+          new THREE.Vector2( curvePointsList[0].vertices[numroadplanes].x, curvePointsList[0].vertices[numroadplanes].y )
+          ] );
+      }
+      else
+      {
+        curve = new THREE.SplineCurve( [
+          new THREE.Vector2( curvePointsList[i].vertices[numroadplanes].x, curvePointsList[i].vertices[numroadplanes].y ),
+          new THREE.Vector2( curvePointsList[i+1].vertices[numroadplanes].x, curvePointsList[i+1].vertices[numroadplanes].y )
+          ] );
+      }
+
+      var path = new THREE.Path( curve.getPoints( numroadplanes*2 ) );
+      var roadpoints = path.createPointsGeometry( numroadplanes*2 );
+
+      for(var k=0; k<numroadplanes*2 ;k++)
+      {
+        var geo = new THREE.PlaneGeometry( 1, 1, 1 );
+        var mat = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
+        var roadplane = new THREE.Mesh( geo, mat );
+        roadplane.rotateX(3.14 * 0.5);
+        roadplane.position.set(roadpoints.vertices[k].x + guiParameters.city_center_x, 0.1, roadpoints.vertices[k].y + guiParameters.city_center_z);
+        roadplane.scale.set(1.5,1.5,1.5);
         scene.add( roadplane );
       }
     }
