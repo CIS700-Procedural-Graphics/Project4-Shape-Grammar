@@ -11,11 +11,10 @@ var flag_loaded = 2; //array of flags
 //------------------------------------------------------------------------------
 var shapeList = [];
 var guiParameters = {
-  iterations: 1.0,
+  buildingIterations: 4.0,
   city_center_x: 0.01,
   city_center_z: 0.01,
-  regenerate: 0,
-  levelOfDetail: 2
+  levelOfDetail: 4
 }
 
 var building_Material = new THREE.ShaderMaterial({
@@ -65,15 +64,23 @@ var window_sMesh = new THREE.Mesh(); //undefined; //loaded in later
 //------------------------------------------------------------------------------
 function changeGUI(gui, camera, scene)
 {
-  gui.add(guiParameters, 'iterations', 0, 5).step(1).onChange(function(newVal) {
-    guiParameters.iterations = newVal;
+  gui.add(guiParameters, 'buildingIterations', 0, 5).step(1).onChange(function(newVal) {
+    guiParameters.buildingIterations = newVal;
+    onreset(scene);
   });
 
-  gui.add(guiParameters, 'city_center_x', -50.0, 50.0).onChange(function(newVal) {
-    guiParameters.city_center_x = newVal;
+  gui.add(guiParameters, 'levelOfDetail', 0, 5).step(1).onChange(function(newVal) {
+    guiParameters.levelOfDetail = newVal;
+    onreset(scene);
   });
-  gui.add(guiParameters, 'city_center_z', -50.0, 50.0).onChange(function(newVal) {
+
+  gui.add(guiParameters, 'city_center_x', -30.0, 30.0).onChange(function(newVal) {
+    guiParameters.city_center_x = newVal;
+    onreset(scene);
+  });
+  gui.add(guiParameters, 'city_center_z', -30.0, 30.0).onChange(function(newVal) {
     guiParameters.city_center_z = newVal;
+    onreset(scene);
   });
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
@@ -102,7 +109,7 @@ function setupLightsandSkybox(scene, camera)
   scene.background = skymap;
 
   //set plane
-  var geometry = new THREE.PlaneGeometry( 10, 10, 1 );
+  var geometry = new THREE.PlaneGeometry( 100, 100, 1 );
   var material = new THREE.MeshBasicMaterial( {color: 0x696969, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
   plane.rotateX(90 * 3.14/180);
@@ -171,19 +178,48 @@ function loadGeometry()
   });
 }
 
+function onreset(scene)
+{
+  cleanscene(scene);
+  finalbuildingGeneration(scene);
+  renderbuildings(scene);
+}
+
 //------------------------------------------------------------------------------
 function cleanscene(scene)
 {
+  for( var i = scene.children.length - 1; i >= 0; i--)
+  {
+    var obj = scene.children[i];
+    scene.remove(obj);
+  }
+
   for(var j=0; j<shapeList.length; j++)
   {
-    scene.remove(shapeList[j].mesh);
+    shapeList.splice(0, shapeList.length);
+    console.log("clean:" + shapeList.length);
+    //add initial shape grammar axiom
+    var shape1 = new Shape(0, cube);
+    shape1.scale = new THREE.Vector3( 10, 1, 10 );
+    shape1.pos.setY(shape1.scale.y/2.0);
+    shapeList.push(shape1);
+    console.log("added initial axiom:" + shapeList.length);
   }
+
+  //set plane
+  var geometry = new THREE.PlaneGeometry( 100, 100, 1 );
+  var material = new THREE.MeshBasicMaterial( {color: 0x696969, side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+  plane.rotateX(90 * 3.14/180);
+  scene.add( plane );
+
+  createCity(scene);
 }
 
-function finalgeneration(scene)
+function finalbuildingGeneration(scene)
 {
   //actual cubes and buildings
-  for(var i=0; i<5; i++)
+  for(var i=0; i<guiParameters.buildingIterations; i++)
   {
     var l = shapeList.length;
     for(var j=0; j<l; j++)
@@ -196,6 +232,7 @@ function finalgeneration(scene)
     }
   }
 
+  //now we have terminal geometry so added features to them
   //roofs
   var objLoader4 = new THREE.OBJLoader();
   objLoader4.load('geometry/roofCastleType.obj', function(obj)
@@ -234,10 +271,9 @@ function finalgeneration(scene)
         shapeList[j].addDoor(shapeList[j], scene, doorMesh);
       }
   });
-
 }
 
-function render(scene)
+function renderbuildings(scene)
 {
     for(var j=0; j<shapeList.length; j++)
     {
@@ -245,6 +281,23 @@ function render(scene)
       shapeList[j].mesh.position.set( shapeList[j].pos.x, shapeList[j].pos.y, shapeList[j].pos.z );
       scene.add(shapeList[j].mesh);
     }
+}
+
+//------------------------------------------------------------------------------
+
+function createCity(scene)
+{
+  var radius = 6;
+  var tube = 1;
+  var arc = 6.3; //in radians
+  var geotorus = new THREE.TorusBufferGeometry( radius, tube, 6, 15, arc); // (radius, tube, radialSegments, tubularSegments, arc)
+  var mtorus = new THREE.MeshBasicMaterial( { color: (new THREE.Color(Math.random(), Math.random(), Math.random())).getHex() } );
+  var torus = new THREE.Mesh( geotorus, mtorus );
+  torus.position.set(guiParameters.city_center_x, tube*0.5, guiParameters.city_center_z);
+  torus.rotateX(3.14 * 0.5);
+  scene.add( torus );
+
+
 }
 
 //------------------------------------------------------------------------------
@@ -267,36 +320,8 @@ function onLoad(framework) {
   shape1.pos.setY(shape1.scale.y/2.0);
   shapeList.push(shape1);
 
-/*
-  setTimeout(function() {
-    balconyMesh.position.set(10,0,0);
-    scene.add(balconyMesh);
-
-    doorMesh.position.set(8,0,0);
-    scene.add(doorMesh);
-
-    roofCastleTypeMesh.position.set(4,0,0);
-    scene.add(roofCastleTypeMesh);
-
-    roofChimneyTypeMesh.position.set(2,0,0);
-    scene.add(roofChimneyTypeMesh);
-
-    window_lMesh.position.set(0,0,0);
-    scene.add(window_lMesh);
-
-    window_sMesh.position.set(-2,0,0);
-    scene.add(window_sMesh);
-  }, 20); //increase the number of milliseconds if the loadgeometry is taking too long
-*/
-  //--------------------------- Do things to shapes here -----------------------
-
-  // var geotorus = new THREE.TorusBufferGeometry( 10, 3, 16, 100 );
-  // var mtorus = new THREE.MeshBasicMaterial( { color: 0xB266FF } );
-  // var torus = new THREE.Mesh( geotorus, mtorus );
-  // torus.position.set(guiParameters.city_center_x, 0, guiParameters.city_center_z);
-  // torus.scale.set(0.3,0.3,0.3);
-  // torus.rotateX(3.14/2.0);
-  // scene.add( torus );
+  //--------------------------- create city here -----------------------
+  createCity(scene);
 
 /*
   var angle = 60 * 3.14/180.0;
@@ -339,15 +364,13 @@ function onLoad(framework) {
   }
 */
 
-  finalgeneration(scene);
-  render(scene);
+  finalbuildingGeneration(scene);
+  renderbuildings(scene);
 }
 
 // called on frame updates
 function onUpdate(framework)
-{
-  guiParameters.regenerate = 0;
-}
+{}
 
 // when the scene is done initializing, it will call onLoad, then on frame updates, call onUpdate
 Framework.init(onLoad, onUpdate);
