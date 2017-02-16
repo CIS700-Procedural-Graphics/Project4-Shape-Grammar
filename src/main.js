@@ -10,6 +10,7 @@ var shapeType = require('./shape.js');
 var flag_loaded = 2; //array of flags
 //------------------------------------------------------------------------------
 var shapeList = [];
+var sampler = []; //array of vector2's
 var guiParameters = {
   buildingIterations: 4.0,
   city_center_x: 0.01,
@@ -69,7 +70,7 @@ function changeGUI(gui, camera, scene)
     onreset(scene);
   });
 
-  gui.add(guiParameters, 'levelOfDetail', 0, 5).step(1).onChange(function(newVal) {
+  gui.add(guiParameters, 'levelOfDetail', 0, 6).step(1).onChange(function(newVal) {
     guiParameters.levelOfDetail = newVal;
     onreset(scene);
   });
@@ -297,6 +298,50 @@ function createCity(scene)
   torus.rotateX(3.14 * 0.5);
   scene.add( torus );
 
+  //generate square plane of uniform points
+  var samplesize = guiParameters.levelOfDetail;
+  for(var i=0; i<samplesize ; i = i+(1.0/samplesize))
+  {
+    for(var j=0; j<samplesize ; j = j+(1.0/samplesize))
+    {
+      sampler.push(new THREE.Vector2(i,j));
+    }
+  }
+
+  //convert square into disc
+  var angle = 6.28/samplesize;
+  var samplestep = 0.0;
+  for(var i=angle*0.5; i<6.28 ; i=i+angle, samplestep = samplestep + samplesize )
+  {
+    var r = 6; //scaling
+    r = r + Math.sqrt(sampler[samplestep].x);
+    var theta = 6.28 * sampler[samplestep].y;
+    var gridx = r * Math.cos(theta);
+    var gridz = r * Math.sin(theta);
+    //gridz is 0;
+
+    var splineStart = new THREE.Vector2( gridx, gridz );
+    var center = new THREE.Vector2( torus.position.x,  torus.position.z);
+    splineStart.rotateAround ( center, angle )
+    var curve = new THREE.SplineCurve( [
+         new THREE.Vector2( splineStart.x, splineStart.y ),
+         new THREE.Vector2( splineStart.x * 2, splineStart.y *2)
+       ] );
+    var path = new THREE.Path(curve.getPoints(5));
+    var roadpoints = path.createPointsGeometry(5);
+
+    for(var j=0; j<5 ;j++)
+    {
+      var geo = new THREE.PlaneGeometry( 1, 1, 1 );
+      var mat = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
+      var roadplane = new THREE.Mesh( geo, mat );
+      roadplane.rotateX(3.14 * 0.5);
+      roadplane.position.set(roadpoints.vertices[j].x, 1, roadpoints.vertices[j].y);
+      roadplane.scale.set(2,2,2);
+      // plane.rotateX(3.14/2.0);
+      scene.add( roadplane );
+    }
+  }
 
 }
 
@@ -324,22 +369,6 @@ function onLoad(framework) {
   createCity(scene);
 
 /*
-  var angle = 60 * 3.14/180.0;
-  for(var i=0; i<=3.14 ;i=i+angle)
-  {
-    var r=0.5;
-    var u = Math.cos(i);
-    var v = Math.sin(i);
-    var vec = new THREE.Vector3(u,0,v);
-
-    var axis = new THREE.Vector3( 0, 1, 0 );
-    vec.applyAxisAngle( axis, i );
-
-    u = vec.x;
-    v = vec.z;
-
-    console.log(u);
-    console.log(v);
     var splineObject = new THREE.Line();
     var curve = new THREE.SplineCurve( [
          new THREE.Vector2( guiParameters.city_center_x, guiParameters.city_center_z ),
