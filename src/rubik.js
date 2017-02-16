@@ -2,7 +2,7 @@ const THREE = require('three');
 
 function fequals(a, b)
 {
-	return Math.abs(a-b) < .0001;
+	return Math.abs(a-b) < .001;
 }
 
 class Rubik
@@ -10,25 +10,71 @@ class Rubik
 	constructor()
 	{
 		this.segments = [];
+		this.animating = false;
+		this.currentAxis = 0;
+		this.currentPlane = 0;
+		this.currentLength = 1.0;
+		this.time = 0;
+		this.callback = null;
+	}
+
+	animate(axis, plane, length, callback)
+	{
+		this.animating = true;
+		this.currentAxis = axis;
+		this.currentPlane = plane;
+		this.currentLength = length;
+		this.time = 0;
+		this.callback = callback;
+	}
+
+	update(deltaTime)
+	{
+		if(!this.animating)
+			return;
+
+		this.time += deltaTime;
+
+		var t = THREE.Math.clamp(this.time / this.currentLength, 0.0, 1.0);
+
+		t = THREE.Math.smoothstep(t, 0, 1);
+		var angle = t * 90;
+		var swapped = false;
+
+		if(this.currentAxis == 0)
+			swapped = this.rotateX(angle, this.currentPlane);
+		else if(this.currentAxis == 1)
+			swapped = this.rotateY(angle, this.currentPlane);
+		else if(this.currentAxis == 2)
+			swapped = this.rotateZ(angle, this.currentPlane);
+
+		if(swapped)
+		{
+			this.animating = false;
+			this.time = 0;
+
+			if(this.callback != null)
+				this.callback();
+		}
 	}
 
 	rotateX(degrees, xPlane)
 	{
-		this.rotateInternal(degrees, xPlane, new THREE.Vector3( 1, 0, 0), function(x, y, plane) {
+		return this.rotateInternal(degrees, xPlane, new THREE.Vector3( 1, 0, 0), function(x, y, plane) {
 			return new THREE.Vector3( plane, x, y );
 		});
 	}
 
 	rotateY(degrees, yPlane)
 	{
-		this.rotateInternal(degrees, yPlane, new THREE.Vector3( 0, 1, 0), function(x, y, plane) {
+		return this.rotateInternal(degrees, yPlane, new THREE.Vector3( 0, 1, 0), function(x, y, plane) {
 			return new THREE.Vector3( y, plane, x );
 		});
 	}
 
 	rotateZ(degrees, zPlane)
 	{
-		this.rotateInternal(degrees, zPlane, new THREE.Vector3( 0, 0, 1), function(x, y, plane) {
+		return this.rotateInternal(degrees, zPlane, new THREE.Vector3( 0, 0, 1), function(x, y, plane) {
 			return new THREE.Vector3( x, y, plane );
 		});
 	}
@@ -101,7 +147,12 @@ class Rubik
 					var p = indexFunction(x, y, plane);
 					this.segments[p.x][p.y][p.z] = tmpArray[x][y];
 				}
+
+			// We swapped
+			return true;
 		}
+
+		return false;
 	}
 
 	build()
@@ -142,8 +193,6 @@ class Rubik
 				}
 			}
 		}
-
-
 
 		return container;
 	}

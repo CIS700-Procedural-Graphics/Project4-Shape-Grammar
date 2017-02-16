@@ -1,12 +1,29 @@
 const THREE = require('three');
-import Framework from './framework'
+const Random = require("random-js");
 
+import Framework from './framework'
 import * as Building from './building.js'
 import * as Rubik from './rubik.js'
 
 var UserSettings = 
 {
   iterations : 5
+}
+
+var Engine = 
+{
+  initialized : false,
+  time : 0.0,
+  deltaTime : 0.0,
+  clock : null,
+
+  music : null,
+
+  loadingBlocker : null,
+  materials : [],
+
+  rubik : null,
+  rubikTime : 0,
 }
 
 function onLoad(framework) 
@@ -33,8 +50,8 @@ function onLoad(framework)
   scene.add(directionalLight2);
 
   // set camera position
-  camera.position.set(2, 3, 4);
-  camera.lookAt(new THREE.Vector3(0,2,0));
+  camera.position.set(9, 7, 9);
+  camera.lookAt(new THREE.Vector3(0,0,0));
 
   var profile = new Building.Profile();
   profile.addPoint(1.0, 0.0);
@@ -61,15 +78,43 @@ function onLoad(framework)
   var shape = new Building.MassShape();
   var mesh = shape.generateMesh(lot, profile);
 
-  scene.add(mesh);
+  // scene.add(mesh);
 
-  var rubik = new Rubik.Rubik();
-  // scene.add(rubik.build());
+  Engine.rubik = new Rubik.Rubik();
+  scene.add(Engine.rubik.build());
 
+  // Init Engine stuff
+  Engine.scene = scene;
+  Engine.renderer = renderer;
+  Engine.clock = new THREE.Clock();
+  Engine.camera = camera;
+  Engine.initialized = true;
+
+  var random = new Random(Random.engines.mt19937().seed(2545));
+
+  var speed = .15;
+
+  var callback = function() {
+    Engine.rubik.animate(random.integer(0, 2), random.integer(0, 2), speed, callback);
+  };
+
+  Engine.rubik.animate(0, 0, speed, callback);
 }
 
 // called on frame updates
-function onUpdate(framework) {
+function onUpdate(framework) 
+{
+  if(Engine.initialized)
+  {
+    var screenSize = new THREE.Vector2( framework.renderer.getSize().width, framework.renderer.getSize().height );
+    var deltaTime = Engine.clock.getDelta();
+
+    Engine.time += deltaTime;
+    Engine.cameraTime += deltaTime;
+    Engine.deltaTime = deltaTime;
+
+    Engine.rubik.update(deltaTime);
+  }
 }
 
 // when the scene is done initializing, it will call onLoad, then on frame updates, call onUpdate
