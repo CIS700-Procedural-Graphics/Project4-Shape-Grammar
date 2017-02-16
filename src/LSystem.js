@@ -52,8 +52,19 @@ export default class LSystem {
         break;
       case 'O':
         break;
+      // Building Rule: B -> (B 0.25|BB 0.75), b when terminal
       case 'B':
         successors.push(...symbol.subBuilding());
+        break;
+      // Terminal Building Rule: b -> bRWD
+      case 'b':
+        successors.push(symbol.copy());
+        successors.push(symbol.genRoof());
+        successors.push(symbol.genWindows());
+        // successors.push(symbol.genDoor())
+        break;
+      // Terminal Roof Rule
+      case 'R':
         break;
       default:
     }

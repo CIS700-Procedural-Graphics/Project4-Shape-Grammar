@@ -102,6 +102,7 @@ export default class Framework {
     objLoader.load('obj/lpt_0.obj', loadObj.bind(this, 'lpt_0', 0x888888));
     objLoader.load('obj/lpt_1.obj', loadObj.bind(this, 'lpt_1', 0x888888));
     objLoader.load('obj/lpt_2.obj', loadObj.bind(this, 'lpt_2', 0x888888));
+    objLoader.load('obj/window.obj', loadObj.bind(this, 'window', 0xffffff));
 
   }
 

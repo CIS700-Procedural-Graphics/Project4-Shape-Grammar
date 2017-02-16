@@ -5,7 +5,7 @@ const BLACK = rgb(0, 0, 0);
 
 const ROOF_TYPES = ['pyramid', 'trapezoid'];
 const TREE_TYPES = ['lpt_0', 'lpt_1', 'lpt_2'];
-const HOUSE_MAX_ITER = 2;
+const HOUSE_MAX_ITER = 1;
 
 function rgb(r, g, b) {
   return {r, g, b};
@@ -17,6 +17,14 @@ function randColor() {
 
 function randGray() {
   return {r: Math.random() * 40 - 107, g: Math.random() * 40 - 107, b: Math.random() * 40 - 107};
+}
+
+function upperRand() {
+  return Math.random() * 0.5 + 0.5;
+}
+
+function randRange(a,b) {
+  return Math.random() * (b - a) + a;
 }
 
 export class Shape {
@@ -46,25 +54,53 @@ export class Symbol {
   subBuilding() {
     let { type, pos, size, rot, color } = this.shape;
     let subdiv = [];
+    let sub0, sub1, newSymbol, char = this.char;
 
     let random = Math.random();
-    if (random < 0.25 || this.iter > HOUSE_MAX_ITER) {
-      return [this];
+    // let random = 0.9;
+    if (random < 0.33) {
+      newSymbol = this.copy();
+      newSymbol.char = 'b';
+      return [newSymbol];
+    } else if (random < 0.66) {
+      // yz-subdiv
+      sub0 = new Shape('box', v3(-size.x / 4,0,0).add(pos), v3(0.5, upperRand(), 1).multiply(size), rot, color);
+      sub1 = new Shape('box', v3(size.x / 4,0,0).add(pos), v3(0.5, upperRand(), 1).multiply(size), rot, color);
+    } else if (random < 1) {
+      // xy-subdiv
+      sub0 = new Shape('box', v3(0,0,-size.z / 4).add(pos), v3(1, upperRand(), 0.5).multiply(size), rot, color);
+      sub1 = new Shape('box', v3(0,0,size.z / 4).add(pos), v3(1, upperRand(), 0.5).multiply(size), rot, color);
+    } else {
+      //xz-subdiv
+      sub0 = new Shape('box', v3(0,0,0).add(pos), v3(1,0.5,1).multiply(size), rot, color);
+      sub1 = new Shape('box', v3(0,size.y / 2,0).add(pos), v3(Math.random(),0.5,Math.random()).multiply(size), rot, color);
     }
 
-    let sub0, sub1;
-    // yz-subdiv
-    sub0 = new Shape('box', v3(-size.x / 2 + size.x / 4,0,0).add(pos), v3(0.5, Math.random() * 0.5 + 0.5, 1).multiply(size), rot, randColor());
-    sub1 = new Shape('box', v3(size.x / 2 - size.x / 4,0,0).add(pos), v3(0.5, Math.random() * 0.5 + 0.5, 1).multiply(size), rot, randColor());
+    if (this.iter >= HOUSE_MAX_ITER) {
+      char = 'b';
+    }
+    newSymbol = new Symbol(char, sub0, this.iter + 1);
+    subdiv.push(newSymbol);
 
-    // xy-subdiv
-    sub0 = new Shape('box', v3(0,0,-size.z / 2 + size.z / 4).add(pos), v3(1, Math.random() * 0.5 + 0.5, 0.5).multiply(size), rot, randColor());
-    sub1 = new Shape('box', v3(0,0,size.z / 2 - size.z / 4).add(pos), v3(1, Math.random() * 0.5 + 0.5, 0.5).multiply(size), rot, randColor());
-
-    subdiv.push(new Symbol('B', sub0, this.iter + 1));
-    subdiv.push(new Symbol('B', sub1, this.iter + 1));
+    newSymbol = new Symbol(char, sub1, this.iter + 1)
+    subdiv.push(newSymbol);
 
     return subdiv;
+  }
+
+  genRoof() {
+    let { char, shape: {type, pos, size, rot, color}, iter } = this;
+    let newType = ROOF_TYPES[Math.floor(Math.random() * ROOF_TYPES.length)];
+    let roofShape = new Shape(newType, v3(0,size.y / 2,0).add(pos), v3(1,1,1).multiply(size), rot, randGray());
+    let roofSymbol = new Symbol('R', roofShape, iter + 1);
+    return roofSymbol;
+  }
+
+  genWindows() {
+    let { char, shape: {type, pos, size, rot, color}, iter } = this;
+    let shape = new Shape('window', v3(size.x / 2,randRange(0.3,0.8) * size.y,randRange(-0.6,0.6) * size.z).add(pos), v3(0.003,0.0025,0.003), rot, rgb(255,255,255));
+    let symbol = new Symbol('W', shape, iter + 1);
+    return symbol;
   }
 
   copy() {
@@ -76,7 +112,7 @@ export class Symbol {
     let pos = opts.pos ? opts.pos : v3(0,0,0);
     let size = opts.size ? opts.size : v3(1,1,1);
     let rot = opts.rot ? opts.rot : v3(0,0,0);
-    let color = opts.color ? opts.color : rgb(0,0,0);
+    let color = opts.color ? opts.color : randColor();
     let char = opts.char ? opts.char : 'X';
     let type = opts.type ? opts.type : 'Y';
     return new Symbol(char, new Shape(type, pos, size, rot, color));
@@ -103,13 +139,13 @@ export class Symbol {
     let newPos, newSize;
     if (opts.nextLevel) {
       newPos = v3(0, size.y, 0).add(pos);
-      let random = Math.random() * 0.5 + 0.5;
+      let random = upperRand();
       newSize = v3(random,Math.random() + 0.5,random).multiply(size);
     } else {
-      let newPosX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 0.5 + 0.5) * size.x * 0.5;
-      let newPosZ = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 0.5 + 0.5) * size.z * 0.5;
+      let newPosX = (Math.random() > 0.5 ? 1 : -1) * (upperRand()) * size.x * 0.5;
+      let newPosZ = (Math.random() > 0.5 ? 1 : -1) * (upperRand()) * size.z * 0.5;
       newPos = v3(newPosX, 0, newPosZ);
-      newSize = v3(Math.random() * 0.5 + 0.5, Math.random() + 0.5, Math.random() * 0.5 + 0.5).multiply(size);
+      newSize = v3(upperRand(), Math.random() + 0.5, upperRand()).multiply(size);
     }
     let houseShape = new Shape('box', newPos, newSize, v3(0, 0, 0), color);
     let houseSymbol = new Symbol(newChar, houseShape, iter + 1);
@@ -125,13 +161,13 @@ export class Symbol {
     let newPos, newSize;
     if (opts.nextLevel) {
       newPos = v3(0, size.y, 0).add(pos);
-      let random = Math.random() * 0.5 + 0.5;
+      let random = upperRand();
       newSize = v3(random,Math.random() + 0.5,random).multiply(size);
     } else {
-      let newPosX = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 0.5 + 0.5) * size.x * 0.5;
-      let newPosZ = (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 0.5 + 0.5) * size.z * 0.5;
+      let newPosX = (Math.random() > 0.5 ? 1 : -1) * (upperRand()) * size.x * 0.5;
+      let newPosZ = (Math.random() > 0.5 ? 1 : -1) * (upperRand()) * size.z * 0.5;
       newPos = v3(newPosX, 0, newPosZ);
-      newSize = v3(Math.random() * 0.5 + 0.5, Math.random() + 0.5, Math.random() * 0.5 + 0.5).multiply(size);
+      newSize = v3(upperRand(), Math.random() + 0.5, upperRand()).multiply(size);
     }
     let houseShape = new Shape('box', newPos, newSize, v3(0, 0, 0), color);
     let houseSymbol = new Symbol(newChar, houseShape, iter + 1);
