@@ -30,9 +30,9 @@ var arrFancy = []; var arrTree = []; var arrCar = [];
 var arrRoad = []; var arrChim = [];
 
 // geometries
-var totalGeo = new THREE.BufferGeometry(); 
-var totalRoad = new THREE.BufferGeometry();
-var totalTree = new THREE.BufferGeometry();
+var totalGeo = new THREE.Geometry(); 
+var totalRoad = new THREE.Geometry();
+var totalTree = new THREE.Geometry();
 
 // meshes
 var town; 
@@ -77,8 +77,8 @@ function onLoad(framework) {
   var plane = new THREE.Mesh( geometry, material );
   scene.add( plane );
 
-  roadGeo = new THREE.PlaneBufferGeometry( 0.5, 0.5 );
-  chimGeo = new THREE.BoxBufferGeometry(1,1,1);
+  roadGeo = new THREE.PlaneGeometry( 0.5, 0.5 );
+  chimGeo = new THREE.BoxGeometry(1,1,1);
 
   layout = new Layout(scene);
   layout.doIterations();
@@ -90,8 +90,8 @@ function onLoad(framework) {
     // draw trees
     var objLoader = new THREE.OBJLoader();
   var obj = objLoader.load('tree.obj', function(obj) {
-      treeGeo = obj.children[0].geometry;
-      treeGeo.computeVertexNormals();
+      treeGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+      //treeGeo.computeVertexNormals();
       //treeGeo.normalsNeedUpdate = true;
       var mat = new THREE.MeshLambertMaterial( {color: 0x003300} );
     drawTrees(layout);
@@ -100,8 +100,8 @@ function onLoad(framework) {
 
     // draw cars
     var obj = objLoader.load('car.obj', function(obj) {
-      carGeo = obj.children[0].geometry;
-      carGeo.computeVertexNormals();
+      carGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+      //carGeo.computeVertexNormals();
       //carGeo.normalsNeedUpdate = true;
 
       drawCars(layout);
@@ -111,39 +111,39 @@ function onLoad(framework) {
   });
 
     var obj = objLoader.load('brick.obj', function(obj) {
-      brickGeo = obj.children[0].geometry;
-      brickGeo.computeVertexNormals();
+      brickGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+      //brickGeo.computeVertexNormals();
       //brickGeo.normalsNeedUpdate = true;
       var mat = new THREE.MeshLambertMaterial( {color: 0x555555} );
       build(arrBrick, brickGeo, mat);
     });
 
     var obj = objLoader.load('door.obj', function(obj) {
-      doorGeo = obj.children[0].geometry;
-      doorGeo.computeVertexNormals();
+      doorGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+      //doorGeo.computeVertexNormals();
       //doorGeo.normalsNeedUpdate = true; 
       var mat = new THREE.MeshLambertMaterial( {color: 0x555555} );   
       build(arrDoor, doorGeo, mat);
     });
 
     var obj = objLoader.load('fancy.obj', function(obj) {
-      fancyGeo = obj.children[0].geometry; 
-      fancyGeo.computeVertexNormals();
+      fancyGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry); 
+      //fancyGeo.computeVertexNormals();
       //fancyGeo.normalsNeedUpdate = true; 
       var mat = new THREE.MeshLambertMaterial( {color: 0x555555} );   
       build(arrFancy, fancyGeo, mat);
     });
 
     var obj = objLoader.load('roof.obj', function(obj) {
-      roofGeo = obj.children[0].geometry;  
-      roofGeo.computeVertexNormals();
+      roofGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);  
+      //roofGeo.computeVertexNormals();
       //roofGeo.normalsNeedUpdate = true;  
       var mat = new THREE.MeshLambertMaterial( {color: 0x553333} );
       build(arrRoof, roofGeo, mat);
     });
 
     
-    build(arrRoad, roadGeo,new THREE.MeshLambertMaterial( {color: 0x000000} )); 
+    build(arrRoad, roadGeo,new THREE.MeshLambertMaterial( {color: 0x111111} )); 
     town = new THREE.Mesh(totalGeo);
     console.log(totalGeo);
     console.log(town);
@@ -159,20 +159,25 @@ function build(shapes, geo, mat) {
   var mat4 = new THREE.Matrix4();
   var mat5 = new THREE.Matrix4();
   for (var i = 0; i < shapes.length; i ++) {
-      geo.rotateY(shapes[i].rot.y);
-      geo.scale(shapes[i].scale.x, shapes[i].scale.y, shapes[i].scale.z);
+      //geo.rotateY(shapes[i].rot.y);
+      //geo.scale.set(shapes[i].obj.scale.x, shapes[i].obj.scale.y, shapes[i].obj.scale.z);
+      // geo.position.set(shapes[i].pos);
+      // geo.rotation.set(shapes[i].rot);
+      // geo.scale.set(shapes[i].scale);
 
       var Wline = new THREE.Line(geo, line);
       layout.scene.add(Wline);
       var mesh = new THREE.Mesh(geo, mat);
-
+      mesh.position.set(shapes[i].pos);
+      mesh.rotation.set(shapes[i].rot);
+      mesh.scale.set(shapes[i].scale);
       //rotation and translation
-      //geo.rotation.set(shapes[i].rot.x, shapes[i].rot.y, shapes[i].rot.z);
+      
       
       //Move the flower so its base rests at the turtle's current position
-      var mat5 = new THREE.Matrix4();
-      mat5.makeTranslation(shapes[i].pos.x, shapes[i].pos.y, shapes[i].pos.z);
-      mesh.applyMatrix(mat5);
+      // var mat5 = new THREE.Matrix4();
+      // mat5.makeTranslation(shapes[i].pos.x, shapes[i].pos.y, shapes[i].pos.z);
+      // mesh.applyMatrix(mat5);
 
       totalGeo.merge(mesh.geometry, mesh.matrix);
   }
@@ -227,7 +232,7 @@ function layoutBlock(block) {
     for (var k = 0; k < road; k ++) {
       var roadPos = block.p[i].clone().lerp(block.p[(i+1)%4],k/road); roadPos.y = -0.499;
       var roadScale = new THREE.Vector3(1,1,1);
-      var roadRot = new THREE.Vector3(rot.x-Math.PI/2, rot.y, rot.z);
+      var roadRot = new THREE.Vector3(0,0,0);
       arrRoad.push(new Draw(roadPos, roadRot, roadScale));
     }
   }
