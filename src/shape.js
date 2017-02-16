@@ -1,5 +1,5 @@
 const THREE = require('three')
-var scale_factor = 3;
+var scale_factor = 4;
 var building_Material = new THREE.ShaderMaterial({
   uniforms:
   {
@@ -17,7 +17,6 @@ var building_Material = new THREE.ShaderMaterial({
   vertexShader: require('./shaders/buildings-vert.glsl'),
   fragmentShader: require('./shaders/buildings-frag.glsl')
 });
-
 
 export default class Shape
 {
@@ -242,16 +241,42 @@ export default class Shape
       scene.add( roof );
     }
 
-    addDoor(shape) //shape should be a ground floor
+    addDoor(shape, scene, mesh) //shape should be a ground floor
     {
-      var door = mesh.clone();
       var pos = shape.pos;
+      var scale = shape.scale;
+      var door = mesh.clone();
+      door.scale.set(0.69, 0.69, 0.69);
+      door.rotateY(3.14); // it now faces you, i.e +z
 
-
-
-      door.scale.set(shape.scale.x *0.7, 1, shape.scale.z*0.7);
-      door.position.set(pos.x, pos.y+ shape.scale.y/2.0 , pos.z);
-      scene.add( door );
+      var p = Math.random(); //to randomly pick a wall
+      if(p<0.25)
+      {
+        //+x
+        door.rotateY(3.14*0.5);
+        var jitter = -scale.z/2.0  + 0.5 + Math.random()*(scale.z - 0.5);
+        door.position.set(pos.x + scale.x/2.0, 0, pos.z + jitter);
+      }
+      else if(p<0.50)
+      {
+        //-x
+        door.rotateY(3.14*1.5);
+        var jitter = -scale.z/2.0  + 0.5 + Math.random()*(scale.z - 0.5);
+        door.position.set(pos.x - scale.x/2.0, 0, pos.z + jitter);
+      }
+      else if(p<0.75)
+      {
+        //+z
+        var jitter = -scale.x/2.0  + 0.5 + Math.random()*(scale.x - 0.5);
+        door.position.set(pos.x + jitter, 0, pos.z + scale.z/2.0);
+      }
+      else
+      {
+        //-z
+        var jitter = -scale.x/2.0  + 0.5 + Math.random()*(scale.x - 0.5);
+        door.position.set(pos.x + jitter, 0, pos.z - scale.z/2.0);
+      }
+      scene.add(door);
     }
 
     addBalcony(shape) //shape should be a floor that is not the ground floor
@@ -262,11 +287,5 @@ export default class Shape
       // roof.scale.set(shape.scale.x *0.1, 0.2, shape.scale.z*0.1);
       // roof.position.set(pos.x, pos.y+ shape.scale.y/2.0 + 0.35*shape.scale.y, pos.z);
       // scene.add( roof );
-    }
-
-    replaceShape(shapeList, index) //inefficient, ask a TA about the other way
-    {
-      if(this.type == 0) this.createbuilding(shapeList, index);
-      // else if ()
     }
 }

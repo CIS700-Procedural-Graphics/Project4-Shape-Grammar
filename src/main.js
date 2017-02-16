@@ -120,9 +120,6 @@ function loadGeometry()
   {
       floorDivisionGeo = obj.children[0].geometry;
       floorDivisionMesh = new THREE.Mesh(floorDivisionGeo, building_Material);
-      // floorDivisionMesh.name = "undefined";
-      // floorDivisionMesh.scale.set(1,1,1);
-      // scene.add(floorDivisionMesh);
   });
 
   var objLoader2 = new THREE.OBJLoader();
@@ -185,6 +182,7 @@ function cleanscene(scene)
 
 function finalgeneration(scene)
 {
+  //actual cubes and buildings
   for(var i=0; i<4; i++)
   {
     var l = shapeList.length;
@@ -193,11 +191,12 @@ function finalgeneration(scene)
       if((shapeList[j].scale.x > 1.5) && (shapeList[j].scale.z > 1.5))
       {
         if (j != 0) j=j+1;
-        shapeList[j].replaceShape(shapeList, j);
+        shapeList[j].createbuilding(shapeList, j);
       }
     }
   }
 
+  //roofs
   var objLoader4 = new THREE.OBJLoader();
   objLoader4.load('geometry/roofCastleType.obj', function(obj)
   {
@@ -210,6 +209,7 @@ function finalgeneration(scene)
       }
   });
 
+  //windows
   var objLoader7 = new THREE.OBJLoader();
   objLoader7.load('geometry/window_s.obj', function(obj)
   {
@@ -218,8 +218,20 @@ function finalgeneration(scene)
       var l = shapeList.length;
       for(var j=0; j<l; j++)
       {
-        // var floormid = new THREE.Vector3(shapeList[j].pos.x,0,shapeList[j].pos.z);
-        shapeList[j].addWindows(shapeList[j], scene, window_sMesh, 1.0);
+        shapeList[j].addWindows(shapeList[j], scene, window_sMesh);
+      }
+  });
+
+  //doors
+  var objLoader3 = new THREE.OBJLoader();
+  objLoader3.load('geometry/door.obj', function(obj)
+  {
+      doorGeo = obj.children[0].geometry;
+      doorMesh = new THREE.Mesh(doorGeo, building_Material);
+      var l = shapeList.length;
+      for(var j=0; j<l; j++)
+      {
+        shapeList[j].addDoor(shapeList[j], scene, doorMesh);
       }
   });
 
