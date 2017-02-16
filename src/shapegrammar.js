@@ -10,7 +10,7 @@ export default class ShapeGrammar {
       initial_set.forEach((s) => this.shapeSet.add(s));
     }
 
-    this.iterations = iterations ? iterations : 4; // Defaults to 4 iters
+    this.iterations = iterations ? iterations : 30; // Defaults to 30 iters
   }
 
 
@@ -44,7 +44,7 @@ export default class ShapeGrammar {
    * Expands the ShapeGrammar's initial geometry
    * for the given number of iterations
    */
-  doIterations(iterations, GeometryRef) { 
+  doIterations(iterations) { 
     var succ = new Set();
 
     for (var i = 0; i < iterations; i++) {
@@ -54,9 +54,10 @@ export default class ShapeGrammar {
           var rule = rules ? this.pickRule(rules) : false;
 
           if (rule) {
-            var successors = rule.getSuccessors(node, GeometryRef); // Apply rule
-            this.shapeSet.delete(node); // Delete old shape
-            successors.forEach((s) => succ.add(s)); // Add new ones
+            var maxHeight = 5; //TODO: generate this from noise
+            var successors = rule.getSuccessors(node, 5); // Apply rule
+            this.shapeSet.delete(node);
+            successors.forEach((s) => succ.add(s)); 
           }
          }
       });

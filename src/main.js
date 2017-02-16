@@ -4,10 +4,13 @@ import Lsystem, {linkedListToString} from './lsystem'
 import turtle from './turtle'
 import ShapeGrammar from './shapegrammar'
 import { Node } from './linkedlist'
+import City from './city'
+
 const OBJLoader = require('jser-three-obj-loader');
 OBJLoader(THREE); 
 
-const Geometry = {
+//TODO: put this in its own file
+export const Geometry = {
   SHORT_HOUSE: {
     path: 'window_house.obj', // for test
     obj: {}
@@ -19,23 +22,35 @@ const Geometry = {
   FLOOR_APT: {
     path: 'floor.obj',
     obj: {},
+    sizeRatio: 1,
   },
   GROUND_FLOOR_APT: {
     path: 'floor.obj',
     obj: {},
   },
+  ROOF_APT: {
+    path: 'tall_tower.obj', //TODO: replace
+    obj: {}
+  },
   FLOOR_SKY: {
     path: 'skyscraper_floor.obj',
-    obj: {}
+    obj: {},
+    sizeRatio: 4,
   },
   GROUND_FLOOR_SKY: {
     path: 'skyscraper_floor.obj',
-    obj: {}
+    obj: {},
   },
-  STORE_FRONT: {
-    path: 'floor.obj',
+  ROOF_SKY: {
+    path: 'slant_section.obj', //TODO: replace
     obj: {}
   }
+  // STORE_FRONT: { // -> can function as GROUND_FLOOR_APT or GROUND_FLOOR_SKY
+  //   path: '', //TODO
+  //   obj: {},
+  // },
+
+  //TODO: STORE_FRONT
 }
 
 var loaded = 0; // Are the geometries loaded? 
@@ -43,6 +58,7 @@ var rendered = false; // Have the shapes been rendered?
 
 var scene;
 var shapeGrammar;
+var city;
 
 function onLoad(framework) {
   scene = framework.scene;
@@ -65,8 +81,10 @@ function onLoad(framework) {
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   // Initialize 
+  city = new City();
   loadGeometries();
   resetShapeGrammar();
+
 
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
@@ -108,16 +126,19 @@ function resetShapeGrammar() {
     var iter = shapeGrammar.iterations;
   }
 
-  var shapes = new Set();
+  // var shapes = new Set();
 
-  var apt = new Node('GROUND_FLOOR_APT', 0)
-  apt.position.set(0, 0, 0);
+  // var apt = new Node('GROUND_FLOOR_APT', 0)
+  // apt.position.set(0, 0, 0);
 
-  var skyscraper = new Node('GROUND_FLOOR_SKY');
-  skyscraper.position.set(3, 0, 3);
+  // var skyscraper = new Node('GROUND_FLOOR_SKY');
+  // skyscraper.position.set(3, 0, 3);
 
-  shapes.add(apt);
-  shapes.add(skyscraper);
+  // shapes.add(apt);
+  // shapes.add(skyscraper);
+
+  var shapes = city.makeCity();
+
   shapeGrammar = new ShapeGrammar(shapes);
 
   if (iter) {
@@ -174,7 +195,7 @@ function loadGeometries() {
   * Renders the given shapeGrammar
   */
 function renderShapeGrammar(iterations) {
-  var set = shapeGrammar.doIterations(iterations, Geometry);
+  var set = shapeGrammar.doIterations(iterations);
   set.forEach((node) => {
     var geo = Geometry[node.shape].obj.clone();
 
