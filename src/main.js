@@ -110,7 +110,7 @@ function onLoad(framework) {
 
 
   var ambientLight = new THREE.AmbientLight(0x404040);
-  ambientLight.intensity = 3.5;
+  ambientLight.intensity = 2.5;
   scene.add(ambientLight);
 
   camera.position.set(1, 40, 70);
@@ -247,7 +247,7 @@ function renderShapeGrammar(iterations) {
   var mesh = new THREE.Mesh(new THREE.PlaneGeometry(60,60), mat);
   mesh.rotation.x = Math.PI / 2;
   mesh.material.side = THREE.DoubleSide;
-  mesh.position.set(20,-0.5,20);
+  mesh.position.set(20,-0.1,20);
   mesh.receiveShadow = true;
   mesh.castShadow = true;
   scene.add(mesh);
