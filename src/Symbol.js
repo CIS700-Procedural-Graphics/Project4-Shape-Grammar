@@ -43,6 +43,30 @@ export class Symbol {
     this.iter = iter;
   }
 
+  subBuilding() {
+    let { type, pos, size, rot, color } = this.shape;
+    let subdiv = [];
+
+    let random = Math.random();
+    if (random < 0.25 || this.iter > HOUSE_MAX_ITER) {
+      return [this];
+    }
+
+    let sub0, sub1;
+    // yz-subdiv
+    sub0 = new Shape('box', v3(-size.x / 2 + size.x / 4,0,0).add(pos), v3(0.5, Math.random() * 0.5 + 0.5, 1).multiply(size), rot, randColor());
+    sub1 = new Shape('box', v3(size.x / 2 - size.x / 4,0,0).add(pos), v3(0.5, Math.random() * 0.5 + 0.5, 1).multiply(size), rot, randColor());
+
+    // xy-subdiv
+    sub0 = new Shape('box', v3(0,0,-size.z / 2 + size.z / 4).add(pos), v3(1, Math.random() * 0.5 + 0.5, 0.5).multiply(size), rot, randColor());
+    sub1 = new Shape('box', v3(0,0,size.z / 2 - size.z / 4).add(pos), v3(1, Math.random() * 0.5 + 0.5, 0.5).multiply(size), rot, randColor());
+
+    subdiv.push(new Symbol('B', sub0, this.iter + 1));
+    subdiv.push(new Symbol('B', sub1, this.iter + 1));
+
+    return subdiv;
+  }
+
   copy() {
     let newSymbol = new Symbol(this.char, this.shape.copy(), this.iter);
     return newSymbol;
@@ -50,10 +74,12 @@ export class Symbol {
 
   static genericSymbol(opts = {}) {
     let pos = opts.pos ? opts.pos : v3(0,0,0);
-    let size = opts.size ? opts.size : v3(0,0,0);
+    let size = opts.size ? opts.size : v3(1,1,1);
     let rot = opts.rot ? opts.rot : v3(0,0,0);
     let color = opts.color ? opts.color : rgb(0,0,0);
-    return new Symbol('X', new Shape('Y', pos, size, rot, color));
+    let char = opts.char ? opts.char : 'X';
+    let type = opts.type ? opts.type : 'Y';
+    return new Symbol(char, new Shape(type, pos, size, rot, color));
   }
 
   static genRoof(refSymbol, opts = {}) {

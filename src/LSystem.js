@@ -25,10 +25,10 @@ export default class LSystem {
     if (window.mode === window.DEBUGGING) {
       // let box = new Shape('box', v3(0, 0, 0), v3(2, 1, 2), v3(0, 0, 0), WHITE);
       // let symbol = new Symbol('H', box);
+      let building = Symbol.genericSymbol({char: 'B', type: 'box'});
       this.axiom = [
+        building,
         Symbol.genGround(),
-        Symbol.genHouse('H'),
-        Symbol.genTree(),
       ];
     }
     // deep copy
@@ -49,41 +49,11 @@ export default class LSystem {
       // Ground Rule: G -> O*
       case 'G':
         successors.push(symbol.copy());
-        successors.push(Symbol.genRoad());
         break;
       case 'O':
-        successors.push(symbol.copy());
         break;
-      case 'E':
-        successors.push(symbol.copy());
-        break;
-      case 'R':
-        break;
-      case 'W':
-        successors.push(symbol.copy());
-        break;
-      // House Rule: H -> HR(T|H)
-      case 'H':
-        successors.push(Symbol.genHouse('T'));
-        if (random < 0.5) {
-          successors.push(Symbol.genSubHouse('h', symbol, {nextLevel: true}));
-        } else {
-          successors.push(Symbol.genRoof(symbol));
-        }
-        if (random < 0.4) {
-          successors.push(Symbol.genSubHouse('h', symbol));
-        }
-        break;
-      // Sub-House Rule:
-      case 'h':
-        let succ = symbol.copy();
-        succ.char = 'T'
-        successors.push(succ);
-        successors.push(Symbol.genRoof(symbol));
-      // Terminal Symbols
-      case 'R':
-      case 'T':
-        successors.push(symbol.copy());
+      case 'B':
+        successors.push(...symbol.subBuilding());
         break;
       default:
     }
@@ -98,9 +68,7 @@ export default class LSystem {
     this.doIterations(numIters - 1).forEach((sym) => {
       let successors = this.applyGrammar(sym);
       if (successors) {
-        successors.forEach((ns) => {
-          nextState.push(ns);
-        });
+        nextState.push(...successors);
       }
     });
     return nextState;
