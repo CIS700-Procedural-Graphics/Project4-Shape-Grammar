@@ -136,9 +136,7 @@ export default class Shape
           var window = mesh.clone();
           window.rotateY(3.14*0.5);
           var wallx;
-          console.log(shape.pos);
-          console.log(shape.scale);
-          console.log(floormid);
+
           if(shape.pos.x >= -0.001 && shape.pos.x <= 0.001)
           {
             wallx = (floormid.x - (shape.scale.x * 0.5)) + i + 0.5;
@@ -154,15 +152,76 @@ export default class Shape
             window.position.set(wallx - 1.0 * shape.scale.x * 0.25, floorY + 0.1 , floormid.z + shape.scale.z/2.0); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
             scene.add( window );
           }
-          console.log(wallx);
         }
-        // for(var i=0; i<numwindowsz; i++)
-        // {
-        //   var wallz = (floormid.z - (shape.scale.z * 0.5))+ i*windowsize/2.0; // width half of length
-        //   window.scale.set(1, 1, 1);
-        //   window.position.set(floormid.x + wallx, floorY  -1, floormid.z + shape.scale.z/2.0);
-        //   scene.add( window );
-        // }
+
+        for(var i=0; i<numwindowsx; i++)
+        {
+          var window = mesh.clone();
+          window.rotateY(3.14*1.5);
+          var wallx;
+          // console.log(shape.pos);
+          // console.log(shape.scale);
+          // console.log(floormid);
+          if(shape.pos.x >= -0.001 && shape.pos.x <= 0.001)
+          {
+            wallx = (floormid.x - (shape.scale.x * 0.5)) + i + 0.5;
+            window.scale.set(0.9, 0.9, 0.9);
+            window.position.set(wallx, floorY + 0.1 , floormid.z - shape.scale.z/2.0);
+            scene.add( window );
+          }
+          else
+          {
+            //geometry has subdivided so scale is the entire thing not half
+            wallx = (floormid.x - (shape.scale.x * 0.25)) + i + 0.5;
+            window.scale.set(0.9, 0.9, 0.9);
+            window.position.set(wallx - 1.0 * shape.scale.x * 0.25, floorY + 0.1 , floormid.z - shape.scale.z/2.0); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+            scene.add( window );
+          }
+          // console.log(wallx);
+        }
+
+        for(var i=0; i<numwindowsz; i++)
+        {
+          var window = mesh.clone();
+          var wallz;
+          if(shape.pos.z >= -0.001 && shape.pos.z <= 0.001)
+          {
+            wallz = (floormid.z - (shape.scale.z * 0.5)) + i + 0.5;
+            window.scale.set(0.9, 0.9, 0.9);
+            window.position.set(floormid.x - shape.scale.x/2.0, floorY + 0.1 , wallz);
+            scene.add( window );
+          }
+          else
+          {
+            //geometry has subdivided so scale is the entire thing not half
+            wallz = (floormid.z - (shape.scale.z * 0.25)) + i + 0.5;
+            window.scale.set(0.9, 0.9, 0.9);
+            window.position.set(floormid.x - shape.scale.x/2.0, floorY + 0.1 ,  wallz - 1.0 * shape.scale.z * 0.25); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+            scene.add( window );
+          }
+        }
+
+        for(var i=0; i<numwindowsz; i++)
+        {
+          var window = mesh.clone();
+          window.rotateY(3.14);
+          var wallz;
+          if(shape.pos.z >= -0.001 && shape.pos.z <= 0.001)
+          {
+            wallz = (floormid.z - (shape.scale.z * 0.5)) + i + 0.5;
+            window.scale.set(0.9, 0.9, 0.9);
+            window.position.set(floormid.x + shape.scale.x/2.0, floorY + 0.1 , wallz);
+            scene.add( window );
+          }
+          else
+          {
+            //geometry has subdivided so scale is the entire thing not half
+            wallz = (floormid.z - (shape.scale.z * 0.25)) + i + 0.5;
+            window.scale.set(0.9, 0.9, 0.9);
+            window.position.set(floormid.x + shape.scale.x/2.0, floorY + 0.1 ,  wallz - 1.0 * shape.scale.z * 0.25); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+            scene.add( window );
+          }
+        }
       }
     }
 
