@@ -15,7 +15,8 @@ var guiParameters = {
   buildingIterations: 4.0,
   city_center_x: 0.01,
   city_center_z: 0.01,
-  levelOfDetail: 4
+  levelOfDetail: 5,
+  towerRadius: 5
 }
 
 var building_Material = new THREE.ShaderMaterial({
@@ -65,12 +66,17 @@ var window_sMesh = new THREE.Mesh(); //undefined; //loaded in later
 //------------------------------------------------------------------------------
 function changeGUI(gui, camera, scene)
 {
-  gui.add(guiParameters, 'buildingIterations', 0, 5).step(1).onChange(function(newVal) {
+  gui.add(guiParameters, 'buildingIterations', 0, 4).step(1).onChange(function(newVal) {
     guiParameters.buildingIterations = newVal;
     onreset(scene);
   });
 
   gui.add(guiParameters, 'levelOfDetail', 0, 6).step(1).onChange(function(newVal) {
+    guiParameters.levelOfDetail = newVal;
+    onreset(scene);
+  });
+
+  gui.add(guiParameters, 'towerRadius', 3, 10).step(1).onChange(function(newVal) {
     guiParameters.levelOfDetail = newVal;
     onreset(scene);
   });
@@ -198,13 +204,13 @@ function cleanscene(scene)
   for(var j=0; j<shapeList.length; j++)
   {
     shapeList.splice(0, shapeList.length);
-    console.log("clean:" + shapeList.length);
+    // console.log("clean:" + shapeList.length);
     //add initial shape grammar axiom
     var shape1 = new Shape(0, cube);
     shape1.scale = new THREE.Vector3( 10, 1, 10 );
     shape1.pos.setY(shape1.scale.y/2.0);
     shapeList.push(shape1);
-    console.log("added initial axiom:" + shapeList.length);
+    // console.log("added initial axiom:" + shapeList.length);
   }
 
   //set plane
@@ -286,7 +292,7 @@ function renderbuildings(scene)
 
 //------------------------------------------------------------------------------
 
-function createCity(scene)
+function createCityoldfailedfunction(scene)
 {
   var radius = 6;
   var tube = 1;
@@ -342,7 +348,51 @@ function createCity(scene)
       scene.add( roadplane );
     }
   }
+}
 
+function createCity(scene)
+{
+  var circleList = [];
+  var curveList = [];
+  var radius = guiParameters.towerRadius;
+
+  //-------------------------------- create circle Layers ---------------------------
+  var numberOfLayers = 3;
+  var segments = guiParameters.levelOfDetail;
+  for(var i=0; i<numberOfLayers ;i++)
+  {
+    var circlegeo = new THREE.CircleGeometry( radius + i*7, segments );
+    circlegeo.rotateX(-3.14*0.5);
+    var mat = new THREE.MeshBasicMaterial( { color:  (new THREE.Color(Math.random(), Math.random(), Math.random())).getHex() } );
+    var circle = new THREE.Mesh( circlegeo, mat ); // first vertex is the center the others are points on the circle,
+                                                  // starting alligned with the +x axis
+    circle.position.set(guiParameters.city_center_x, 0.01 *(numberOfLayers-i) + 0.01, guiParameters.city_center_z);
+    circleList.push(circle);
+    scene.add( circleList[circleList.length-1] );
+  }
+
+  console.log(numberOfLayers);
+  console.log(segments);
+  for(var i=0; i<numberOfLayers-1 ;i++)
+  {
+    for(var j=0; j<segments ;j++)
+    {
+      var curve = new THREE.SplineCurve( [
+        new THREE.Vector2(circleList[i].geometry.vertices[j+1].x, circleList[i].geometry.vertices[j+1].z),
+        new THREE.Vector2(circleList[i+1].geometry.vertices[j+1].x, circleList[i+1].geometry.vertices[j+1].z)
+      ] );
+
+      console.log(circleList[i].geometry.vertices[j+1]);
+      console.log(circleList[i+1].geometry.vertices[j+1]);
+
+      var path = new THREE.Path( curve.getPoints( 5 ) );
+      var pathgeo = path.createPointsGeometry( 5 );
+      var pathMat = new THREE.LineBasicMaterial( { color : 0x0000ff } );
+      var splineObject = new THREE.Line( pathgeo, pathMat );
+      splineObject.position.set(guiParameters.city_center_x, 0.06, guiParameters.city_center_z);
+      scene.add(splineObject);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
