@@ -21,7 +21,7 @@ module.exports = {
       },
       {
         test: /\.(obj|mtl)$/,
-        loader: 'file-loader?name=./assets/[name]-[hash:6].[ext]'
+        loader: 'file-loader?name=./../assets/[name]-[hash:6].[ext]'
       }
     ]
   },
