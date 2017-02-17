@@ -6,16 +6,22 @@ import {Shape} from './lsystem.js'
 import Lsystem from './lsystem.js'
 import Voronoi from './rhill-voronoi-core.js'
 
-var shapeSet;
 //initialize obj loading before anything, or else multithreading causes issues
 var typeToObjMap = initializeMap();
+var shapeSet;
 
-/*
-var Sliders = function() {
-  this.anglefactor = 1.0;
-};
-var sliders = new Sliders();
-*/
+function bias(b, t) {
+    return Math.pow(t, Math.log(b) / Math.log(0.5));
+}
+
+function gain(g, t) {
+    if (t < 0.5) {
+        return bias(1.0 - g, 2.0*t) / 2; 
+    }
+    else {
+        return 1 - bias(1.0 - g, 2.0 - 2.0*t) / 2;
+    }
+}
 
 // called after the scene loads
 function onLoad(framework) {
@@ -52,6 +58,8 @@ function onLoad(framework) {
   plane.applyMatrix(matPlane);
   scene.add(plane);
 
+  /*
+  //SINGLE BUILDING DEBUGGING PURPOSES
   var building = new Shape('A');
   //apply translation
   var mat6 = new THREE.Matrix4();
@@ -68,19 +76,20 @@ function onLoad(framework) {
   building.geom_type = 'Apartment';
   building.terminal = false;
   shapeSet.add(building);
+  */
   
   //compute Voronoi diagram
   var voronoi = new Voronoi();
   var sites = [];
   var diagram;
   var xo = 0;
-  var dx = 125;
+  var dxSampling = 135;
   var yo = 0;
-  var dy = 125;
+  var dySampling = 135;
   for (var i=0; i<30; i++) {
     sites.push({
-      x:Math.round(xo+2*(Math.random()-0.5)*dx),
-      y:Math.round(yo+2*(Math.random()-0.5)*dy)
+      x:Math.round(xo+2*(Math.random()-0.5)*dxSampling),
+      y:Math.round(yo+2*(Math.random()-0.5)*dySampling)
     });
   }
   var bbox = {xl:-400,xr:400,yt:-300,yb:300};
@@ -98,16 +107,16 @@ function onLoad(framework) {
       var edge;
       while (nEdges--) {
 
-        
-        //get the two vertices that make up the line, and add line to scene
+        //get the two vertices that make up the line
         edge = edges[nEdges];
-        var stroke = new THREE.Geometry();
         v1 = edge.va;
-        stroke.vertices.push(new THREE.Vector3(v1.x, 0, v1.y));
         v2 = edge.vb;
-        stroke.vertices.push(new THREE.Vector3(v2.x, 0, v2.y));
-        var line = new THREE.Line( stroke, lineMaterial );
-        scene.add( line );
+        //VORONOI EDGES DEBUGGING PURPOSES
+        //var stroke = new THREE.Geometry();
+        //stroke.vertices.push(new THREE.Vector3(v1.x, 0, v1.y));
+        //stroke.vertices.push(new THREE.Vector3(v2.x, 0, v2.y));
+        //var line = new THREE.Line( stroke, lineMaterial );
+        //scene.add( line );
 
         //create and add street to scene
         var street = new THREE.BoxGeometry(1, 1, 1);
@@ -115,9 +124,9 @@ function onLoad(framework) {
         //apply scale
         var dx = v2.x - v1.x;
         var dz = v2.y - v1.y;
-        var distance = Math.sqrt(dx*dx + dz*dz);
+        var streetLength = Math.sqrt(dx*dx + dz*dz);
         var mat4 = new THREE.Matrix4();
-        mat4.makeScale(distance, 1, 2);
+        mat4.makeScale(streetLength, 1, 2);
         streetMesh.applyMatrix(mat4);
         //apply rotation
         var streetVec = new THREE.Vector2(dx, dz);
@@ -134,15 +143,15 @@ function onLoad(framework) {
         streetMesh.applyMatrix(mat6);
         scene.add(streetMesh);
 
-        if (distance > 20 && distance < 80) {
-          //make primitve shape for future buildings around the street
+        //bound the buildings near center of plane
+        if (streetLength > 20 &&  streetLength < 90 &&
+          Math.abs(midpoint.x) < dxSampling && Math.abs(midpoint.z) < dySampling) {
+          //make primitve shape for future buildings using the street edge
           var futureBuildings = new Shape('N');
-
           //apply translation
           var mat6 = new THREE.Matrix4();
           mat6.makeTranslation(midpoint.x, midpoint.y, midpoint.z);
           futureBuildings.mat.multiply(mat6);
-
           //apply rotation
           var q1 = new THREE.Quaternion();
           q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
@@ -150,7 +159,11 @@ function onLoad(framework) {
           mat5.makeRotationFromQuaternion(q1);
           futureBuildings.mat.multiply(mat5);
 
-          futureBuildings.scale = new THREE.Vector3(distance, 5.0, distance);
+          var distanceToCenter = Math.sqrt(midpoint.x*midpoint.x + midpoint.z*midpoint.z); //center is the origin
+          var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
+          var buildingHeight = Math.max(Math.round(50.0 * gain(0.8, t)), 4.0);
+          //width and length are dependent on street length
+          futureBuildings.scale = new THREE.Vector3(streetLength, buildingHeight, streetLength);
           futureBuildings.geom_type = 'FutureBuildings';
           futureBuildings.terminal = false;
           shapeSet.add(futureBuildings);
@@ -166,27 +179,6 @@ function onLoad(framework) {
 
   //parse the shape set and adds to scene
   parseShapeSet(scene);
-
-  gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
-    camera.updateProjectionMatrix();
-  });
-
-  /*
-  gui.add(lsys, 'axiom').onChange(function(newVal) {
-    lsys.UpdateAxiom(newVal);
-    doLsystem(lsys, lsys.iterations, turtle, sliders.anglefactor);
-  });
-
-  gui.add(lsys, 'iterations', 0, 5).step(1).onChange(function(newVal) {
-    clearScene(turtle);
-    doLsystem(lsys, newVal, turtle, sliders.anglefactor);
-  });
-
-  gui.add(sliders, 'anglefactor', 0.5, 1.5).step(0.05).onChange(function(newVal) {
-    clearScene(turtle);
-    doLsystem(lsys, lsys.iterations, turtle, sliders.anglefactor);
-  });
-  */
 }
 
 /*
@@ -231,8 +223,10 @@ function initializeMap() {
 
 function parseShapeSet(scene) {
 
-  var material = new THREE.MeshLambertMaterial({color: 0xffffff, wireframe: false});
+  
   //var singleGeometry = new THREE.Geometry();
+  var dxSampling = 135;
+  var dySampling = 135;
 
   for (var shape of shapeSet.values()) {
 
@@ -243,7 +237,15 @@ function parseShapeSet(scene) {
     else {
       box = new THREE.Geometry();
     }
+
+    var position = new THREE.Vector3(0, 0, 0).applyMatrix4(shape.mat);
+    var distanceToCenter = Math.sqrt(position.x*position.x + position.z*position.z); //center is the origin
+    var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
+    var colorFactor = Math.max(gain(0.8, t), 0.2);
+    var material = new THREE.MeshLambertMaterial({color: 0xffffff, wireframe: false});
+    material.color.setRGB(colorFactor, colorFactor, colorFactor);
     var boxMesh = new THREE.Mesh(box, material);
+
     //apply scale
     var mat4 = new THREE.Matrix4();
     mat4.makeScale(shape.scale.x, shape.scale.y, shape.scale.z);
