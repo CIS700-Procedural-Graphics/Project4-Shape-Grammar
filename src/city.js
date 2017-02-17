@@ -504,22 +504,22 @@ class Generator
 			if(segmentLength < .5)
 				continue;
 
-			var count = random.integer(1, 3);
+			var count = Math.floor(Math.pow(random.real(0, 1), 2.0) * 4) + 1;
 
 			for(var i = 0; i < count; i++)
 			{
 				// We dont want to overlap with other segments
 				var t = (i / (count + 1));
-				var p = from.clone().lerp(to, t);
-				p.add(segment.normal.clone().multiplyScalar(-.4));
+				var p = from.clone().lerp(to, t * .8 + .1);
+				p.add(segment.normal.clone().multiplyScalar(-.25));
 				p.add(segment.dir.clone().multiplyScalar(.5*segmentLength/count));
 
 				var normal = new THREE.Vector3( segment.normal.x, 0, segment.normal.y );
 
 				// Facing street
 				var faceLength = random.real(.7, .99) * .5 * segmentLength / count;
-				var depth = random.real(.2, .5);
-				var height = random.real(.2, 10.0 * depth * faceLength); // Height is dependent on depth+length
+				var depth = random.real(.2, .65);
+				var height = random.real(random.real(.2, 1), 6.0 * depth * faceLength); // Height is dependent on depth+length
 
 				p.add(segment.normal.clone().multiplyScalar(depth*-.5));
 
@@ -528,7 +528,18 @@ class Generator
 				cube.position.copy(new THREE.Vector3( p.x, cube.scale.y * .5, p.y ));
 				cube.lookAt(cube.position.clone().add(normal));
 
-				shapes.push(cube);
+				var intersects = false;
+				for(var j = 0; j < shapes.length; j++)
+				{
+					if(shapes[j].position.distanceTo(cube.position) < faceLength)
+					{
+						intersects = true;
+						break;
+					}
+				}
+
+				if(!intersects)
+					shapes.push(cube);
 			}
 		}
 
