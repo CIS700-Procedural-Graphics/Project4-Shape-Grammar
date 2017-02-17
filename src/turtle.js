@@ -143,8 +143,9 @@ export default class Turtle {
         
         //Adding base plane
         var geometry = new THREE.PlaneGeometry( 250, 250, 20, 20);
-        var material = new THREE.MeshPhongMaterial( {color: 0x5d5d61, side: THREE.DoubleSide} );
-        var plane = new THREE.Mesh( geometry, material ); 
+        var material3 = new THREE.MeshLambertMaterial( {color: 0xe3e0e0, side: THREE.DoubleSide} );
+        
+        var plane = new THREE.Mesh( geometry, material3 ); 
         plane.rotateX(90 * 3.14 / 180);
         plane.name = "base";
         plane.position.set(0,-10.1,0);
@@ -532,8 +533,19 @@ export default class Turtle {
         
         var geometry = new THREE.ConeGeometry( radius, height, 32 );
         //var material = new THREE.MeshLambertMaterial( {color: 0xe0dee0} );
-        var material = new THREE.MeshPhongMaterial( {color: 0xe0dee0} );
-        var cone = new THREE.Mesh( geometry, material );
+        //var material = new THREE.MeshPhongMaterial( {color: 0xe0dee0} );
+        
+        var loader = new THREE.TextureLoader();
+        var material2;
+        // load a resource
+        loader.load( 'images/bt2.jpg',function ( texture )
+            {
+		      // do something with the texture
+		      material2 = new THREE.MeshBasicMaterial( {map: texture} );
+	        }
+                   );
+        
+        var cone = new THREE.Mesh( geometry, material2 );
         cone.position.set(position.x, position.y, position.z);
         //this.scene.add( cone );
         
@@ -558,8 +570,19 @@ export default class Turtle {
     {
         var geometry = new THREE.CylinderGeometry( radiustop, radiusbottom, height, segments);
         //var material = new THREE.MeshLambertMaterial( {color: 0xe0dee0} );
-        var material = new THREE.MeshPhongMaterial( {color: 0xe0dee0} );
-        var cylinder = new THREE.Mesh( geometry, material );
+        //var material = new THREE.MeshPhongMaterial( {color: 0xe0dee0} );
+        
+        var loader = new THREE.TextureLoader();
+        var material1;
+        // load a resource
+        loader.load( 'images/bt2.jpg',function ( texture )
+            {
+		      // do something with the texture
+		      material1 = new THREE.MeshBasicMaterial( {map: texture} );
+	        }
+                   );
+        
+        var cylinder = new THREE.Mesh( geometry, material1 );
         cylinder.position.set(position.x, position.y, position.z);
         //this.scene.add( cylinder );
         
