@@ -1,12 +1,12 @@
 const THREE = require('three')
 
-var amplitude = 0.8;
-var frequency = 2.0;
+var amplitude = 1;
+var frequency = 5;
 var num_octaves = 1;
 var grads = [new THREE.Vector2(1,1), new THREE.Vector2(-1,1), new THREE.Vector2(1,-1), new THREE.Vector2(-1,-1)];
 
 function hash(p) {
-	return Math.floor(Math.sin(new THREE.Vector2(12.9898, 78.233).dot(p))*43758.5453) % 4;
+	return Math.abs(Math.floor(Math.sin(new THREE.Vector2(12.9898, 78.233).dot(p))*43758.5453) % 4);
 }
 
 function new_t(t) {

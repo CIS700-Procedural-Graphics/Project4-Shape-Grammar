@@ -39,24 +39,20 @@ export default class Building {
 		this.grammar = {};
 		// A: starting grammar
 		// B: 
-		this.grammar['A'] = [new Rule(1, this.subdivideX('H','H',3)),
+		this.grammar['A'] = [new Rule(0.3, this.subdivideScaleZ('H','H',3)),
 							new Rule(0.3, this.subdivideScaleZ('M', 'D')),
 							new Rule(0.4, this.subdivideX('M', 'D', 1))];
-		// this.grammar['M'] = [new Rule(0.25, this.add('X', 'T', 1)), // num of floors
-		// 					new Rule(0.25, this.add('X', 'T', 2)),
-		// 					new Rule(0.5, this.add('X', 'T', 3))];
-		// this.grammar['X'] = [new Rule(0.5, this.subdivideX('Y', 'Y', 3)),
-		// 					new Rule(0.5, this.subdivideX('Y', 'Y', 2))];
-		// this.grammar['Y'] = [new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 3)),
-		// 					new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 2))]; // H are bricks, final
-		// this.grammar['D'] = [new Rule(0.5, this.subdivideX('BRICK', 'Door', 1)),
-		// 					new Rule(0.5, this.subdivideX('Door', 'BRICK', 1))];
-		// this.grammar['Door'] = [new Rule(0.5, this.nothing('DOOR')),
-		// 						new Rule(0.5, this.nothing('FANCY'))];
-		// this.grammar['T'] = [new Rule(1, this.addRoof('R'))]; 
-		// this.grammar['R'] = [new Rule(0.25, this.addChim('CHIM')),
-		// 						new Rule(0.75, this.nothing('ROOF'))];
-		this.iterations = 1; 
+		this.grammar['M'] = [new Rule(1, this.add('X', 'T', 1))];
+		this.grammar['X'] = [new Rule(0.5, this.subdivideX('Y', 'Y', 3)),
+		 					new Rule(0.5, this.subdivideX('Y', 'Y', 2))];
+		this.grammar['Y'] = [new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 3)),
+							new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 2))]; // H are bricks, final
+		this.grammar['D'] = [new Rule(0.5, this.subdivideX('BRICK', 'Door', 1)),
+		 					new Rule(0.5, this.subdivideX('Door', 'BRICK', 1))];
+		this.grammar['Door'] = [new Rule(1, this.addDoor())];
+		this.grammar['DOOR'] = [new Rule(1, this.addDoor())];
+		this.grammar['T'] = [new Rule(1, this.addRoof('ROOF'))]; 
+		this.iterations = 10; 
 		this.curr = this.axiom;
 		this.shapes = [this.axiom];
 		this.color = 0xff1111;
@@ -129,12 +125,13 @@ export default class Building {
 
 	add(a,b, num) {
 		return function() {
-			var s = (Math.random()-0.5)*0.25;
 			var len = scope.curr.obj.scale.y;
 			var arr = [];
+			var height = scope.curr.obj.pos.y;
 			for (var i = 0; i < num; i ++) {
 				arr[i] = copyState(scope.curr);
-				arr[i].obj.pos.y += len;
+				height += len;
+				arr[i].obj.pos.y = height;
 				arr[i].sym = a;
 				if (i != 0 && i != (num - 1)) scope.shapes.push(arr[i]);
 			} 
@@ -223,19 +220,23 @@ export default class Building {
 
 	addRoof(a) {
 		return function() {
-			scope.curr.obj.scale.multiplyScalar(1.1);
-			scope.curr.obj.pos.y += scope.curr.obj.scale.y/2 + 4; 
+			scope.curr.obj.scale.x *= 1.1;
+			scope.curr.obj.scale.z *= 1.1;
+			scope.curr.obj.pos.y +=scope.curr.obj.scale.y;
 			scope.curr.terminal = false;
-			scope.curr.sum = a;
+			scope.curr.sym = a;
 		}
 	}
 
-	addChim(a) {
+	addDoor() {
 		return function() {
-			var c = copyState(scope.curr);
-			c.obj.scale = new THREE.Vector3(0.1,1.1*c.obj.scale.y,0.1);
-			c.sym = a;
-			scope.shapes.push(c);
+			if (scope.curr.obj.pos.y < 1) {
+				var s1 = copyState(scope.curr);
+				s1.sym = 'FANCY';
+				scope.shapes.push(s1);
+			} else {
+				scope.curr.sym = 'DOOR';
+			}
 		}
 	}
 

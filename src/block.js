@@ -9,7 +9,7 @@ function Rule(prob, func) {
 }
 
 var scope;
-var cityX = 30; var cityZ = 30;
+var cityX = 90; var cityZ = 90;
 var blockWidth = 4;
 
 // block defined by its four corners
@@ -86,7 +86,7 @@ export default class Layout {
 		this.iterations = 2; 
 		this.curr = this.axiom;
 		this.blocks = [this.axiom];
-		this.map = popMap(30,30);
+		this.map = popMap(cityX, cityZ);
 
 		scope = this;
 	
