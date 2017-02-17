@@ -47,7 +47,8 @@ export default function shapeSystem(axiom, grammar, scene) {
 
 	this.traverse = function(scene) {
 		if (a === false) {
-			axiom.subdivide();
+			axiom.createFloors(3);
+			//axiom.subdivide();
 			a = true;
 		}
 

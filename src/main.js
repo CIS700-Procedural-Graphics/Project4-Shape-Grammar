@@ -78,6 +78,12 @@ function onLoad(framework) {
   // var pendulum = new THREE.Mesh(pendulumGeo, material);
   // scene.add(pendulum);
 
+  var geometry = new THREE.PlaneGeometry( 5, 20, 32 );
+  var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+  var plane = new THREE.Mesh( geometry, material );
+  plane.rotateX(Math.PI / 2.0);
+  scene.add( plane );
+
   ss.traverse(scene);
 }
 

@@ -4,6 +4,11 @@ import Framework from './framework'
 
 var lambertWhite = new THREE.MeshLambertMaterial( {color: 0xffffff} );
 
+// Generate a random color
+function randColor() {
+	return Math.random() * 0xffffff;
+};
+
 // Shape Node
 // parent: parent of the node
 // boundingbox: bounding box of the shape in world space
@@ -15,8 +20,9 @@ export default class Shape {
 			// Default empty
 			this.parent = null;
 			// this.boundingBox = new THREE.BoxGeometry(10, 10, 10);
-			this.mesh = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 10),
+			this.mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1),
 				lambertWhite);
+			this.mesh.position.set(0, 0.5, 0);
 			this.iteration = 0;
 		} else {
 			this.parent = parent;
@@ -35,11 +41,50 @@ export default class Shape {
 	};
 
 
-	// If there is any Z subdivision then 
-	subdivide() { // 0 = x, 1 = y, 2 = z
-		if (this.children.length === 0) {
+
+
+	// Creates a gate 
+
+	// Creates floors
+	// Can only create on a building that has floors for the first time
+	// This should only happen once per building and should really be the first thing that happens
+	createFloors(numFloors) {
 			// subdivide
-			var axis = 2; // Just do this for now.
+			var s_factor = 0.5;
+
+			var s = this.mesh.scale;
+			var p = this.mesh.position;
+
+			var s_child = s.clone();
+			var s_axis;
+
+			if (numFloors != null && numFloors > 0) {
+				numFloors = Math.floor(numFloors);
+				s_axis = 1.0 / numFloors;
+			} else {
+				numFloors = 2.0;
+				s_axis = 0.5;
+			}
+
+			s_axis = s.y * s_axis;
+			s_child.setComponent(1, s_axis);
+
+			for(var i = 0; i < numFloors; i++) {
+				var child = new THREE.Mesh(new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
+				new THREE.MeshLambertMaterial( {color: randColor()} ));
+
+				child.position.set(p.x, p.y - s.y / 2.0 + s_axis / 2.0 + s_axis * i, p.z);
+				this.children.push(new Shape(this, child));
+			}
+	};
+
+	// Subdivides Evenly in Half
+	// Should not be used for in y direction for floor creation
+	subdivide(axis) { // 0 = x, 1 = y, 2 = z
+		if (this.children.length === 0) {
+			if (axis == null) {
+				axis = 0;
+			}
 
 			var s = this.mesh.scale;
 			var p = this.mesh.position;
@@ -122,16 +167,15 @@ export default class Shape {
 				this.children[i].draw(scene, n);
 			}
 		} else {
-			// this.drawBbox(scene);
 			scene.add(this.mesh);
-			//this.subdivide();
 		}
 	};
 
-	drawBbox(scene) {
-		var geo = new THREE.EdgesGeometry( this.mesh.geometry );
-		var mat = new THREE.LineBasicMaterial( { color: 0x00ffff, linewidth: 2 } );
-		var wireframe = new THREE.LineSegments( geo, mat );
-		scene.add( wireframe );
-	};
+	// Well that didn't work
+	// drawBbox(scene) {
+	// 	var geo = new THREE.EdgesGeometry( this.mesh.geometry );
+	// 	var mat = new THREE.LineBasicMaterial( { color: 0x00ffff, linewidth: 2 } );
+	// 	var wireframe = new THREE.LineSegments( geo, mat );
+	// 	scene.add( wireframe );
+	// };
 }
