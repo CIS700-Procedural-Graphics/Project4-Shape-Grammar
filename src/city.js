@@ -39,8 +39,47 @@ class ConvexHull
 		this.segments.push({ valid : false, normal: normal.clone(), dir: direction.clone(), midpoint: midpoint.clone(), min : 1000, max : -1000});
 	}
 
-	sort()
+	// Sorts the vertices with the gift wrapping algorithm
+	sortVertices()
 	{
+		var unorderedVertices = this.vertices;
+		this.vertices = [];
+
+		if(unorderedVertices.length == 0)
+			return;
+
+		var leftmostPoint = unorderedVertices[0];
+
+		for(var i = 1; i < unorderedVertices.length; i++)
+			if(unorderedVertices[i].x < leftmostPoint.x)
+				leftmostPoint = unorderedVertices[i];
+
+        function isLeft(a, b, c)
+        {
+    	    return ((b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x)) > 0;
+        }
+
+		var currentPoint = leftmostPoint;
+		var endpoint = unorderedVertices[0];
+		var i = 0;
+		do
+		{
+			this.vertices.push(currentPoint);
+			endpoint = unorderedVertices[0];
+
+			for(var j = 1; j < unorderedVertices.length; j++)
+			{
+				if((endpoint === currentPoint) || isLeft(currentPoint, endpoint, unorderedVertices[j]))
+					endpoint = unorderedVertices[j];
+			}
+
+			currentPoint = endpoint;
+			i++;
+		}
+		while(i < unorderedVertices.length * 2 && !(endpoint === this.vertices[0]));
+
+		if(unorderedVertices.length != this.vertices.length)
+			console.log("Convex hull vertex sort did not work: " + unorderedVertices.length + " original points, result: " + this.vertices.length)
 	}
 
 	calculateVertices()
@@ -157,7 +196,7 @@ class ConvexHull
 				valid++;
 		}
 
-		return valid > 2;
+		return valid > 2 && this.segments.length > 2;
 	}
 
 	// Returns two copies
@@ -340,6 +379,8 @@ class Generator
 
 			if(!bounded)
 				continue;
+
+			hulls[h].sortVertices();
 			
 			var height = 0;
 			pointsGeo.vertices.push(new THREE.Vector3( hulls[h].midpoint.x, height, hulls[h].midpoint.y));
