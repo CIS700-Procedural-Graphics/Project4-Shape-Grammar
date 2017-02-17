@@ -38,6 +38,7 @@ function copyNodePos(oldNode, shape, iter) {
 
 	newNode.maxHeight = oldNode.maxHeight;
 	newNode.iteration = iter;
+	newNode.colorOffset = oldNode.colorOffset;
 
 	return newNode;
 }
@@ -186,6 +187,7 @@ export const GrammarRules =
 			var set = new Set();
 			var tree = copyNodePos(node, 'TREE', iter);
 			tree.scale.set(1,1,1);
+			tree.generateNewColorOffset();
 			var nodeBox = getBbox(node);
 			tree.position.y += getBbox(tree).y / 2;
 			var xOffset =  (Math.random() * 2 - 1) * nodeBox.x / 2;

@@ -1,12 +1,4 @@
 export const Geometry = {
-  SHORT_HOUSE: {
-    path: 'window_house', // for test
-    obj: {}
-  },
-  TOWER: {
-    path: 'tall_tower', // for test
-    obj: {},
-  },
   FLOOR_APT: {
     path: 'floor',
     obj: {},
@@ -30,7 +22,7 @@ export const Geometry = {
     obj: {},
   },
   ROOF_SKY: {
-    path: 'skyscraper_roof', //TODO: replace
+    path: 'skyscraper_roof', 
     obj: {}
   },
   PARK: {

@@ -5,18 +5,15 @@ import turtle from './turtle'
 import ShapeGrammar from './shapegrammar'
 import { Node } from './linkedlist'
 import City from './city'
-
 import {Geometry} from './ref'
-
+const MTLLoader = require('three-mtl-loader'); 
 const OBJLoader = require('jser-three-obj-loader');
 OBJLoader(THREE);
 
-const MTLLoader = require('three-mtl-loader'); 
-
 var loaded = 0; // Are the geometries loaded? 
 var rendered = false; // Have the shapes been rendered?
-var initRender = true;
-var shadowsOn = false;//true;
+var initRender = true; // Generate a new shapeSet or use existing existing one?
+var shadowsOn = false;
 
 var scene;
 var shapeGrammar;
@@ -44,12 +41,11 @@ function renderLights() {
   directionalLight2.color.setHSL(0.1, 1, 0.95);
   directionalLight2.position.set(1, 4, 2);
   directionalLight2.position.multiplyScalar(100);
-  directionalLight2.intensity = 0.4;
+  directionalLight2.intensity = 0.5;
   scene.add(directionalLight2)
 
-
   var ambientLight = new THREE.AmbientLight(0x404040);
-  ambientLight.intensity = 2.5;
+  ambientLight.intensity = 2;
   scene.add(ambientLight);
 }
 
@@ -63,6 +59,8 @@ function onLoad(framework) {
   renderer.shadowMap.enabled = true;
   renderer.antialias = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  scene.background = new THREE.Color(0.85, 0.95, 1);
 
   renderLights();
 
@@ -89,7 +87,6 @@ function onLoad(framework) {
     rerender: function() {     
       clearScene();
       resetShapeGrammar();
-      rendered = false;
     },
     shadows: function() {     
       clearScene();
@@ -116,20 +113,20 @@ function clearScene() {
   }
 }
 
+
+/**
+ * Creates a new shape grammar, keeping the number of iterations
+ * from the gui, then triggers a full rerender
+ */
 function resetShapeGrammar() {
-  if (shapeGrammar) {
-    var iter = shapeGrammar.iterations;
-  }
-
+  var iter = shapeGrammar ? shapeGrammar.iterations : null;
   var shapes = city.makeCity();
-
   shapeGrammar = new ShapeGrammar(city);
+  shapeGrammar.iterations = iter ? iter : shapeGrammar.iterations;
   initRender = true;
-
-  if (iter) {
-    shapeGrammar.iterations = iter;
-  }
+  rendered = false;
 }
+
 
 /**
   * Load custom geometry .obj's from the assets folder.
@@ -137,13 +134,7 @@ function resetShapeGrammar() {
   * Called once when the scene loads.
   */
 function loadGeometries() {
-  
   var mtlLoader = new MTLLoader();
-
-  //TODO: replace with custom material, or MTLLoader
-  var material = new THREE.MeshLambertMaterial({
-    color: 0x554444
-  });
 
   mtlLoader.setPath('./../assets/');
 
@@ -198,18 +189,16 @@ function loadGeometries() {
   * Renders the given shapeGrammar
   */
 function renderShapeGrammar(iterations) {
-
-
   // ground
-  var mat = new THREE.MeshLambertMaterial({color: 0xaaaaaa});
-  var mesh = new THREE.Mesh(new THREE.PlaneGeometry(60,60), mat);
+  // TODO: replace with real ground, and roads, etc
+  var mat = new THREE.MeshLambertMaterial({color: new THREE.Color(0.67, 0.70, 0.75)});
+  var mesh = new THREE.Mesh(new THREE.PlaneGeometry(200,200), mat);
   mesh.rotation.x = Math.PI / 2;
   mesh.material.side = THREE.DoubleSide;
   mesh.position.set(20,-0.1,20);
   mesh.receiveShadow = shadowsOn;
   mesh.castShadow = shadowsOn;
   scene.add(mesh);
-
 
   var set = initRender ? shapeGrammar.doIterations(iterations) : shapeGrammar.shapeSet;
   set.forEach((node) => {
@@ -219,8 +208,11 @@ function renderShapeGrammar(iterations) {
     geo.scale.set(node.scale.x, node.scale.y, node.scale.z);
     geo.position.set(node.position.x, node.position.y, node.position.z);
 
-    
-    geo.material = Geometry[node.shape].obj.material;
+    var color =  Geometry[node.shape].obj.material.color;
+   
+    geo.material = new THREE.MeshPhongMaterial(Geometry[node.shape].obj.material);
+    geo.material.color = new THREE.Color(color.r, color.g, color.b)
+    geo.material.color.addScalar(node.colorOffset);
 
     geo.traverse(function(child) {
       if (child instanceof THREE.Mesh) {
@@ -229,7 +221,6 @@ function renderShapeGrammar(iterations) {
         child.receiveShadow = shadowsOn;
       }
     });
-
     
     if (node.iteration <= iterations) {
      scene.add(geo);

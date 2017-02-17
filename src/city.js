@@ -1,5 +1,5 @@
 const THREE = require('three');
-import { Geometry } from './main'
+import { Geometry } from './ref'
 import { Node } from './linkedlist'
 
 const NUM_OCTAVES = 10;
@@ -141,6 +141,7 @@ export default class City {
 			var lot = lots[i];
 			var pos = lot.position;
 			var isPark = Math.random() > 0.95;
+			var savedOffset;
 
 			// Adjust building size according to the lot's maxHeight
 			var sz = buildingSize * lot.maxHeight / this.baseHeight;
@@ -158,11 +159,14 @@ export default class City {
 				var node2 = new Node(building2, 0);
 
 				if (isPark) {
-					var n = lot.lotSize[len] / (buildingSize * scale);
+					var n = lot.lotSize[len] / buildingSize;
 					node1.scale[len] = lot.lotSize[len] / n;
 					node2.scale[len] = lot.lotSize[len] / n;
 					node1.scale[width] =  lot.lotSize[width] * 0.5 / buildingSize;
 					node2.scale[width] =  lot.lotSize[width] * 0.5 / buildingSize;
+					savedOffset = savedOffset ? savedOffset : node1.colorOffset;
+					node1.colorOffset = savedOffset;
+					node2.colorOffset = savedOffset;
 				} else {
 					node1.scale.set(scale, 1, scale);
 					node2.scale.set(scale, 1, scale);
@@ -184,7 +188,6 @@ export default class City {
 				var lilNoise2 = this.noise(node2.position.x, node2.position.y,
 					node2.position.z) ;
 				node2.maxHeight = lot.maxHeight + lilNoise2;
-
 
 				set.add(node1);
 				set.add(node2);
@@ -212,7 +215,6 @@ export default class City {
 				var height = this.getMaxHeight(x, Math.random(), z);
 				var ratios = {};
 
-				// ratios[park] = 0.05;
 				ratios[sky] = 0.6 - 1 / height * 0.1;
 				ratios[apt] = 1  - ratios[sky];
 

@@ -8,11 +8,16 @@ export class Node {
 		this.terminal = false;
 		this.maxHeight = 5;
 		this.shape = shape ? shape : 'GROUND_FLOOR_APT';
-		this.iteration = iter ? iter : 0;		
+		this.iteration = iter ? iter : 0;	
+		this.colorOffset = (Math.random() * 2 - 1) * 0.2;
 	}
 
 	terminate() {
 		this.terminal = true;
+	}
+
+	generateNewColorOffset() {
+		this.colorOffset = (Math.random() * 2 - 1) * 0.2;
 	}
 }
 
