@@ -26,9 +26,13 @@ A **Voronoi diagram** is created such that 5 points arbitrarily selected as "see
 
 # Buildings
 Urban Houses (Zone 1): These houses are wider and will arbitrarily rotate its subdivisions to extend further outward
+
 Suburban houses (Zone 2): These houses are unit sized and follow default subdivision rules.
+
 High-density Residence (Zone 4): These are apartment-like houses that have their height extended and follow default subdivision rules. These will appear pink, have more windows, and a door.
+
 City Financial District (Zone 5): These are similar to Zone 4 except taller and appear more indigo and all features are more brought out.
+
 
 Windows are placed based on the building height. The larger the zone number, the more windows (because the buildings get bigger). They are placed randomly with no constraints. Doors are only placed on the primary building body (the body that eventually will be subdivided) and thus buildings will each have a single door.
 
