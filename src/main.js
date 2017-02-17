@@ -2,8 +2,6 @@
 const THREE = require('three'); // older modules are imported like this. You shouldn't have to worry about this much
 import Framework from './framework'
 import Builder from './builder.js'
-import OBJLoader from './OBJLoader.js'
-import MTLLoader from './MTLLoader.js'
 import Turtle from './turtle.js'
 import CTurtle from './cturtle.js'
 import Lsystem, {LinkedListToString} from './lsystem.js'
