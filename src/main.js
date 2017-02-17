@@ -40,27 +40,43 @@ function onLoad(framework) {
   // initialize LSystem and a Turtle to draw
   shapeSet = new Set();
 
+  //initialize the ground
+  var planeGeometry = new THREE.PlaneGeometry(800, 600);
+  var planeMaterial = new THREE.MeshLambertMaterial({color: 0x8BA870, side: THREE.DoubleSide});
+  var plane = new THREE.Mesh(planeGeometry, planeMaterial);
+  //apply rotation
+  var qPlane = new THREE.Quaternion();
+  qPlane.setFromAxisAngle(new THREE.Vector3(1.0, 0.0, 0.0), -Math.PI/2.0);
+  var matPlane = new THREE.Matrix4();
+  matPlane.makeRotationFromQuaternion(qPlane);
+  plane.applyMatrix(matPlane);
+  scene.add(plane);
+
   var building = new Shape('A');
-  building.position = new THREE.Vector3(0, 0, 0);
-  building.rotation = new THREE.Vector3(0, 0, 0);
+  //apply translation
+  var mat6 = new THREE.Matrix4();
+  mat6.makeTranslation(4, 0, 10);
+  building.mat.multiply(mat6);
+  //apply rotation
+  var q1 = new THREE.Quaternion();
+  q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 30 * Math.PI/180.0);
+  var mat5 = new THREE.Matrix4();
+  mat5.makeRotationFromQuaternion(q1);
+  building.mat.multiply(mat5);
+  //apply scale
   building.scale = new THREE.Vector3(7, 15, 5);
   building.geom_type = 'Apartment';
+  building.terminal = false;
   shapeSet.add(building);
-  
-  var lsys = new Lsystem(shapeSet);
-  shapeSet = lsys.doIterations(3);
-
-  //parse the shape set and adds to scene
-  parseShapeSet(scene);
   
   //compute Voronoi diagram
   var voronoi = new Voronoi();
   var sites = [];
   var diagram;
   var xo = 0;
-  var dx = 100;
+  var dx = 125;
   var yo = 0;
-  var dy = 100;
+  var dy = 125;
   for (var i=0; i<30; i++) {
     sites.push({
       x:Math.round(xo+2*(Math.random()-0.5)*dx),
@@ -74,7 +90,7 @@ function onLoad(framework) {
   if ( diagram ) {
 
     var lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-    var streetMaterial = new THREE.MeshLambertMaterial({color: 0xffffff, wireframe: false});
+    var streetMaterial = new THREE.MeshLambertMaterial({ color: 0x708090 });
     var edges = diagram.edges;
     var nEdges = edges.length;
     var v1, v2;
@@ -82,6 +98,7 @@ function onLoad(framework) {
       var edge;
       while (nEdges--) {
 
+        
         //get the two vertices that make up the line, and add line to scene
         edge = edges[nEdges];
         var stroke = new THREE.Geometry();
@@ -92,39 +109,63 @@ function onLoad(framework) {
         var line = new THREE.Line( stroke, lineMaterial );
         scene.add( line );
 
-        //create a building that bounds the street
+        //create and add street to scene
         var street = new THREE.BoxGeometry(1, 1, 1);
         var streetMesh = new THREE.Mesh(street, streetMaterial);
-
         //apply scale
         var dx = v2.x - v1.x;
         var dz = v2.y - v1.y;
-        console.log(dx);
-        console.log(dz);
         var distance = Math.sqrt(dx*dx + dz*dz);
         var mat4 = new THREE.Matrix4();
-        mat4.makeScale(distance, 4, 20);
+        mat4.makeScale(distance, 1, 2);
         streetMesh.applyMatrix(mat4);
-
         //apply rotation
-        var streetVec = new THREE.Vector3(dx, 0, dz).normalize();
+        var streetVec = new THREE.Vector2(dx, dz);
+        var angle = -1.0* streetVec.angle();
         var q = new THREE.Quaternion();
-        q.setFromUnitVectors(new THREE.Vector3(1, 0, 0), streetVec);
+        q.setFromAxisAngle(new THREE.Vector3(0.0, 1.0, 0.0), angle);
         var mat5 = new THREE.Matrix4();
         mat5.makeRotationFromQuaternion(q);
         streetMesh.applyMatrix(mat5);
-        
         //apply translation
-        var midpoint = new THREE.Vector3((v1.x + v2.x)/2.0, 0, (v1.y + v2.y)/2.0);
+        var midpoint = new THREE.Vector3((v1.x + v2.x)/2.0, 0.0, (v1.y + v2.y)/2.0);
         var mat6 = new THREE.Matrix4();
         mat6.makeTranslation(midpoint.x, midpoint.y, midpoint.z);
         streetMesh.applyMatrix(mat6);
-
         scene.add(streetMesh);
+
+        if (distance > 20 && distance < 80) {
+          //make primitve shape for future buildings around the street
+          var futureBuildings = new Shape('N');
+
+          //apply translation
+          var mat6 = new THREE.Matrix4();
+          mat6.makeTranslation(midpoint.x, midpoint.y, midpoint.z);
+          futureBuildings.mat.multiply(mat6);
+
+          //apply rotation
+          var q1 = new THREE.Quaternion();
+          q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
+          var mat5 = new THREE.Matrix4();
+          mat5.makeRotationFromQuaternion(q1);
+          futureBuildings.mat.multiply(mat5);
+
+          futureBuildings.scale = new THREE.Vector3(distance, 5.0, distance);
+          futureBuildings.geom_type = 'FutureBuildings';
+          futureBuildings.terminal = false;
+          shapeSet.add(futureBuildings);
+        }
+        
       }
     }
-
   }
+  
+
+  var lsys = new Lsystem(shapeSet);
+  shapeSet = lsys.doIterations(5);
+
+  //parse the shape set and adds to scene
+  parseShapeSet(scene);
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
     camera.updateProjectionMatrix();
@@ -169,6 +210,8 @@ function doLsystem(lsystem, iterations, turtle, anglefactor) {
 function initializeMap() {
   var tempMap = new Map();
   var objLoader = new THREE.OBJLoader();
+
+  //apartment objects
   objLoader.load('/geo/ApartmentBaseSide.obj', function(obj) { typeToObjMap.set('ApartmentBaseSide', obj.children[0].geometry) });
   objLoader.load('/geo/ApartmentBaseCorner.obj', function(obj) { typeToObjMap.set('ApartmentBaseCorner', obj.children[0].geometry) });
   objLoader.load('/geo/ApartmentFloorSide1.obj', function(obj) { tempMap.set('ApartmentFloorSide1', obj.children[0].geometry); });
@@ -178,6 +221,7 @@ function initializeMap() {
   objLoader.load('/geo/ApartmentRoofSide.obj', function(obj) { typeToObjMap.set('ApartmentRoofSide', obj.children[0].geometry) });
   objLoader.load('/geo/ApartmentRoofCorner.obj', function(obj) { typeToObjMap.set('ApartmentRoofCorner', obj.children[0].geometry) });
 
+  //skyscraper objects
   objLoader.load('/geo/SkyscraperSide.obj', function(obj) { typeToObjMap.set('SkyscraperSide', obj.children[0].geometry) });
   objLoader.load('/geo/SkyscraperCorner.obj', function(obj) { typeToObjMap.set('SkyscraperCorner', obj.children[0].geometry) });
   objLoader.load('/geo/SkyscraperRoof.obj', function(obj) { typeToObjMap.set('SkyscraperRoof', obj.children[0].geometry) });
@@ -200,44 +244,16 @@ function parseShapeSet(scene) {
       box = new THREE.Geometry();
     }
     var boxMesh = new THREE.Mesh(box, material);
-
     //apply scale
     var mat4 = new THREE.Matrix4();
     mat4.makeScale(shape.scale.x, shape.scale.y, shape.scale.z);
     boxMesh.applyMatrix(mat4);
-
-    //apply rotation
-    if (shape.rotation.x != 0) {
-        var q = new THREE.Quaternion();
-        //forward rotation is not affected by angle factor, rotation about the trunk
-        q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), shape.rotation.x * Math.PI/180.0);
-        var mat5 = new THREE.Matrix4();
-        mat5.makeRotationFromQuaternion(q);
-        boxMesh.applyMatrix(mat5);
-    }
-    if (shape.rotation.y != 0) {
-        var q = new THREE.Quaternion();
-        //up rotation is not affected by angle factor, main trunk curve
-        q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), shape.rotation.y * Math.PI/180.0);
-        var mat5 = new THREE.Matrix4();
-        mat5.makeRotationFromQuaternion(q);
-        boxMesh.applyMatrix(mat5);
-    }
-    if (shape.rotation.z != 0) {
-        var q = new THREE.Quaternion();
-        q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), shape.rotation.z * Math.PI/180.0);
-        var mat5 = new THREE.Matrix4();
-        mat5.makeRotationFromQuaternion(q);
-        boxMesh.applyMatrix(mat5);
-    }
-
-    //apply translation
-    var mat6 = new THREE.Matrix4();
-    mat6.makeTranslation(shape.position.x, shape.position.y, shape.position.z);
-    boxMesh.applyMatrix(mat6);
-
+    //apply transformation
+    boxMesh.applyMatrix(shape.mat);
     scene.add(boxMesh);
+
     //singleGeometry.merge(boxMesh.geometry, boxMesh.matrix);
+
   }
   
   //var mesh = new THREE.Mesh(singleGeometry, material);

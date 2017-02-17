@@ -12,8 +12,9 @@ function Rule(prob, str) {
 export class Shape {
 	constructor(symbol) {
     	this.symbol = symbol;
-	    this.position = new THREE.Vector3(0, 0, 0); //WARNING: position is at BOTTOM CENTER of shape, as defined in OBJ files
-	    this.rotation = new THREE.Vector3(0, 0, 0);
+	    //this.position = new THREE.Vector3(0, 0, 0); //WARNING: position is at BOTTOM CENTER of shape, as defined in OBJ files
+	    //this.rotation = new THREE.Vector3(0, 0, 0);
+	    this.mat = new THREE.Matrix4(); //keeps track of position and rotation
 	    this.scale = new THREE.Vector3(1, 1, 1); //scale.y is the height of shape
 	    this.terminal = false;
 	    this.geom_type = 'Unknown';
@@ -26,6 +27,13 @@ export default class Lsystem {
 	constructor(shapes) {
 		this.shapes = new Set();
 		this.grammar = {};
+
+		this.grammar['N'] = [
+			new Rule(1.0, 'x')
+		];
+		this.grammar['X'] = [
+			new Rule(1.0, 'v')
+		];
 
 		//apartment rules
 		this.grammar['A'] = [
@@ -51,6 +59,9 @@ export default class Lsystem {
 
 		//binds grammar to method stored in this class
 	    this.renderGrammar = {
+	        'x' : this.splitStreet.bind(this),
+	        'v' : this.splitStreetSide.bind(this),
+
 	        'b' : this.makeBase.bind(this),
 	        'm' : this.makeMiddle.bind(this),
 	        'r' : this.makeRoof.bind(this),
@@ -129,10 +140,82 @@ export default class Lsystem {
 		return finalShapes;
 	};
 
+	splitStreet(shapeSet, replacedShape) {
+
+		var displacement = (replacedShape.scale.z/2.0) + 3.0;
+
+		var shape1 = new Shape('X');
+		shape1.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+		//apply translation
+		var mat4 = new THREE.Matrix4();
+	 	mat4.makeTranslation(0.0, 0.0, displacement);
+	 	shape1.mat.multiply(mat4);
+
+		shape1.scale = new THREE.Vector3(replacedShape.scale.x /2.0, replacedShape.scale.y, Math.floor(replacedShape.scale.z/3.0) + 2.0);
+		shape1.terminal = false;
+		shape1.geom_type = 'StreetSide';
+		shapeSet.add(shape1);
+
+		var shape2 = new Shape('X');
+		shape2.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+		//apply translation
+		var mat5 = new THREE.Matrix4();
+	 	mat5.makeTranslation(0.0, 0.0, -displacement);
+	 	shape2.mat.multiply(mat5);
+
+		shape2.scale = new THREE.Vector3(replacedShape.scale.x /2.0, replacedShape.scale.y, Math.floor(replacedShape.scale.z/3.0)+ 2.0);
+		shape2.terminal = false;
+		shape2.geom_type = 'StreetSide';
+		shapeSet.add(shape2);
+	};
+
+	splitStreetSide(shapeSet, replacedShape) {
+		var buildingType;
+		var geometryType;
+		if (replacedShape.scale.y > 16.0) {
+			buildingType = 'A';
+			geometryType = 'Skyscraper';
+		}
+		else {
+			buildingType = 'A';
+			geometryType = 'Apartment';
+		}
+
+		var currentX = 0;
+		var maxX = replacedShape.scale.x;
+		while (currentX < maxX) {
+			var spaceBetweenBuilding = Math.floor(Math.random() * 4.0) + 2.0;
+			console.log(spaceBetweenBuilding);
+			currentX = currentX + spaceBetweenBuilding;
+			var buildingScaleX = Math.floor(Math.random() * 4.0) + 4.0;
+			//if over the maximum width, clamp it
+			if (currentX + buildingScaleX > maxX) {
+				console.log('here');
+				buildingScaleX = maxX - currentX;
+			}
+			var shape1 = new Shape(buildingType);
+			shape1.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+			//apply translation
+			var dx = currentX + (buildingScaleX/2.0) - (replacedShape.scale.x/2.0);
+			//console.log(dx);
+			var mat4 = new THREE.Matrix4();
+		 	mat4.makeTranslation(dx, 0.0, 0.0);
+		 	shape1.mat.multiply(mat4);
+
+			shape1.scale = new THREE.Vector3(replacedShape.scale.x /2.0, replacedShape.scale.y, replacedShape.scale.z);
+			shape1.terminal = false;
+			shape1.geom_type = geometryType;
+			shapeSet.add(shape1);
+			currentX = currentX + buildingScaleX;
+		}
+	};
+
 	makeBase(shapeSet, replacedShape) {
 		var shape = new Shape('B');
-		shape.position = new THREE.Vector3(replacedShape.position.x, replacedShape.position.y, replacedShape.position.z);
-		shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y, replacedShape.rotation.z);
+		shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 		shape.scale = new THREE.Vector3(replacedShape.scale.x, 1, replacedShape.scale.z);
 		shape.terminal = false;
 		shape.geom_type = 'ApartmentBase';
@@ -141,8 +224,13 @@ export default class Lsystem {
 
 	makeRoof(shapeSet, replacedShape) {
 		var shape = new Shape('R');
-		shape.position = new THREE.Vector3(replacedShape.position.x, replacedShape.position.y + replacedShape.scale.y - 1.0, replacedShape.position.z);
-		shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y, replacedShape.rotation.z);
+		shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+		//apply translation
+		var mat6 = new THREE.Matrix4();
+	 	mat6.makeTranslation(0.0, replacedShape.scale.y - 1.0, 0.0);
+	 	shape.mat.multiply(mat6);
+
 		shape.scale = new THREE.Vector3(replacedShape.scale.x, 1, replacedShape.scale.z);
 		shape.terminal = false;
 		shape.geom_type = 'ApartmentRoof';
@@ -151,8 +239,13 @@ export default class Lsystem {
 
 	makeMiddle(shapeSet, replacedShape) {
 		var shape = new Shape('M');
-		shape.position = new THREE.Vector3(replacedShape.position.x, replacedShape.position.y + 2.0, replacedShape.position.z);
-		shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y, replacedShape.rotation.z);
+		shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+		//apply translation
+		var mat6 = new THREE.Matrix4();
+	 	mat6.makeTranslation(0, 2.0, 0);
+	 	shape.mat.multiply(mat6);
+
 		shape.scale = new THREE.Vector3(replacedShape.scale.x, replacedShape.scale.y - 3.0, replacedShape.scale.z);
 		shape.terminal = false;
 		shape.geom_type = 'ApartmentMiddle';
@@ -167,8 +260,13 @@ export default class Lsystem {
 				floorHeight = 1;
 			}
 			var shape = new Shape('F');
-			shape.position = new THREE.Vector3(replacedShape.position.x, replacedShape.position.y + sumFloorHeight, replacedShape.position.z);
-			shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y, replacedShape.rotation.z);
+			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+			//apply translation
+			var mat6 = new THREE.Matrix4();
+		 	mat6.makeTranslation(0, sumFloorHeight, 0);
+		 	shape.mat.multiply(mat6);
+
 			shape.scale = new THREE.Vector3(replacedShape.scale.x, floorHeight, replacedShape.scale.z);
 			shape.terminal = false;
 			if (floorHeight == 1) {
@@ -207,13 +305,18 @@ export default class Lsystem {
 		var isCorner = true;
 
 		//front side of floor
-		var xPos = replacedShape.position.x + (replacedShape.scale.x/2.0) - 0.5;
-		var zPos = replacedShape.position.z + (replacedShape.scale.z/2.0) - 0.5;
-		var endXPos = replacedShape.position.x - (replacedShape.scale.x/2.0) + 0.5;
+		var xPos = (replacedShape.scale.x/2.0) - 0.5;
+		var zPos = (replacedShape.scale.z/2.0) - 0.5;
+		var endXPos = -(replacedShape.scale.x/2.0) + 0.5;
 		while (xPos > endXPos) {
 			var shape = new Shape('W');
-			shape.position = new THREE.Vector3(xPos, replacedShape.position.y, zPos);
-			shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y, replacedShape.rotation.z);
+			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+			//apply translation
+			var mat6 = new THREE.Matrix4();
+		 	mat6.makeTranslation(xPos, 0, zPos);
+		 	shape.mat.multiply(mat6);
+
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
 			if (isCorner) {
@@ -229,13 +332,25 @@ export default class Lsystem {
 		isCorner = true;
 
 		//right side of floor (if positive z axis is facing toward you)
-		xPos = replacedShape.position.x + (replacedShape.scale.x/2.0) - 0.5;
-		zPos = replacedShape.position.z - (replacedShape.scale.z/2.0) + 0.5;
-		var endZPos = replacedShape.position.z + (replacedShape.scale.z/2.0) - 0.5;
+		xPos = (replacedShape.scale.x/2.0) - 0.5;
+		zPos = -(replacedShape.scale.z/2.0) + 0.5;
+		var endZPos = (replacedShape.scale.z/2.0) - 0.5;
 		while (zPos < endZPos) {
 			var shape = new Shape('W');
-			shape.position = new THREE.Vector3(xPos, replacedShape.position.y, zPos);
-			shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y + 90.0, replacedShape.rotation.z);
+			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+			//apply translation
+			var mat6 = new THREE.Matrix4();
+		 	mat6.makeTranslation(xPos, 0, zPos);
+		 	shape.mat.multiply(mat6);
+
+		 	//apply rotation
+		  	var q1 = new THREE.Quaternion();
+		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI/2.0);
+		  	var mat5 = new THREE.Matrix4();
+		 	mat5.makeRotationFromQuaternion(q1);
+		 	shape.mat.multiply(mat5);
+
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
 			if (isCorner) {
@@ -251,13 +366,25 @@ export default class Lsystem {
 		isCorner = true;
 
 		//back side of floor
-		xPos = replacedShape.position.x - (replacedShape.scale.x/2.0) + 0.5;
-		zPos = replacedShape.position.z - (replacedShape.scale.z/2.0) + 0.5;
-		endXPos = replacedShape.position.x + (replacedShape.scale.x/2.0) - 0.5;
+		xPos = -(replacedShape.scale.x/2.0) + 0.5;
+		zPos = -(replacedShape.scale.z/2.0) + 0.5;
+		endXPos = (replacedShape.scale.x/2.0) - 0.5;
 		while (xPos < endXPos) {
 			var shape = new Shape('W');
-			shape.position = new THREE.Vector3(xPos, replacedShape.position.y, zPos);
-			shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y + 180.0, replacedShape.rotation.z);
+			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+			//apply translation
+			var mat6 = new THREE.Matrix4();
+		 	mat6.makeTranslation(xPos, 0, zPos);
+		 	shape.mat.multiply(mat6);
+
+		 	//apply rotation
+		  	var q1 = new THREE.Quaternion();
+		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
+		  	var mat5 = new THREE.Matrix4();
+		 	mat5.makeRotationFromQuaternion(q1);
+		 	shape.mat.multiply(mat5);
+
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
 			if (isCorner) {
@@ -273,13 +400,25 @@ export default class Lsystem {
 		isCorner = true;
 
 		//left side of floor
-		xPos = replacedShape.position.x - (replacedShape.scale.x/2.0) + 0.5;
-		zPos = replacedShape.position.z + (replacedShape.scale.z/2.0) - 0.5;
-		endZPos = replacedShape.position.z - (replacedShape.scale.z/2.0) + 0.5;
+		xPos = -(replacedShape.scale.x/2.0) + 0.5;
+		zPos = (replacedShape.scale.z/2.0) - 0.5;
+		endZPos = -(replacedShape.scale.z/2.0) + 0.5;
 		while (zPos > endZPos) {
 			var shape = new Shape('W');
-			shape.position = new THREE.Vector3(xPos, replacedShape.position.y, zPos);
-			shape.rotation = new THREE.Vector3(replacedShape.rotation.x, replacedShape.rotation.y + 270.0, replacedShape.rotation.z);
+			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
+
+			//apply translation
+			var mat6 = new THREE.Matrix4();
+		 	mat6.makeTranslation(xPos, 0, zPos);
+		 	shape.mat.multiply(mat6);
+
+			//apply rotation
+		  	var q1 = new THREE.Quaternion();
+		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 3.0*Math.PI/2.0);
+		  	var mat5 = new THREE.Matrix4();
+		 	mat5.makeRotationFromQuaternion(q1);
+		 	shape.mat.multiply(mat5);
+
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
 			if (isCorner) {
