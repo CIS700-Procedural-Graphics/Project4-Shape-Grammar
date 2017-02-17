@@ -1,7 +1,9 @@
 const THREE = require('three');
 const _ = require('lodash');
 
-import Shape, { ShapeType } from './shapeTypes.js'
+import { ShapeType } from './shapeTypes'
+import Shape from './shape'
+
 const ST = ShapeType();
 
 export default class ShapeGrammar {
@@ -16,7 +18,7 @@ export default class ShapeGrammar {
   createAxiom() {
     var axiom = [];
 
-    axiom.push(ST.Building);
+    axiom.push(new Shape(ST.Building));
 
     return axiom;
   }
@@ -41,7 +43,7 @@ export default class ShapeGrammar {
   }
 
   doIterations() {
-    var shapes = this.axiom;
+    var shapes = this.createAxiom();
 
     this.applyState(shapes);
 
@@ -56,6 +58,11 @@ export default class ShapeGrammar {
         } else {
           successors.push(shape);
         }
+
+        if (!shape.removable) {
+          successors.push(shape);
+          shape.terminal = true;
+        }
       }
 
       this.applyState(successors);
@@ -69,6 +76,11 @@ export default class ShapeGrammar {
   render() {
     this.doIterations();
 
+    var group = new THREE.Group();
+    var rotate = (Math.PI / 180) * THREE.Math.randInt(0, 1);
+
+    // group.rotateZ(rotate);
+
     for (var i = 0; i < this.shapes.length; i++) {
       var shape = this.shapes[i];
       var geometry = (typeof shape.geometry == 'function') ? shape.geometry() : shape.geometry;
@@ -80,15 +92,19 @@ export default class ShapeGrammar {
       var material = new THREE.MeshLambertMaterial({ color: color });
       var mesh = new THREE.Mesh(geometry, material);
 
-      this.scene.add(mesh);
-
       mesh.name = 'building';
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
       mesh.scale.set(scale.x, scale.y, scale.z);
 
       mesh.translateX(position.x);
       mesh.translateY(position.y);
       mesh.translateZ(position.z);
       mesh.translateZ(mesh.scale.z / 2);
+
+      group.add(mesh);
     }
+
+    this.scene.add(group);
   }
 };

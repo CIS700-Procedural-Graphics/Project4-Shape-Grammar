@@ -24,15 +24,20 @@ export default class City {
     this.cells = [];
 
     this.shapeGrammar = shapeGrammar;
+
+    this.baseColor = 0x15938;
+    this.streetColor = 0x031923;
   }
 
   renderBase() {
     var geometry = new THREE.PlaneGeometry(this.baseDim, this.baseDim, 32);
-    var material = new THREE.MeshBasicMaterial({ color: 0x619739, side: THREE.DoubleSide });
+    var material = new THREE.MeshLambertMaterial({ color: this.baseColor, side: THREE.DoubleSide });
     var mesh = new THREE.Mesh(geometry, material);
 
+    mesh.receiveShadow = true;
+    mesh.translateZ(-0.1);
+
     this.scene.add(mesh);
-    mesh.translateZ(-1);
     this.base = geometry;
   }
 
@@ -162,6 +167,14 @@ export default class City {
           }
         }
 
+        if (halfDim - Math.abs(pos.x) < 5) {
+          draw = false;
+        }
+
+        if (halfDim - Math.abs(pos.y) < 5) {
+          draw = false;
+        }
+
         if (draw) {
           this.cells.push({
             pos: pos,
@@ -192,13 +205,11 @@ export default class City {
 
   renderBuildings() {
     for (var i = 0; i < this.cells.length; i++) {
+      var cell = this.cells[i];
 
-      // Render one building
-      if (THREE.Math.randFloat(0, 1) > 0.5) {
+      if (i % 2 == 0) {
         continue;
       }
-
-      var cell = this.cells[i];
 
       this.shapeGrammar.setState(cell);
       this.shapeGrammar.render();
@@ -208,7 +219,7 @@ export default class City {
   renderRing(radius) {
     var halfWidth = (this.ringWidth / 2);
     var geometry = new THREE.RingGeometry(radius - halfWidth, radius + halfWidth, this.ringPoints);
-    var material = new THREE.MeshBasicMaterial({ color: 0x0e77c4, side: THREE.DoubleSide });
+    var material = new THREE.MeshBasicMaterial({ color: this.streetColor, side: THREE.DoubleSide });
     var mesh = new THREE.Mesh(geometry, material);
 
     this.scene.add(mesh);
@@ -220,7 +231,7 @@ export default class City {
     var height = (this.baseDim / (2 * 4)) + this.divisionWidth - epsilon;
 
     var geometry = new THREE.PlaneGeometry(width, height, 32);
-    var material = new THREE.MeshBasicMaterial({ color: 0x0e77c4, side: THREE.DoubleSide });
+    var material = new THREE.MeshBasicMaterial({ color: this.streetColor, side: THREE.DoubleSide });
     var mesh = new THREE.Mesh(geometry, material);
 
     this.scene.add(mesh);
@@ -239,7 +250,7 @@ export default class City {
 
     geometry.vertices = points;
 
-    var material = new THREE.LineBasicMaterial({ color: 0x0e77c4 });
+    var material = new THREE.LineBasicMaterial({ color: this.streetColor });
     var mesh = new THREE.Line(geometry, material);
 
     this.scene.add(mesh);
