@@ -35,24 +35,26 @@ function onLoad(framework)
   var gui = framework.gui;
   var stats = framework.stats;
 
+  renderer.setClearColor(new THREE.Color(.4, .75, .95), 1);
+
   // initialize a simple box and material
   var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
-  directionalLight.color.setHSL(0.1, 1, 0.95);
-  directionalLight.position.set(1, 3, 2);
-  directionalLight.position.multiplyScalar(10);
+  directionalLight.color = new THREE.Color(.9, .9, 1 );
+  directionalLight.position.set(-10, 10, 10);
   scene.add(directionalLight);
-
 
   // initialize a simple box and material
   var directionalLight2 = new THREE.DirectionalLight( 0xffffff, 1 );
-  directionalLight2.color.setHSL(0.1, 1, 0.95);
-  directionalLight2.position.set(-1, -3, -2);
+  directionalLight2.color = new THREE.Color(.4, .4, .7);
+  directionalLight2.position.set(-1, -3, 2);
   directionalLight2.position.multiplyScalar(10);
   scene.add(directionalLight2);
 
   // set camera position
-  camera.position.set(9, 7, 9);
+  camera.position.set(40, 40, 40);
   camera.lookAt(new THREE.Vector3(0,0,0));
+  camera.fov = 5;
+  camera.updateProjectionMatrix();
 
   var profile = new Building.Profile();
   profile.addPoint(1.0, 0.0);
@@ -97,8 +99,7 @@ function onLoad(framework)
 
   var random = new Random(Random.engines.mt19937().seed(2545));
 
-  var speed =1.15;
-
+  var speed = .45;
 
   var city = new City.Generator();
   var cityBlocks = city.build(scene);

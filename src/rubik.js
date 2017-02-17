@@ -264,8 +264,6 @@ class Rubik
 		var boxGeo = new THREE.BoxGeometry( 1, 1, 1 );
 		var planeGeo = new THREE.PlaneGeometry(1, 1, 1, 1 );
 
-		var blackMaterial = new THREE.MeshLambertMaterial( {color: 0x777777} );
-		
 		this.segments = []
 
 		for(var x = 0; x < 3; x++)
@@ -279,13 +277,15 @@ class Rubik
 				for(var z = 0; z < 3; z++)
 				{
 					var colorDebugging = z;
-					var mat = new THREE.MeshLambertMaterial( {color: 0x000000} );
-					mat.color = new THREE.Color(1, 0.0, 0.0 );
+					var mat = new THREE.MeshPhongMaterial( {color: 0x888888} );
+					mat.shininess = 5;
+					mat.specular = new THREE.Color(.2,.2,.3);
+					// mat.color = new THREE.Color(1, 0.0, 0.0 );
 
-					if(colorDebugging == 1)
-						mat.color = new THREE.Color( 0.0, 1,  0.0 );
-					else if(colorDebugging == 2)
-						mat.color = new THREE.Color(0.0, 0.0, 1);
+					// if(colorDebugging == 1)
+					// 	mat.color = new THREE.Color( 0.0, 1,  0.0 );
+					// else if(colorDebugging == 2)
+					// 	mat.color = new THREE.Color(0.0, 0.0, 1);
 
 					var cube = new THREE.Mesh( boxGeo, mat );
 					cube.position.copy(new THREE.Vector3( x - 1, y - 1, z - 1));

@@ -494,7 +494,7 @@ class Generator
 
 				// If it is too small, no lot
 				// If it is medium sized, it can be ignored with a probability
-				if(hull.area > .75 && (random.real(0,1) > .1 || hull.area > 2))
+				// if(hull.area > .5 && (random.real(0,1) > .1 || hull.area > 2))
 				{
 					var lot = new Building.BuildingLot();
 
@@ -503,6 +503,7 @@ class Generator
 					lot.buildNormals();
 					lot.hasCap = true;
 					lot.hull = hull;
+					lot.park = (hull.area < .5 || (random.real(0,1) < .1 && hull.area < 2));
 
 					lotContainer[i].push(lot);
 				}
@@ -547,6 +548,9 @@ class Generator
 
 	generateMassShapesForLot(lot, random)
 	{
+		if(lot.park)
+			return [];
+
 		var hull = lot.hull;
 		var shapes = [];
 
@@ -567,7 +571,7 @@ class Generator
 			if(segmentLength < .5)
 				continue;
 
-			var count = Math.floor(Math.pow(random.real(0, 1), 2.0) * 4 * segmentLength) + 1;
+			var count = Math.floor(Math.pow(random.real(0, 1), 2.0) * 3 * segmentLength) + 1;
 
 			for(var i = 0; i < count; i++)
 			{
@@ -580,9 +584,9 @@ class Generator
 				var normal = new THREE.Vector3( segment.normal.x, 0, segment.normal.y );
 
 				// Facing street
-				var faceLength = random.real(.7, .99) * .5 * segmentLength / count;
-				var depth = random.real(.2, .65);
-				var height = random.real(random.real(.2, 1), 6.0 * depth * faceLength); // Height is dependent on depth+length
+				var faceLength = random.real(.7, .99) * .6 * segmentLength / count;
+				var depth = random.real(.4, .7);
+				var height = random.real(random.real(.1, .2), THREE.Math.clamp(2.0 * depth * faceLength, .4, 4)); // Height is dependent on depth+length
 
 				p.add(segment.normal.clone().multiplyScalar(depth*-.5));
 
@@ -638,18 +642,25 @@ class Generator
 		{
 			var group = new THREE.Group();
 
+			var geometryBatch = new THREE.Geometry();
+
 			for(var j = 0; j < lots[i].length; j++)
 			{
 				// The blocks profiles are also mass shapes
 				var shape = new Building.MassShape(lots[i][j], baseLotProfile);
 				var mesh = shape.generateMesh();
-				group.add(mesh);
+				geometryBatch.mergeMesh(mesh)
 
 				var massShapes = this.generateMassShapesForLot(lots[i][j], random);
 
 				for(var s = 0; s < massShapes.length; s++)
-					group.add(massShapes[s]);
+					geometryBatch.mergeMesh(massShapes[s])
 			}
+
+			var batchMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x333333 });
+			batchMaterial.side = THREE.DoubleSide;
+			var batchedMesh = new THREE.Mesh(geometryBatch, batchMaterial);
+			group.add(batchedMesh);
 
 			var center = cellBounds[i].min.clone().add(cellBounds[i].max).multiplyScalar(.5);
 			group.position.set(-center.x, 0, -center.y);
@@ -658,8 +669,6 @@ class Generator
 			g2.add(group);
 			g2.userData = { index: i, offset: center }
 			cityBlocks.push(g2);
-
-			// scene.add(g2);
 		}
 
 		return cityBlocks;
