@@ -19,6 +19,6 @@ Grammar rules:
 
 Other notes:
 - Light is using shadow-mapping a directional light, and a hemisphere light. No custom shaders until I can figure out how to access the map
-- Surprisingly performant. Merging all of the meshes into one call is very helpful
+- Merging all of the meshes into one call is very helpful
 - The mountain terrain is procedurally generated as well
 - Once the city reaches its full height, a particular movie scene plays...
