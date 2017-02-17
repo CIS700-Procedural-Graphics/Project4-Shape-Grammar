@@ -192,6 +192,7 @@ export const GrammarRules =
 			tree.position.y += getBbox(tree).y / 2;
 			var xOffset =  (Math.random() * 2 - 1) * nodeBox.x / 2;
 			tree.position.x += xOffset;
+			// TODO: determine this based on noise instead
 			tree.position.z += (Math.random() * 2 - 1) * nodeBox.z / 2;
 			tree.rotation.y += Math.random() * Math.PI * 2;
 

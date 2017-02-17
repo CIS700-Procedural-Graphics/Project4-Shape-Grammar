@@ -14,7 +14,7 @@ function Lot(position, lotSize, ratios, maxHeight) {
 
 export default class City {
 	constructor() {
-		this.citySize = {x: 50, z: 40};
+		this.citySize = {x: 70, z: 40};
 		this.roadSize = 3;
 		this.baseHeight = 2;
 	}
