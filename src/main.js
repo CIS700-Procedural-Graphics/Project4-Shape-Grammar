@@ -24,7 +24,7 @@ function onLoad(framework) {
   scene.add( light );
 
   // set camera position
-  camera.position.set(200, 400, 500);
+  camera.position.set(200, 300, 180);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
   ////// gui
