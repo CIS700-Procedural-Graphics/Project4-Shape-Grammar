@@ -1,7 +1,7 @@
 const THREE = require('three');
 const Random = require("random-js");
 
-
+import * as Common from './common.js'
 
 class Voronoi
 {
@@ -9,7 +9,129 @@ class Voronoi
 	{
 
 	}
+}
 
+// 2D only!
+class ConvexHull
+{
+	constructor()
+	{		
+		this.bounds = null;
+		this.points = [];
+		this.segments = [];
+	}
+
+	addPoint(point)
+	{
+		if(this.bounds == null)
+			this.bounds = new Common.Bounds(point, point);
+		else
+			this.bounds.encapsulate(point);
+
+		this.points.push(point);
+	}
+
+	getCenter()
+	{
+		var c = new THREE.Vector2(0,0);
+
+		for(var p = 0; p < this.points.length; p++)
+			c.add(this.points[p]);
+
+		c.multiplyScalar(1.0 / this.points.length);
+
+		return c;
+	}
+
+	addSegment(s)
+	{
+		// No bounds, this assumes each vertex was added...
+		this.segments.push(s);
+	}
+
+	sort()
+	{		
+	}
+
+	split(axis, splitDistance)
+	{	
+		var newHull = new ConvexHull();
+
+		var tangent = new THREE.Vector2( -axis.y, axis.x);
+		var offset = axis.clone().multiplyScalar(splitDistance);
+
+		var oldPoints = this.points;
+
+		var projectedMidpoint = this.getCenter();
+		var distanceToOffset = projectedMidpoint.clone().sub(offset);
+		projectedMidpoint = projectedMidpoint.clone().sub(axis.clone().multiplyScalar(axis.dot(distanceToOffset)));
+
+		// The new segment to add
+		var s1 = { valid : true, normal: axis, dir: tangent, midpoint: projectedMidpoint, min : -1000, max : 1000 }
+
+		for(var s = 0; s < this.segments.length; s++)
+		{
+			var s2 = this.segments[s];
+
+			// Parallel
+			if(Math.abs(s1.dir.dot(s2.normal)) < .001)
+				continue;
+
+			var diff = s2.midpoint.clone().sub(s1.midpoint);
+			var det = s2.dir.x * s1.dir.y - s2.dir.y * s1.dir.x;
+
+			var u = (diff.y * s2.dir.x - diff.x * s2.dir.y) / det;
+			var v = (diff.y * s1.dir.x - diff.x * s1.dir.y) / det;
+
+			if(u < 0)
+				s1.min = -Math.min(-s1.min, -u);
+			else
+				s1.max = Math.min(s1.max, u);
+		}
+
+		this.points = [];
+		this.bounds = null;
+
+		for(var p = 0; p < oldPoints.length; p++)
+		{
+			var point = oldPoints[p];
+
+			var d = point.clone().sub(offset).dot(axis);
+
+			if(d > 0)
+				this.addPoint(point);
+			else
+				newHull.addPoint(point);
+		}
+
+		// If the other hull is empty, dont split
+		if(newHull.points.length == 0)
+			return null;
+
+		// If this hull is empty, absorb the other hull
+		if(this.points.length == 0)
+		{
+			this.points = newHull.points;
+			this.bounds = newHull.bounds;
+			return null;
+		}
+
+		// If no hull is empty, there was effectively a split
+		// Now lets add the new segment
+		this.addSegment(s1);
+		newHull.addSegment(s1);
+
+		var from = s1.midpoint.clone().add(s1.dir.clone().multiplyScalar(s1.min));
+		var to = s1.midpoint.clone().add(s1.dir.clone().multiplyScalar(s1.max));
+
+		this.addPoint(from);
+		this.addPoint(to);
+
+		newHull.addPoint(from);
+		newHull.addPoint(to);
+
+		return newHull;
+	}
 }
 
 class Generator
@@ -30,6 +152,8 @@ class Generator
   		var geometry = new THREE.Geometry();
   		var pointsGeo = new THREE.Geometry();
   		var points = [];
+		var xAxis = new THREE.Vector2( 1, 0 );
+		var yAxis = new THREE.Vector2( 0, 1 );
 
   		// From center
   		var randomAmplitude = .5;
@@ -46,27 +170,24 @@ class Generator
 
   				var p = new THREE.Vector2( x * scale + .5 + r1, y * scale + .5 + r2);
   				points[x].push(p);
-  				pointsGeo.vertices.push(new THREE.Vector3( p.x, 0, p.y ));
+  				// pointsGeo.vertices.push(new THREE.Vector3( p.x, 0, p.y ));
   			}
   		}
 
   		// Build half planes, and finding their convex hulls
   		var segments = [];
   		var hulls = [];
-  		var hullPoints = [];
 
   		for(var x = 0; x < count; x++)
   		{
   			segments.push(new Array());
-  			hulls.push(new Array());
-  			hullPoints.push(new Array());
 
   			for(var y = 0; y < count; y++)
   			{
   				segments[x].push(new Array());
-  				hullPoints[x].push(new Array());
 
   				var p = points[x][y];
+  				var hull = new ConvexHull();
 
   				// Find all planes for all close neighbors within 3 cells
   				for(var i = -2; i < 3; i++)
@@ -81,11 +202,43 @@ class Generator
   							var midpoint = neighbor.clone().add(p).multiplyScalar(.5);
   							var tangent = new THREE.Vector2( -normal.y, normal.x );
 
-  							var segment = { valid : false, center : p, normal: normal, dir: tangent, midpoint: midpoint, min : 1000, max : -1000 }
+  							var segment = { valid : false, normal: normal, dir: tangent, midpoint: midpoint, min : 1000, max : -1000 }
   							segments[x][y].push(segment)
   						}
   					}
   				}
+
+  				// For reference: failed attempt at constraining cell half planes
+				// {
+					// var fX = Math.floor(10 * (x / count)) * scale * count / 10;
+					// var fP = new THREE.Vector2( fX, 0 );
+
+					// var segment = { valid : false, normal: xAxis.clone().negate(), dir: yAxis, midpoint: fP, min : 1000, max : -1000 }
+					// segments[x][y].push(segment);
+				// }
+				// {
+					// var fX = (Math.floor(10 * (x / count))+1) * scale * count / 10;
+					// var fP = new THREE.Vector2( fX, 0 );
+
+					// var segment = { valid : false, normal: xAxis.clone(), dir: yAxis, midpoint: fP, min : 1000, max : -1000 }
+					// segments[x][y].push(segment);
+				// }
+
+				// {
+					// var fY = Math.floor(10 * (y / count)) * scale * count / 10;
+					// var fP = new THREE.Vector2( 0, fY );
+
+					// var segment = { valid : false, normal: yAxis.clone().negate(), dir: new THREE.Vector2( -yAxis.y, yAxis.x ), midpoint: fP, min : 1000, max : -1000 }
+					// segments[x][y].push(segment);
+				// }
+
+				// {
+					// var fY = (Math.floor(10 * (y / count)) + 1) * scale * count / 10;
+					// var fP = new THREE.Vector2( 0, fY );
+
+					// var segment = { valid : false, normal: yAxis.clone(), dir: new THREE.Vector2( -yAxis.y, yAxis.x ), midpoint: fP, min : 1000, max : -1000 }
+					// segments[x][y].push(segment);
+				// }
 
   				// N^3 over amount of segments per cell (which is 27)
 				for(var i = 0; i < segments[x][y].length; i++)
@@ -126,8 +279,9 @@ class Generator
 						if(!insideHull)
 							continue;
 
-						hullPoints[x][y].push(newPoint);
-						pointsGeo.vertices.push(new THREE.Vector3( newPoint.x, 0, newPoint.y ));
+						hull.addPoint(newPoint)
+						hull.addSegment(s1);
+						// pointsGeo.vertices.push(new THREE.Vector3( newPoint.x, 0, newPoint.y ));
 
 						s1.min = Math.min(s1.min, u);
 						s1.max = Math.max(s1.max, u);
@@ -135,20 +289,25 @@ class Generator
 					}
 				}
 
-  				// Save geo for display
-				for(var s = 0; s < segments[x][y].length; s++)
-				{
-					var segment = segments[x][y][s];
+  		// 		// Save geo for display
+				// for(var s = 0; s < segments[x][y].length; s++)
+				// {
+				// 	var segment = segments[x][y][s];
 
-					if(!segment.valid)
-						continue;
+				// 	if(!segment.valid)
+				// 		continue;
 
-					var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
-					var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
+				// 	var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
+				// 	var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
 					
-					geometry.vertices.push(new THREE.Vector3( from.x, 0, from.y ))
-					geometry.vertices.push(new THREE.Vector3( to.x, 0, to.y ))
-				}
+				// 	geometry.vertices.push(new THREE.Vector3( from.x, 0, from.y ))
+				// 	geometry.vertices.push(new THREE.Vector3( to.x, 0, to.y ))
+				// }
+
+				hulls.push(hull);
+
+				// var center = hull.getCenter();
+				// pointsGeo.vertices.push(new THREE.Vector3( center.x, 0, center.y));
   			}
   		}
 
@@ -165,20 +324,73 @@ class Generator
 		// 	geometry.vertices[i] = mapCenter.clone().add(toCenter.multiplyScalar(dist));
 		// }
 
-		for(var x = 0; x < 10; x++)
+
+		var newHulls = [];
+
+		// for(var x = 0; x < 10; x++)
+		// {
+		// 	var t = x / 9;
+		// 	geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, 0 ));
+		// 	geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, count * scale ));
+		// }
+
+		// 	var sliceX = t * count * scale;
+
+		// 	for(var h = 0; h < hulls.length; h++)
+		// 	{
+		// 		var hull = hulls[h];
+
+		// 		if(hull.bounds.intersectsX(sliceX))
+		// 		{
+		// 			var newHull = hull.split(xAxis, sliceX);
+					
+		// 			if(newHull != null)
+		// 				newHulls.push(newHull);
+		// 		}
+		// 	}
+		// }
+
+		// for(var h = 0; h < newHulls.length; h++)
+		// 	hulls.push(newHulls[h]);
+
+		// for(var y = 0; y < 10; y++)
+		// {
+		// 	var t = y / 9;
+		// 	geometry.vertices.push(new THREE.Vector3(0,0, t * count * scale));
+		// 	geometry.vertices.push(new THREE.Vector3(count * scale, 0, t * count * scale));
+		// }
+
+
+
+		// Save geo for display
+
+
+		for(var h = 0; h < hulls.length; h++)
 		{
-			var t = x / 9;
-			geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, 0 ));
-			geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, count * scale ));
+			for(var s = 0; s < hulls[h].segments.length; s++)
+			{
+				var segment = hulls[h].segments[s];
+
+				if(!segment.valid)
+					continue;
+
+				var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
+				var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
+				
+				geometry.vertices.push(new THREE.Vector3( from.x, 0, from.y ))
+				geometry.vertices.push(new THREE.Vector3( to.x, 0, to.y ))
+
+
+				pointsGeo.vertices.push(new THREE.Vector3( from.x, 0, from.y));
+				pointsGeo.vertices.push(new THREE.Vector3( to.x, 0, to.y));
+			}
+
+			// var center = hulls[h].getCenter();
+			// pointsGeo.vertices.push(new THREE.Vector3( center.x, 0, center.y));
 		}
 
-		for(var y = 0; y < 10; y++)
-		{
-			var t = y / 9;
-			geometry.vertices.push(new THREE.Vector3(0,0, t * count * scale));
-			geometry.vertices.push(new THREE.Vector3(count * scale, 0, t * count * scale));
-		}
-
+		console.log(newHulls.length);
+		console.log(hulls.length);
   		console.log(geometry.vertices.length);
 
   		var material = new THREE.LineBasicMaterial( {color: 0xffffff} );

@@ -1,14 +1,5 @@
 const THREE = require('three');
 
-class Bounds
-{
-	constructor(min, max)
-	{
-		this.min = min;
-		this.max = max;
-	}
-}
-
 class Shape
 {
 	constructor(size)
