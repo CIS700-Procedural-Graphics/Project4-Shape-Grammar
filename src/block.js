@@ -1,4 +1,5 @@
 const THREE = require('three')
+import {popMap} from './perlin.js'
 
 // A class that represents functions applied to blocks
 function Rule(prob, func) {
@@ -25,6 +26,7 @@ var Block = function(sym) {
 	this.width = 0;
 	this.x = true; // continue to x subdivide?
 	this.z = true; // continue to z subdivide?
+
 }
 
 function computeCentroid(block) {
@@ -84,6 +86,7 @@ export default class Layout {
 		this.iterations = 2; 
 		this.curr = this.axiom;
 		this.blocks = [this.axiom];
+		this.map = popMap(30,30);
 
 		scope = this;
 	

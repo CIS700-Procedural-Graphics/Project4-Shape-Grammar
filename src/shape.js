@@ -39,29 +39,30 @@ export default class Building {
 		this.grammar = {};
 		// A: starting grammar
 		// B: 
-		this.grammar['A'] = [new Rule(0.3, this.subdivideScaleX('M', 'D')),
+		this.grammar['A'] = [new Rule(1, this.subdivideX('H','H',3)),
 							new Rule(0.3, this.subdivideScaleZ('M', 'D')),
 							new Rule(0.4, this.subdivideX('M', 'D', 1))];
-		this.grammar['M'] = [new Rule(0.25, this.add('X', 'T', 1)), // num of floors
-							new Rule(0.25, this.add('X', 'T', 2)),
-							new Rule(0.5, this.add('X', 'T', 3))];
-		this.grammar['X'] = [new Rule(0.5, this.subdivideX('Y', 'Y', 3)),
-							new Rule(0.5, this.subdivideX('Y', 'Y', 2))];
-		this.grammar['Y'] = [new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 3)),
-							new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 2))]; // H are bricks, final
-		this.grammar['D'] = [new Rule(0.5, this.subdivideX('BRICK', 'Door', 1)),
-							new Rule(0.5, this.subdivideX('Door', 'BRICK', 1))];
-		this.grammar['Door'] = [new Rule(0.5, this.nothing('DOOR')),
-								new Rule(0.5, this.nothing('FANCY'))];
-		this.grammar['T'] = [new Rule(1, this.addRoof('R'))]; 
-		this.grammar['R'] = [new Rule(0.25, this.addChim('CHIM')),
-								new Rule(0.75, this.nothing('ROOF'))];
+		// this.grammar['M'] = [new Rule(0.25, this.add('X', 'T', 1)), // num of floors
+		// 					new Rule(0.25, this.add('X', 'T', 2)),
+		// 					new Rule(0.5, this.add('X', 'T', 3))];
+		// this.grammar['X'] = [new Rule(0.5, this.subdivideX('Y', 'Y', 3)),
+		// 					new Rule(0.5, this.subdivideX('Y', 'Y', 2))];
+		// this.grammar['Y'] = [new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 3)),
+		// 					new Rule(0.5, this.subdivideZ('BRICK', 'BRICK', 2))]; // H are bricks, final
+		// this.grammar['D'] = [new Rule(0.5, this.subdivideX('BRICK', 'Door', 1)),
+		// 					new Rule(0.5, this.subdivideX('Door', 'BRICK', 1))];
+		// this.grammar['Door'] = [new Rule(0.5, this.nothing('DOOR')),
+		// 						new Rule(0.5, this.nothing('FANCY'))];
+		// this.grammar['T'] = [new Rule(1, this.addRoof('R'))]; 
+		// this.grammar['R'] = [new Rule(0.25, this.addChim('CHIM')),
+		// 						new Rule(0.75, this.nothing('ROOF'))];
 		this.iterations = 1; 
 		this.curr = this.axiom;
 		this.shapes = [this.axiom];
 		this.color = 0xff1111;
 		this.sizeX = 0.5;
 		this.sizeZ = 0.5;
+		this.rot = rot;
 		scope = this;
 		
 		// Set up iterations (the number of times you 
@@ -139,7 +140,7 @@ export default class Building {
 			} 
 			// replace current with one division and push the other
 			arr[num-1].sym = b;
-			scope.updateCurr(arr[0]);
+			//scope.updateCurr(arr[0]);
 			scope.shapes.push(arr[num-1]);
 		}
 		
@@ -172,15 +173,21 @@ export default class Building {
 
 	subdivideX(a, b, num) {
 		return function() {
+			// debugger;
+			var angle = scope.rot.y;
+			var dir = new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle)).normalize();
 			var len = scope.curr.obj.scale.x;
 			var width = len/num;
 			var zero = scope.curr.obj.pos.x - len/2 - width/2;
 			var pos = zero;
 			var arr = [];
+			var zo = scope.curr.obj.pos.clone().add(dir.clone().multiplyScalar(i*width));
 			for (var i = 0; i < num; i ++) {
 				pos += width;
 				arr.push(copyState(scope.curr));
-				arr[i].obj.pos.x = pos;
+				arr[i].obj.pos = scope.curr.obj.pos.clone().add(
+					dir.clone().multiplyScalar(i*width));
+				//arr[i].obj.pos.rotateOnAxis(new THREE.Vector3(0,1,0), angle);
 				arr[i].obj.scale.x = width;
 				arr[i].sym = a;
 				if (i != 0 && i != (num - 1)) scope.shapes.push(arr[i]);
