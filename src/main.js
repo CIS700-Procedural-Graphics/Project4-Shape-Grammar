@@ -89,9 +89,9 @@ function onLoad(framework) {
   plane.rotateX(Math.PI / 2.0);
   scene.add( plane );
 
-  var o = ss.createOningGeometry(new THREE.Vector3(4.0, 1.0, 10.0));
+  var o = ss.createRoofGeometry(new THREE.Vector3(4.0, 1.0, 10.0));
   o.position.set(0.0, 0.5, 0.0);
-  o.scale.set(4.0, 1.0, 10.0);
+  // o.scale.set(4.0, 1.0, 10.0);
 
   scene.add(o);
 

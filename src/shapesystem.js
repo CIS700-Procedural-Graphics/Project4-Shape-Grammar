@@ -63,9 +63,10 @@ export default function shapeSystem(axiom, grammar, scene) {
 	  	width = 1.0; // Standard width of the oning
 	  }
 
-	  var oning = new THREE.BoxGeometry( 1, 1, 1 );
+	  var oning = new THREE.BoxGeometry( 1.0, 1.0, 1.0 );
 	  var v = oning.vertices; 
-	  // console.log(roof.vertices);
+
+	  console.log(oning.vertices);
 	  var sx = (scale.x - width) / (scale.x * 2.0);
 	  var sz = (scale.z - width) / (scale.z * 2.0);
 
@@ -74,7 +75,36 @@ export default function shapeSystem(axiom, grammar, scene) {
 	  v[4].set(-sx, 0.5, -sz);
 	  v[5].set(-sx, 0.5, sz);
 	  var oning_mesh = new THREE.Mesh(oning, new THREE.MeshLambertMaterial());
+	  oning_mesh.scale.set(scale.x, scale.y, scale.z);
 	  return oning_mesh;
+	}
+
+	this.createRoofGeometry = function(scale, width) {
+		if (!width) {
+			width = 2.0;
+		}
+
+		var roof = new THREE.BoxGeometry( 1.0, 1.0, 1.0 );
+		var v = roof.vertices;
+
+		var sx, sz;
+		if (scale.x >= scale.z) {
+			sx = (scale.x - width) / (scale.x * 2.0);
+			sz = 0.0;
+		} else { // scale.z > scale.x
+			sx = 0.0;
+			sz = (scale.z - width) / (scale.z * 2.0);
+		}
+
+		v[0].set(sx, 0.5, sz);
+		v[1].set(sx, 0.5, -sz);
+		v[4].set(-sx, 0.5, -sz);
+		v[5].set(-sx, 0.5, sz);
+		
+		var roof_mesh = new THREE.Mesh(roof, new THREE.MeshLambertMaterial());
+		roof_mesh.scale.set(scale.x, scale.y, scale.z);
+
+		return roof_mesh;
 	}
 
 }
