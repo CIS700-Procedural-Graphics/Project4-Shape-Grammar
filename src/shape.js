@@ -22,8 +22,13 @@ export default class Shape {
 			// this.boundingBox = new THREE.BoxGeometry(10, 10, 10);
 			this.mesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1),
 				lambertWhite);
-			this.mesh.position.set(0, 0.5, 0);
+			this.mesh.scale.set(5, 5, 5);
+			this.mesh.position.set(0, 2.5, 0);
 			this.iteration = 0;
+
+			// For continuation purposes
+			this.name = 'floor';
+			this.show = true;
 		} else {
 			this.parent = parent;
 			// this.boundingBox = boundingBox;

@@ -1,3 +1,4 @@
+const THREE = require('three');
 import Shape from './shape.js'
 import Framework from './framework'
 
@@ -54,22 +55,26 @@ export default function shapeSystem(axiom, grammar, scene) {
 
 		axiom.draw(scene, this.iterations);
 	}
-	// This function returns a linked list that is the result 
-	// of expanding the L-system's axiom n times.
-	// The implementation we have provided you just returns a linked
-	// list of the axiom.
-	// this.doIterations = function(n) {
-	// 	draw(i, scene) {
-	// 		if (i < this.iteration) {
-	// 			for(var i = 0; i < this.children.length; i++) {
-	// 				this.children.draw(i, scene);
-	// 			}
-	// 		} else if (i == this.iteration) {
-	// 			scene
-	// 		} else {
-	// 			return;
-	// 		}
-	// 	}
-	// }
+
+	// Returns a (1, 1, 1) rectangular prism with the top shrunk in so that when scaled
+	// to the input it looks like a oning of a building in the forbidden city
+	this.createOningGeometry = function(scale, width) {
+	  if (!width) {
+	  	width = 1.0; // Standard width of the oning
+	  }
+
+	  var oning = new THREE.BoxGeometry( 1, 1, 1 );
+	  var v = oning.vertices; 
+	  // console.log(roof.vertices);
+	  var sx = (scale.x - width) / (scale.x * 2.0);
+	  var sz = (scale.z - width) / (scale.z * 2.0);
+
+	  v[0].set(sx, 0.5, sz);
+	  v[1].set(sx, 0.5, -sz);
+	  v[4].set(-sx, 0.5, -sz);
+	  v[5].set(-sx, 0.5, sz);
+	  var oning_mesh = new THREE.Mesh(oning, new THREE.MeshLambertMaterial());
+	  return oning_mesh;
+	}
 
 }

@@ -11,6 +11,10 @@ var lambertWhite = new THREE.MeshLambertMaterial( {color: 0xffffff} );
 // Geometry
 var boxGeo = new THREE.BoxGeometry( 1, 1, 1 );
 
+
+
+
+
 // Mesh
 var cubeMesh = new THREE.Mesh( boxGeo, lambertWhite );
 
@@ -45,7 +49,8 @@ function onLoad(framework) {
   //   doLsystem(lsys, lsys.iterations, turtle);
   // });
 
-  gui.add(ss, 'iteration', 0, 12).step(1).onChange(function(newVal) {
+  gui.add(ss, 'iteration').onChange(function(newVal) {
+    console.log('iterate');
   });
 
 
@@ -84,7 +89,14 @@ function onLoad(framework) {
   plane.rotateX(Math.PI / 2.0);
   scene.add( plane );
 
-  ss.traverse(scene);
+  var o = ss.createOningGeometry(new THREE.Vector3(4.0, 1.0, 10.0));
+  o.position.set(0.0, 0.5, 0.0);
+  o.scale.set(4.0, 1.0, 10.0);
+
+  scene.add(o);
+
+  //scene.add(roof_mesh);
+  //ss.traverse(scene);
 }
 
 // // clears the scene by removing all geometries added by turtle.js
