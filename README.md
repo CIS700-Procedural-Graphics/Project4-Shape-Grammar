@@ -1,6 +1,6 @@
 # Shape Grammars
 
-![](img/1.png)
+![](img/1.PNG)
 ![](img/2.png)
 
 # Grammars
