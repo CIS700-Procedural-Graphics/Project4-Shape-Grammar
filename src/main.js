@@ -15,7 +15,7 @@ var settings = {
     size: 10.0,
     resolution: 128,
     split: 0.0,
-    numBuildings: 10000
+    numBuildings: 1000
 }
 
 var lsystem_settings = {
@@ -42,16 +42,12 @@ var turtle;
 var ZONES = {
   UNZONED    : {value: 1, name: "Unzoned",     color: 0xd1cfca},
   ROAD       : {value: 2, name: "Road",        color: 0x2c2a2d},
-  RESIDENTIAL: {value: 3, name: "Residential", color: 0x1fbc14},
-  COMMERCIAL : {value: 4, name: "Commerical",  color: 0x7c14bc},
-  INDUSTRIAL : {value: 5, name: "Industrial",  color: 0xddac30}
 };
 
 var STATUS = {
   VACANT    : {value: 1, name: "Vacant",     color: 0xd1cfca},
   OCCUPIED  : {value: 2, name: "Occupied",   color: 0x2c2a2d},
 };
-
 
 var city = {
     grid: [],
@@ -84,20 +80,19 @@ function onLoad(framework) {
     camera.position.set(0,10,10);
       camera.lookAt(new THREE.Vector3(0,0,0));
   });
-  gui.add(settings, 'newSeed');
   gui.add(settings, 'split', 0, 10);
 
 
-  var roads = gui.addFolder('Roads');
-  roads.add(lsystem_settings, 'Axiom')
-  for (var i = 0; i < lsystem_settings.Rules.length; i++) {
-      roads.add(lsystem_settings.Rules[i], 'Rule');
-      roads.add(lsystem_settings.Rules[i], 'Prob');
-  }
-  roads.add(lsystem_settings, 'Render').onChange(function() {
-      regenerateCity(framework);
-  });
-  roads.open();
+  // var roads = gui.addFolder('Roads');
+  // roads.add(lsystem_settings, 'Axiom')
+  // for (var i = 0; i < lsystem_settings.Rules.length; i++) {
+  //     roads.add(lsystem_settings.Rules[i], 'Rule');
+  //     roads.add(lsystem_settings.Rules[i], 'Prob');
+  // }
+  // roads.add(lsystem_settings, 'Render').onChange(function() {
+  //     regenerateCity(framework);
+  // });
+  // roads.open();
 
   regenerateCity(framework);
 }
@@ -150,7 +145,7 @@ function generateTexture() {
       var norm_j = j / size;
       var rgba = getMapValue(city.maps['roads'], norm_i, norm_j);
       if (rgba.x < 250) {
-        context.fillStyle = 'rgba(' + [30, 30, 30, (255 - rgba.x) / 255].join( ',' )  + ')';
+        context.fillStyle = 'rgba(' + [200, 200, 200, (255 - rgba.x) / 255].join( ',' )  + ')';
         context.fillRect( i, j, 1, 1 );
       }
     }
@@ -259,8 +254,6 @@ function regenerateCity(framework) {
     var light = new THREE.PointLight( 0xffffff, 10, 100 );
     light.position.set( 50, 50, 50 );
     scene.add(light);
-
-    // scene.fog = new THREE.FogExp2( 0xcccccc, 0.01 );
 }
 
 
@@ -283,22 +276,27 @@ function generateTerrain(framework) {
   scene.add(plane);
 }
 
-// function generateRoads() {
-//
-//     // vertical streets
-//     for (var i = 0; i < settings.resolution; i+=16) {
-//         for (var j = 0; j < settings.resolution; j++) {
-//             city.grid[i][j] = { zone: ZONES.ROAD.value };
-//         }
-//     }
-//
-//     // horizontal streets
-//     for (var i = 0; i < settings.resolution; i+=8) {
-//         for (var j = 0; j < settings.resolution; j++) {
-//             city.grid[j][i] = { zone: ZONES.ROAD.value };
-//         }
-//     }
-// }
+function generateRoads() {
+    // vertical streets
+    for (var i = 0; i < settings.resolution; i+=16) {
+        for (var j = 0; j < settings.resolution; j++) {
+            city.grid[i][j] = {
+              zone: ZONES.ROAD.value,
+              status: STATUS.OCCUPIED.value
+            };
+        }
+    }
+
+    // horizontal streets
+    for (var i = 0; i < settings.resolution; i+=8) {
+        for (var j = 0; j < settings.resolution; j++) {
+            city.grid[j][i] = {
+              zone: ZONES.ROAD.value,
+              status: STATUS.OCCUPIED.value
+          };
+        }
+    }
+}
 
 
 function generateBuildings(framework) {
@@ -309,7 +307,6 @@ function generateBuildings(framework) {
     var offset = settings.size / 2.0 - square_size / 2.0;
     var builder = new Builder();
 
-
     builder.loadResources()
       .then(function(response) {
         try {
@@ -318,17 +315,17 @@ function generateBuildings(framework) {
 
           var building_sizes = {
             small: [
-              [0.5,0.5,0.5],
-              [0.5,1,0.5]
+              [2,2,2],
+              [3,1,2]
             ],
             medium: [
               [3,3,6],
               [3,3,10],
             ],
             large: [
-              [9,9,20],
-              [9,9,30],
-              [9,9,30]
+              [5,5,9],
+              [5,5,15],
+              [5,5,20]
             ]
           }
 
@@ -340,8 +337,8 @@ function generateBuildings(framework) {
           context.fillRect(0,0,settings.resolution, settings.resolution);
           context.fillStyle = '#000000';
 
-          var debug = document.getElementById('debug');
-          debug.appendChild(canvas);
+          // var debug = document.getElementById('debug');
+          // debug.appendChild(canvas);
 
           for (var n = 0; n < settings.numBuildings; n++) {
             // randomly pick points
@@ -357,10 +354,10 @@ function generateBuildings(framework) {
               // pick a building size semi-randomly
               if (keep < 100) {
                 var building_size = building_sizes.large[Math.floor(Math.random()*6)%3]
-              } else if (keep < 101) {
+              } else if (keep < 200) {
                 var building_size = building_sizes.medium[Math.floor(Math.random()*4)%2]
               } else {
-                continue;
+                var building_size = building_sizes.small[Math.floor(Math.random()*3)%2]
               }
 
               // check that the building fits in the location
@@ -388,7 +385,7 @@ function generateBuildings(framework) {
                 var density = Math.pow((255 - rgba.x) / 255, 2) * 20;
                 var density = 0.4;
                 var options = {
-                    iterations: 3,
+                    iterations: 5,
                     length: scale_factor * building_size[0],
                     width: scale_factor * building_size[1],
                     height: scale_factor * (building_size[2] + (Math.random() * building_size[2])),
@@ -435,7 +432,6 @@ function onUpdate(framework) {
       i++;
     }
 }
-
 
 /**
  * Returns a number whose value is limited to the given range.
