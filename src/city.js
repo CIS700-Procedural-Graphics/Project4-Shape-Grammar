@@ -17,18 +17,7 @@ class ConvexHull
 	constructor()
 	{		
 		this.bounds = null;
-		this.points = [];
 		this.segments = [];
-	}
-
-	addPoint(point)
-	{
-		if(this.bounds == null)
-			this.bounds = new Common.Bounds(point, point);
-		else
-			this.bounds.encapsulate(point);
-
-		this.points.push(point);
 	}
 
 	getCenter()
@@ -42,95 +31,130 @@ class ConvexHull
 
 		return c;
 	}
-
-	addSegment(s)
+		
+	addSegment(normal, direction, midpoint, min, max)
 	{
-		// No bounds, this assumes each vertex was added...
-		this.segments.push(s);
+		this.segments.push({ valid : false, normal: normal, dir: direction, midpoint: midpoint, min : min, max : max });
 	}
 
 	sort()
-	{		
+	{
 	}
 
-	split(axis, splitDistance)
-	{	
-		var newHull = new ConvexHull();
+	updateBounds()
+	{
+		this.bounds = null;
 
+		for(var h = 0; h < this.segments.length; h++)
+		{
+			if(this.segments[h].valid)
+			{
+				var segment = this.segments[h];
+				var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
+				var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
+				
+				if(this.bounds == null)
+					this.bounds = new Common.Bounds(from, from);
+
+				this.bounds.encapsulate(from);
+				this.bounds.encapsulate(to);
+			}
+		}
+	}
+
+	calculateSegments()
+	{
+		for(var i = 0; i < this.segments.length; i++)
+		{
+			for(var j = 0; j < this.segments.length; j++)
+			{
+				if(i == j)
+					continue;
+
+				var s1 = this.segments[i];
+				var s2 = this.segments[j];
+
+				// Parallel
+				if(Math.abs(s1.dir.dot(s2.normal)) < .001)
+					continue;
+
+				var diff = s2.midpoint.clone().sub(s1.midpoint);
+				var det = s2.dir.x * s1.dir.y - s2.dir.y * s1.dir.x;
+
+				var u = (diff.y * s2.dir.x - diff.x * s2.dir.y) / det;
+				var v = (diff.y * s1.dir.x - diff.x * s1.dir.y) / det;
+
+				var newPoint = s1.midpoint.clone().add(s1.dir.clone().multiplyScalar(u));
+				var insideHull = true;
+
+				// This is the naive, N^3 intersection test method
+				for(var k = 0; k < this.segments.length; k++)
+				{
+					if(k != j && k != i)
+					{
+						var dP = newPoint.clone().sub(this.segments[k].midpoint);
+						
+						// Remember normals are inverted, this is why it is > 0 and not <= 0
+						if(this.segments[k].normal.clone().dot(dP) > 0)
+							insideHull = false;
+					}
+				}
+
+				if(!insideHull)
+					continue;
+
+				s1.min = Math.min(s1.min, u);
+				s1.max = Math.max(s1.max, u);
+				s1.valid = true;
+			}
+		}
+
+		this.updateBounds();
+	}
+
+	isValid()
+	{
+		var valid = 0;
+
+		for(var h = 0; h < this.segments.length; h++)
+		{
+			if(this.segments[h].valid)
+				valid++;
+		}
+		
+		return valid > 2;
+	}
+
+	// Returns two copies
+	splitComplex(axis, splitDistance)
+	{
+		var h1 = new ConvexHull();
+		var h2 = new ConvexHull();
+	
 		var tangent = new THREE.Vector2( -axis.y, axis.x);
 		var offset = axis.clone().multiplyScalar(splitDistance);
 
 		var oldPoints = this.points;
 
-		var projectedMidpoint = this.getCenter();
-		var distanceToOffset = projectedMidpoint.clone().sub(offset);
-		projectedMidpoint = projectedMidpoint.clone().sub(axis.clone().multiplyScalar(axis.dot(distanceToOffset)));
+		h1.addSegment(axis, tangent, offset, 1000, -1000);
+		h2.addSegment(axis.clone().negate(), tangent.clone().negate(), offset, 1000, -1000);
 
-		// The new segment to add
-		var s1 = { valid : true, normal: axis, dir: tangent, midpoint: projectedMidpoint, min : -1000, max : 1000 }
-
-		for(var s = 0; s < this.segments.length; s++)
+		for(var h = 0; h < this.segments.length; h++)
 		{
-			var s2 = this.segments[s];
+			var segment = this.segments[h];
 
-			// Parallel
-			if(Math.abs(s1.dir.dot(s2.normal)) < .001)
-				continue;
-
-			var diff = s2.midpoint.clone().sub(s1.midpoint);
-			var det = s2.dir.x * s1.dir.y - s2.dir.y * s1.dir.x;
-
-			var u = (diff.y * s2.dir.x - diff.x * s2.dir.y) / det;
-			var v = (diff.y * s1.dir.x - diff.x * s1.dir.y) / det;
-
-			if(u < 0)
-				s1.min = -Math.min(-s1.min, -u);
-			else
-				s1.max = Math.min(s1.max, u);
+			// Some pruning
+			if(segment.valid)
+			{
+				h1.addSegment(segment.normal, segment.dir, segment.midpoint, segment.min, segment.max);
+				h2.addSegment(segment.normal, segment.dir, segment.midpoint, segment.min, segment.max);
+			}
 		}
 
-		this.points = [];
-		this.bounds = null;
+		h1.calculateSegments();
+		h2.calculateSegments();
 
-		for(var p = 0; p < oldPoints.length; p++)
-		{
-			var point = oldPoints[p];
-
-			var d = point.clone().sub(offset).dot(axis);
-
-			if(d > 0)
-				this.addPoint(point);
-			else
-				newHull.addPoint(point);
-		}
-
-		// If the other hull is empty, dont split
-		if(newHull.points.length == 0)
-			return null;
-
-		// If this hull is empty, absorb the other hull
-		if(this.points.length == 0)
-		{
-			this.points = newHull.points;
-			this.bounds = newHull.bounds;
-			return null;
-		}
-
-		// If no hull is empty, there was effectively a split
-		// Now lets add the new segment
-		this.addSegment(s1);
-		newHull.addSegment(s1);
-
-		var from = s1.midpoint.clone().add(s1.dir.clone().multiplyScalar(s1.min));
-		var to = s1.midpoint.clone().add(s1.dir.clone().multiplyScalar(s1.max));
-
-		this.addPoint(from);
-		this.addPoint(to);
-
-		newHull.addPoint(from);
-		newHull.addPoint(to);
-
-		return newHull;
+		return [h1, h2];
 	}
 }
 
@@ -140,12 +164,54 @@ class Generator
 	{		
 	}
 
-	// Overall complexity of this Voronoi implementation:
-	// N + N^2 * 27 * 2
+	sliceHullSet(hulls, axis, subdivisions, scale, intersectionFunction)
+	{
+		for(var h = 0; h < hulls.length; h++)
+			hulls[h].added = false;
+
+		var newHulls = [];
+		for(var x = 0; x < subdivisions + 1; x++)
+		{
+			var t = x / subdivisions;
+			var sliceOffset = t * scale;
+
+			for(var h = 0; h < hulls.length; h++)
+			{
+				var hull = hulls[h];
+
+				if(intersectionFunction(hull, sliceOffset))
+				{
+					var split = hull.splitComplex(axis, sliceOffset);
+
+					if(split[0].isValid())
+						newHulls.push(split[0]);
+
+					if(split[1].isValid())
+						newHulls.push(split[1]);
+				}
+				else
+				{
+					if(!hull.added)
+					{
+						hull.added = true;
+						newHulls.push(hull);
+					}
+				}
+			}
+		}
+
+		return newHulls;
+	}
+	
+	// Algorithm overview:
+	// Build voronoi with half plane intersection tests, based on a jittered grid
+	// (super important each point is inside each cell)
+	// Generate convex hulls
+	// Subdivide convex hulls in X and Y, 9 times
 	build(scene)
 	{
 		// count * count final points
-		var count = 20;
+		var count = 40;
 		var scale = 2;
   		var random = new Random(Random.engines.mt19937().autoSeed());
 
@@ -156,7 +222,7 @@ class Generator
 		var yAxis = new THREE.Vector2( 0, 1 );
 
   		// From center
-  		var randomAmplitude = .5;
+  		var randomAmplitude = .499;
 
   		// Distribute points
   		for(var x = 0; x < count; x++)
@@ -170,22 +236,16 @@ class Generator
 
   				var p = new THREE.Vector2( x * scale + .5 + r1, y * scale + .5 + r2);
   				points[x].push(p);
-  				// pointsGeo.vertices.push(new THREE.Vector3( p.x, 0, p.y ));
   			}
   		}
 
   		// Build half planes, and finding their convex hulls
-  		var segments = [];
   		var hulls = [];
 
   		for(var x = 0; x < count; x++)
   		{
-  			segments.push(new Array());
-
   			for(var y = 0; y < count; y++)
   			{
-  				segments[x].push(new Array());
-
   				var p = points[x][y];
   				var hull = new ConvexHull();
 
@@ -202,169 +262,24 @@ class Generator
   							var midpoint = neighbor.clone().add(p).multiplyScalar(.5);
   							var tangent = new THREE.Vector2( -normal.y, normal.x );
 
-  							var segment = { valid : false, normal: normal, dir: tangent, midpoint: midpoint, min : 1000, max : -1000 }
-  							segments[x][y].push(segment)
+  							// var segment = { valid : false, normal: normal, dir: tangent, midpoint: midpoint, min : 1000, max : -1000 }
+
+  							hull.addSegment(normal, tangent, midpoint, 1000, -1000);
   						}
   					}
   				}
 
-  				// For reference: failed attempt at constraining cell half planes
-				// {
-					// var fX = Math.floor(10 * (x / count)) * scale * count / 10;
-					// var fP = new THREE.Vector2( fX, 0 );
-
-					// var segment = { valid : false, normal: xAxis.clone().negate(), dir: yAxis, midpoint: fP, min : 1000, max : -1000 }
-					// segments[x][y].push(segment);
-				// }
-				// {
-					// var fX = (Math.floor(10 * (x / count))+1) * scale * count / 10;
-					// var fP = new THREE.Vector2( fX, 0 );
-
-					// var segment = { valid : false, normal: xAxis.clone(), dir: yAxis, midpoint: fP, min : 1000, max : -1000 }
-					// segments[x][y].push(segment);
-				// }
-
-				// {
-					// var fY = Math.floor(10 * (y / count)) * scale * count / 10;
-					// var fP = new THREE.Vector2( 0, fY );
-
-					// var segment = { valid : false, normal: yAxis.clone().negate(), dir: new THREE.Vector2( -yAxis.y, yAxis.x ), midpoint: fP, min : 1000, max : -1000 }
-					// segments[x][y].push(segment);
-				// }
-
-				// {
-					// var fY = (Math.floor(10 * (y / count)) + 1) * scale * count / 10;
-					// var fP = new THREE.Vector2( 0, fY );
-
-					// var segment = { valid : false, normal: yAxis.clone(), dir: new THREE.Vector2( -yAxis.y, yAxis.x ), midpoint: fP, min : 1000, max : -1000 }
-					// segments[x][y].push(segment);
-				// }
-
-  				// N^3 over amount of segments per cell (which is 27)
-				for(var i = 0; i < segments[x][y].length; i++)
-				{
-					for(var j = 0; j < segments[x][y].length; j++)
-					{
-						if(i == j)
-							continue;
-
-						var s1 = segments[x][y][i];
-						var s2 = segments[x][y][j];
-
-						// Parallel
-						if(Math.abs(s1.dir.dot(s2.normal)) < .001)
-							continue;
-
-						var diff = s2.midpoint.clone().sub(s1.midpoint);
-						var det = s2.dir.x * s1.dir.y - s2.dir.y * s1.dir.x;
-
-						var u = (diff.y * s2.dir.x - diff.x * s2.dir.y) / det;
-						var v = (diff.y * s1.dir.x - diff.x * s1.dir.y) / det;
-
-						var newPoint = s1.midpoint.clone().add(s1.dir.clone().multiplyScalar(u));
-						var insideHull = true;
-
-						for(var k = 0; k < segments[x][y].length; k++)
-						{
-							if(k != j && k != i)
-							{
-								var dP = newPoint.clone().sub(segments[x][y][k].midpoint);
-								
-								// Remember normals are inverted, this is why it is > 0 and not <= 0
-								if(segments[x][y][k].normal.clone().dot(dP) > 0)
-									insideHull = false;
-							}
-						}
-
-						if(!insideHull)
-							continue;
-
-						hull.addPoint(newPoint)
-						hull.addSegment(s1);
-						// pointsGeo.vertices.push(new THREE.Vector3( newPoint.x, 0, newPoint.y ));
-
-						s1.min = Math.min(s1.min, u);
-						s1.max = Math.max(s1.max, u);
-						s1.valid = true;
-					}
-				}
-
-  		// 		// Save geo for display
-				// for(var s = 0; s < segments[x][y].length; s++)
-				// {
-				// 	var segment = segments[x][y][s];
-
-				// 	if(!segment.valid)
-				// 		continue;
-
-				// 	var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
-				// 	var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
-					
-				// 	geometry.vertices.push(new THREE.Vector3( from.x, 0, from.y ))
-				// 	geometry.vertices.push(new THREE.Vector3( to.x, 0, to.y ))
-				// }
-
+  				hull.calculateSegments();
 				hulls.push(hull);
-
-				// var center = hull.getCenter();
-				// pointsGeo.vertices.push(new THREE.Vector3( center.x, 0, center.y));
   			}
   		}
 
-  		// var mapCenter = new THREE.Vector3( count * .5, 0, count * .5);
-
-		// for(var i = 0; i < geometry.vertices.length; i++)
-		// {
-		// 	// Deform it in an interesting way...
-		// 	var v = geometry.vertices[i];
-
-		// 	var toCenter = v.clone().sub(mapCenter);
-		// 	var dist = Math.pow(toCenter.length() / (count * count), 1.35) * count * count;
-
-		// 	geometry.vertices[i] = mapCenter.clone().add(toCenter.multiplyScalar(dist));
-		// }
-
-
-		var newHulls = [];
-
-		// for(var x = 0; x < 10; x++)
-		// {
-		// 	var t = x / 9;
-		// 	geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, 0 ));
-		// 	geometry.vertices.push(new THREE.Vector3(t * count * scale, 0, count * scale ));
-		// }
-
-		// 	var sliceX = t * count * scale;
-
-		// 	for(var h = 0; h < hulls.length; h++)
-		// 	{
-		// 		var hull = hulls[h];
-
-		// 		if(hull.bounds.intersectsX(sliceX))
-		// 		{
-		// 			var newHull = hull.split(xAxis, sliceX);
-					
-		// 			if(newHull != null)
-		// 				newHulls.push(newHull);
-		// 		}
-		// 	}
-		// }
-
-		// for(var h = 0; h < newHulls.length; h++)
-		// 	hulls.push(newHulls[h]);
-
-		// for(var y = 0; y < 10; y++)
-		// {
-		// 	var t = y / 9;
-		// 	geometry.vertices.push(new THREE.Vector3(0,0, t * count * scale));
-		// 	geometry.vertices.push(new THREE.Vector3(count * scale, 0, t * count * scale));
-		// }
-
-
+  		// Subdivide everything 9 times in X and Y
+		hulls = this.sliceHullSet(hulls, xAxis, 9, count * scale, function(hull, sliceOffset){ return hull.bounds.intersectsX(sliceOffset); });
+		hulls = this.sliceHullSet(hulls, yAxis, 9, count * scale, function(hull, sliceOffset){ return hull.bounds.intersectsY(sliceOffset); });
+		console.log("Hulls: " + hulls.length);
 
 		// Save geo for display
-
-
 		for(var h = 0; h < hulls.length; h++)
 		{
 			for(var s = 0; s < hulls[h].segments.length; s++)
@@ -380,7 +295,6 @@ class Generator
 				geometry.vertices.push(new THREE.Vector3( from.x, 0, from.y ))
 				geometry.vertices.push(new THREE.Vector3( to.x, 0, to.y ))
 
-
 				pointsGeo.vertices.push(new THREE.Vector3( from.x, 0, from.y));
 				pointsGeo.vertices.push(new THREE.Vector3( to.x, 0, to.y));
 			}
@@ -389,19 +303,11 @@ class Generator
 			// pointsGeo.vertices.push(new THREE.Vector3( center.x, 0, center.y));
 		}
 
-		console.log(newHulls.length);
-		console.log(hulls.length);
   		console.log(geometry.vertices.length);
 
-  		var material = new THREE.LineBasicMaterial( {color: 0xffffff} );
-
-		var line = new THREE.LineSegments(geometry, material);
+  		var lineMaterial = new THREE.LineBasicMaterial( {color: 0xffffff} );
+		var line = new THREE.LineSegments(geometry, lineMaterial);
 		scene.add(line);
-
-  		// material.wireframe = true;
-
-		// var mesh = new THREE.Mesh(geometry, material);
-		// scene.add(mesh);
 
 		var pointsMaterial = new THREE.PointsMaterial( { color: 0xffffff } )
 		pointsMaterial.size = .1;
