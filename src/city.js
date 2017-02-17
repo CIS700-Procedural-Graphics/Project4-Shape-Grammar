@@ -126,6 +126,10 @@ class ConvexHull
 
 			var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
 			var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
+
+			// Cache these points for future reference...
+			segment.from = from;
+			segment.to = to;
 			
 			addVertex(from, this.vertices, this.midpoint);
 			addVertex(to, this.vertices, this.midpoint);
@@ -414,32 +418,32 @@ class Generator
 
 			hull.sortVertices();
 			
-			var height = 0;
-			pointsGeo.vertices.push(new THREE.Vector3( hull.midpoint.x, height, hull.midpoint.y));
+			// var height = 0;
+			// pointsGeo.vertices.push(new THREE.Vector3( hull.midpoint.x, height, hull.midpoint.y));
 
-			for(var i = 0; i < hull.vertices.length; i++)
-			{
-				var i1 = (i+1) % hull.vertices.length;
-				var v = hull.vertices[i];
-				var v1 = hull.vertices[i1];
+			// for(var i = 0; i < hull.vertices.length; i++)
+			// {
+			// 	var i1 = (i+1) % hull.vertices.length;
+			// 	var v = hull.vertices[i];
+			// 	var v1 = hull.vertices[i1];
 
-				geometry.vertices.push(new THREE.Vector3( v.x, height, v.y ));
-				geometry.vertices.push(new THREE.Vector3( v1.x, height, v1.y ));
+			// 	geometry.vertices.push(new THREE.Vector3( v.x, height, v.y ));
+			// 	geometry.vertices.push(new THREE.Vector3( v1.x, height, v1.y ));
 
-				pointsGeo.vertices.push(new THREE.Vector3( v.x, height, v.y ));
-			}
+			// 	pointsGeo.vertices.push(new THREE.Vector3( v.x, height, v.y ));
+			// }
 		}
 
   // 		console.log(geometry.vertices.length);
 
-  		var lineMaterial = new THREE.LineBasicMaterial( {color: 0xffffff} );
-		var line = new THREE.LineSegments(geometry, lineMaterial);
-		scene.add(line);
+  // 		var lineMaterial = new THREE.LineBasicMaterial( {color: 0xffffff} );
+		// var line = new THREE.LineSegments(geometry, lineMaterial);
+		// scene.add(line);
 
-		var pointsMaterial = new THREE.PointsMaterial( { color: 0xffffff } )
-		pointsMaterial.size = .1;
-		var pointsMesh = new THREE.Points( pointsGeo, pointsMaterial );
-		scene.add( pointsMesh );
+		// var pointsMaterial = new THREE.PointsMaterial( { color: 0xffffff } )
+		// pointsMaterial.size = .1;
+		// var pointsMesh = new THREE.Points( pointsGeo, pointsMaterial );
+		// scene.add( pointsMesh );
 
 
 		return boundedHulls;
@@ -460,7 +464,7 @@ class Generator
 
 				// If it is too small, no lot
 				// If it is medium sized, it can be ignored with a probability
-				if(hull.area > .5 && (random.real(0,1) > .1 || hull.area > 1.5))
+				if(hull.area > .75 && (random.real(0,1) > .1 || hull.area > 2))
 				{
 					var lot = new Building.BuildingLot();
 
@@ -468,6 +472,7 @@ class Generator
 					lot.points = hull.vertices;
 					lot.buildNormals();
 					lot.hasCap = true;
+					lot.hull = hull;
 
 					lotContainer[i].push(lot);
 				}
@@ -477,6 +482,59 @@ class Generator
 		return lotContainer;
 	}
 
+	generateMassShapesForLot(lot, random)
+	{
+		var hull = lot.hull;
+		var shapes = [];
+
+		var material = new THREE.MeshLambertMaterial({ color: 0xffffff, emissive: 0x333333 });
+		var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+
+		for(var s = 0; s < hull.segments.length; s++)
+		{
+			var segment = hull.segments[s];
+			
+			if(!segment.valid)
+				continue;		
+
+			var from = segment.from;
+			var to = segment.to;
+			var segmentLength = from.distanceTo(to);
+
+			if(segmentLength < .5)
+				continue;
+
+			var count = random.integer(1, 3);
+
+			for(var i = 0; i < count; i++)
+			{
+				// We dont want to overlap with other segments
+				var t = (i / (count + 1));
+				var p = from.clone().lerp(to, t);
+				p.add(segment.normal.clone().multiplyScalar(-.4));
+				p.add(segment.dir.clone().multiplyScalar(.5*segmentLength/count));
+
+				var normal = new THREE.Vector3( segment.normal.x, 0, segment.normal.y );
+
+				// Facing street
+				var faceLength = random.real(.7, .99) * .5 * segmentLength / count;
+				var depth = random.real(.2, .5);
+				var height = random.real(.2, 10.0 * depth * faceLength); // Height is dependent on depth+length
+
+				p.add(segment.normal.clone().multiplyScalar(depth*-.5));
+
+				var cube = new THREE.Mesh( geometry, material );
+				cube.scale.set(faceLength, height, depth);
+				cube.position.copy(new THREE.Vector3( p.x, cube.scale.y * .5, p.y ));
+				cube.lookAt(cube.position.clone().add(normal));
+
+				shapes.push(cube);
+			}
+		}
+
+		return shapes;
+	}
+
 	build(scene)
 	{
   		var random = new Random(Random.engines.mt19937().autoSeed());
@@ -484,11 +542,11 @@ class Generator
 		var lots = this.buildLots(hulls, random);
 
 		var baseLotProfile = new Building.Profile();
-		baseLotProfile.addPoint(1.1, 0.0);
-		baseLotProfile.addPoint(1.1, .025);
-		baseLotProfile.addPoint(1.2, .025);
-		baseLotProfile.addPoint(1.2, .075);
-		baseLotProfile.addPoint(1.3, .075);
+		baseLotProfile.addPoint(1.15, 0.0);
+		baseLotProfile.addPoint(1.15, .025);
+		baseLotProfile.addPoint(1.25, .025);
+		baseLotProfile.addPoint(1.25, .05);
+		baseLotProfile.addPoint(1.35, .05);
 
 		for(var i = 0; i < lots.length; i++)
 		{
@@ -498,7 +556,13 @@ class Generator
 				var shape = new Building.MassShape(lots[i][j], baseLotProfile);
 				var mesh = shape.generateMesh();
 				scene.add(mesh);
+
+				var massShapes = this.generateMassShapesForLot(lots[i][j], random);
+
+				for(var s = 0; s < massShapes.length; s++)
+					scene.add(massShapes[s]);
 			}
+
 		}
 	}
 }
