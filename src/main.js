@@ -11,6 +11,12 @@ var animPlayed = false;
 
 var lastTime = Date.now();
 
+var pic = THREE.ImageUtils.loadTexture('./resources/denethor.jpg');
+
+var settings = {
+  volume: 0.5
+};
+
 // curve helpers for terrain deformation
 function bias(b, t) {
     return Math.pow(t, Math.log(b) / Math.log(0.5));
@@ -105,6 +111,9 @@ function onLoad(framework) {
 
   gui.add(obj,'Iterate');
   gui.add(obj,'Clear');
+  gui.add(settings, 'volume', 0.0, 1.0).onChange(function(newVal) {
+    sound.setVolume(newVal);
+  });
 }
 
 function makeTerrain(scene) {
@@ -159,15 +168,15 @@ function onUpdate(framework) {
     }
   } else if (iterations >= 4 && !animPlayed) {
     // make a burning denethor
-    var geo = new THREE.SphereGeometry(0.2);
+    var geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
     geo.applyMatrix(new THREE.Matrix4().makeTranslation(0, 0.1, 0));
-    var mat = new THREE.MeshBasicMaterial(0x0000ff);
+    var mat = new THREE.MeshBasicMaterial({map: pic});
     denethor = new THREE.Mesh(geo, mat);
     denethor.name = "unfortunateSteward";
     denethor.userdata = {v: new THREE.Vector3(0, 0, 1)};
     denethor.position.y = 9.0;
     denethor.position.z = 1.0;
-    denethor.material.color.setHex(0xff8800);
+    //denethor.material.color.setHex(0xff8800);
     denethor.castShadow = true;
     framework.scene.add(denethor);
     console.log("AAAAAAAAAaaaaaaaaaa~....");
