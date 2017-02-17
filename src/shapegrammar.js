@@ -12,10 +12,16 @@ function getRandom(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
 class Shape {
     constructor() {
-        this.position = { x: getRandom(-25,25), y: 0, z: getRandom(-25,25)}; 
-        this.scale = { x: getRandom(1,4), y: 1.0, z: getRandom(1, 2)};
+        this.position = { x: getRandom(-100,100), y: 0, z: getRandom(-100,100)}; 
+        this.scale = { x: getRandom(1,10), y: getRandom(1,50), z: getRandom(1, 10)};
         this.symbol = ''; // name of the associated geometry for this symbol
         this.geom = {}; 
     }
@@ -174,7 +180,12 @@ function replaceNode(scene, linkedList, node, replacementString) {
 
 export default function ShapeSystem(scene, axiom, grammar, iterations) {
     // default LSystem
-    this.axiom = "X";// FX";
+    var numBuildings = getRandomInt(10, 50);
+    var axiomString = "";
+    for (var i = 1; i <= numBuildings; i++) {
+        axiomString += "X";
+    }
+    this.axiom = axiomString;// FX";
     this.grammar = {};
     this.grammar['X'] = [new Rule(1.0, 'FFF')];
     this.iterations = 0; 
@@ -242,18 +253,16 @@ export default function ShapeSystem(scene, axiom, grammar, iterations) {
         console.log(lSystemLL);
 
         var node = lSystemLL.getStartNode();
-        var ctr = 0.0; 
         do {
             console.log("making cube");
             //based on values in shape attributes
             var geometry = new THREE.BoxGeometry( node.shape.scale.x, node.shape.scale.y, node.shape.scale.z);
             var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
             var cube = new THREE.Mesh( geometry, material );
-            cube.position.setX(node.shape.position.x + ctr);
+            cube.position.setX(node.shape.position.x);
             cube.position.setY(node.shape.position.y);
             cube.position.setZ(node.shape.position.z);
             scene.add( cube );
-            ctr += 10;
             node = node.getNext();
         } while (node.getNext() != null) 
         console.log(scene);
