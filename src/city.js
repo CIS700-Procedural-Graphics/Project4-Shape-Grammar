@@ -18,6 +18,8 @@ class ConvexHull
 	{		
 		this.bounds = null;
 		this.segments = [];
+		this.vertices = [];
+		this.midpoint = new THREE.Vector2(0,0);
 	}
 
 	getCenter()
@@ -34,11 +36,44 @@ class ConvexHull
 		
 	addSegment(normal, direction, midpoint, min, max)
 	{
-		this.segments.push({ valid : false, normal: normal, dir: direction, midpoint: midpoint, min : min, max : max });
+		this.segments.push({ valid : false, normal: normal.clone(), dir: direction.clone(), midpoint: midpoint.clone(), min : 1000, max : -1000});
 	}
 
 	sort()
 	{
+	}
+
+	calculateVertices()
+	{
+		this.vertices = [];
+		this.midpoint = new THREE.Vector2(0,0);
+
+		function addVertex(v, vertices, midpoint)
+		{
+			for(var i = 0; i < vertices.length; i++)
+				if(v.distanceTo(vertices[i]) < .01)
+					return;
+
+			vertices.push(v);
+			midpoint.add(v);
+		}
+
+		for(var s = 0; s < this.segments.length; s++)
+		{
+			var segment = this.segments[s];
+
+			if(!segment.valid)
+				continue;
+
+			var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
+			var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
+			
+			addVertex(from, this.vertices, this.midpoint);
+			addVertex(to, this.vertices, this.midpoint);
+		}
+
+		if(this.vertices.length > 0)
+			this.midpoint.multiplyScalar(1.0 / this.vertices.length);
 	}
 
 	updateBounds()
@@ -121,7 +156,7 @@ class ConvexHull
 			if(this.segments[h].valid)
 				valid++;
 		}
-		
+
 		return valid > 2;
 	}
 
@@ -136,8 +171,8 @@ class ConvexHull
 
 		var oldPoints = this.points;
 
-		h1.addSegment(axis, tangent, offset, 1000, -1000);
-		h2.addSegment(axis.clone().negate(), tangent.clone().negate(), offset, 1000, -1000);
+		h1.addSegment(axis, tangent, offset);
+		h2.addSegment(axis.clone().negate(), tangent.clone().negate(), offset);
 
 		for(var h = 0; h < this.segments.length; h++)
 		{
@@ -146,8 +181,8 @@ class ConvexHull
 			// Some pruning
 			if(segment.valid)
 			{
-				h1.addSegment(segment.normal, segment.dir, segment.midpoint, segment.min, segment.max);
-				h2.addSegment(segment.normal, segment.dir, segment.midpoint, segment.min, segment.max);
+				h1.addSegment(segment.normal, segment.dir, segment.midpoint);
+				h2.addSegment(segment.normal, segment.dir, segment.midpoint);
 			}
 		}
 
@@ -166,18 +201,17 @@ class Generator
 
 	sliceHullSet(hulls, axis, subdivisions, scale, intersectionFunction)
 	{
-		for(var h = 0; h < hulls.length; h++)
-			hulls[h].added = false;
-
 		var newHulls = [];
-		for(var x = 0; x < subdivisions + 1; x++)
-		{
-			var t = x / subdivisions;
-			var sliceOffset = t * scale;
 
-			for(var h = 0; h < hulls.length; h++)
+		for(var h = 0; h < hulls.length; h++)		
+		{
+			var hull = hulls[h];	
+			var intersected = false;
+
+			for(var x = 0; x < subdivisions + 1 && !intersected; x++)
 			{
-				var hull = hulls[h];
+				var t = x / subdivisions;
+				var sliceOffset = t * scale;			
 
 				if(intersectionFunction(hull, sliceOffset))
 				{
@@ -188,16 +222,13 @@ class Generator
 
 					if(split[1].isValid())
 						newHulls.push(split[1]);
-				}
-				else
-				{
-					if(!hull.added)
-					{
-						hull.added = true;
-						newHulls.push(hull);
-					}
+
+					intersected = true;
 				}
 			}
+
+			if(!intersected)
+				newHulls.push(hull);
 		}
 
 		return newHulls;
@@ -211,7 +242,7 @@ class Generator
 	build(scene)
 	{
 		// count * count final points
-		var count = 40;
+		var count = 30;
 		var scale = 2;
   		var random = new Random(Random.engines.mt19937().autoSeed());
 
@@ -261,10 +292,7 @@ class Generator
   							var normal = neighbor.clone().sub(p).normalize();
   							var midpoint = neighbor.clone().add(p).multiplyScalar(.5);
   							var tangent = new THREE.Vector2( -normal.y, normal.x );
-
-  							// var segment = { valid : false, normal: normal, dir: tangent, midpoint: midpoint, min : 1000, max : -1000 }
-
-  							hull.addSegment(normal, tangent, midpoint, 1000, -1000);
+  							hull.addSegment(normal, tangent, midpoint);
   						}
   					}
   				}
@@ -274,14 +302,23 @@ class Generator
   			}
   		}
 
-  		// Subdivide everything 9 times in X and Y
-		hulls = this.sliceHullSet(hulls, xAxis, 9, count * scale, function(hull, sliceOffset){ return hull.bounds.intersectsX(sliceOffset); });
-		hulls = this.sliceHullSet(hulls, yAxis, 9, count * scale, function(hull, sliceOffset){ return hull.bounds.intersectsY(sliceOffset); });
+  		// Subdivide everything 11 times in X and Y
+  		// Then we take the inner 9x9 grids to build a cube
+		hulls = this.sliceHullSet(hulls, xAxis, 11, count * scale, function(hull, sliceOffset){ return hull.bounds.intersectsX(sliceOffset); });
+		hulls = this.sliceHullSet(hulls, yAxis, 11, count * scale, function(hull, sliceOffset){ return hull.bounds.intersectsY(sliceOffset); });
 		console.log("Hulls: " + hulls.length);
 
 		// Save geo for display
 		for(var h = 0; h < hulls.length; h++)
 		{
+			if(!hulls[h].isValid())
+				continue;
+
+			var height = 0;// h * .1;
+			
+			hulls[h].calculateVertices();
+			pointsGeo.vertices.push(new THREE.Vector3( hulls[h].midpoint.x, height, hulls[h].midpoint.y));
+
 			for(var s = 0; s < hulls[h].segments.length; s++)
 			{
 				var segment = hulls[h].segments[s];
@@ -292,15 +329,12 @@ class Generator
 				var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
 				var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
 				
-				geometry.vertices.push(new THREE.Vector3( from.x, 0, from.y ))
-				geometry.vertices.push(new THREE.Vector3( to.x, 0, to.y ))
+				geometry.vertices.push(new THREE.Vector3( from.x, height, from.y ))
+				geometry.vertices.push(new THREE.Vector3( to.x, height, to.y ))
 
-				pointsGeo.vertices.push(new THREE.Vector3( from.x, 0, from.y));
-				pointsGeo.vertices.push(new THREE.Vector3( to.x, 0, to.y));
+				pointsGeo.vertices.push(new THREE.Vector3( from.x, height, from.y));
+				pointsGeo.vertices.push(new THREE.Vector3( to.x, height, to.y));
 			}
-
-			// var center = hulls[h].getCenter();
-			// pointsGeo.vertices.push(new THREE.Vector3( center.x, 0, center.y));
 		}
 
   		console.log(geometry.vertices.length);
