@@ -74,15 +74,15 @@ function makeBuildings(framework){
 	  var center = new THREE.Vector3( xoff, 0, zoff);
 	  var heightScale = 1.1 - ( Math.sqrt( xoff * xoff + zoff * zoff ) / Math.sqrt( xbound * xbound + zbound * zbound ) );
 	  var height = Math.ceil(heightScale * 30 /*floors*/) + getRandom( framework.scene.stauffUserSeed ) * 4;
-	  var diff = getRandom( framework.scene.stauffUserSeed ) * 5
+	  var diff = getRandom( framework.scene.stauffUserSeed ) * 8
 	  //generate!
 	  var building = new Building(
 					'test', /* style */
 					center, /*center*/
 					new THREE.Vector3(0,0,1), /*orientation*/
 					height, /*startHeight in floors*/
-					18 - diff, /*startWidth in wall units */
-					18 - diff / 2, /*startDepth*/
+					20 - diff, /*startWidth in wall units */
+					20 - diff / 2, /*startDepth*/
 					framework.scene,
 					0 /*recursion depth*/);
 	  //hack in a diff random number

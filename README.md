@@ -1,6 +1,28 @@
 
 # Project 4: Shape Grammar
 
+# Stauffer
+
+Another hack job, my apologies. 
+
+I implemented a grammar of sorts to choose different rules for making the buildings of different styles. It has these options:
+
+- ground floor layout (i.e. sequence of window, wall, door segments)
+- upper floor layout (all the same for a given style, and each building is one style)
+- roof height
+- relative dimensions of wall/window/door units
+- colors of each segment
+
+Randomization uses current time to seed style selection and height and width/depth of buildings.
+A "beautiful" population density simulation is used to have building height decay from the center of the "city".
+
+I started implementing grammer for sub-dividing individual buildings but failed.
+
+Sorry, I didn't have time to merge the geometry to speed rendering.
+
+
+
+===============================
 For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
 
 **Goal:** to model an urban environment using a shape grammar. 
