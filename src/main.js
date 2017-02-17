@@ -15,7 +15,8 @@ var guiParameters = {
   city_center_x: 0.01,
   city_center_z: 0.01,
   levelOfDetail: 5,
-  towerRadius: 5
+  towerRadius: 5,
+  Adam_Make1: 0
 }
 
 var building_Material = new THREE.ShaderMaterial({
@@ -77,6 +78,10 @@ function changeGUI(gui, camera, scene)
   });
 
   gui.add(guiParameters, 'towerRadius', 3, 10).step(1).onChange(function(newVal) {
+    guiParameters.levelOfDetail = newVal;
+    onreset(scene);
+  });
+  gui.add(guiParameters, 'Adam_Make1', 0, 1).step(1).onChange(function(newVal) {
     guiParameters.levelOfDetail = newVal;
     onreset(scene);
   });
@@ -338,16 +343,16 @@ function createCity(scene)
   torus.rotateX(PI * 0.5);
   scene.add( torus );
 
-  //create torus knot building
-  // torusKnot.position.set(guiParameters.city_center_x, radius, guiParameters.city_center_z);
-  // torusKnot.scale.set(0.05*radius, 0.05*radius, 0.05*radius);
-  // scene.add( torusKnot );
+  // create torus knot building
+  torusKnot.position.set(guiParameters.city_center_x, radius, guiParameters.city_center_z);
+  torusKnot.scale.set(0.05*radius, 0.05*radius, 0.05*radius);
+  scene.add( torusKnot );
 
   var objLoader = new THREE.OBJLoader();
   objLoader.load('geometry/glados.obj', function(obj)
   {
       gladosGeo = obj.children[0].geometry;
-      var mglados = new THREE.MeshBasicMaterial( { color: 0x0080FF } );
+      var mglados = new THREE.MeshLambertMaterial( { color: 0x0080FF } );
       glados = new THREE.Mesh(gladosGeo, mglados);
       glados.position.set(guiParameters.city_center_x, 0.1*radius, guiParameters.city_center_z);
       glados.scale.set(0.005*radius, 0.005*radius, 0.005*radius);
@@ -517,13 +522,21 @@ function onLoad(framework)
 // called on frame updates
 function onUpdate(framework)
 {
-  if(torusKnot)
+  var scene = framework.scene;
+  if(torusKnot && glados)
   {
-    torusKnot.rotateY(1/50.0);
-  }
-  if(glados)
-  {
-    glados.rotateY(1/50.0);
+    if(guiParameters.Adam_Make1 == 0)
+    {
+      scene.remove(glados);
+      scene.add(torusKnot);
+      torusKnot.rotateY(1/50.0);
+    }
+    else if(guiParameters.Adam_Make1 == 1)
+    {
+      scene.remove(torusKnot);
+      scene.add(glados);
+      glados.rotateY(1/50.0);
+    }
   }
 }
 
