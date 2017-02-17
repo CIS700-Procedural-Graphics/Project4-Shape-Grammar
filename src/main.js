@@ -1,3 +1,4 @@
+require('file-loader?name=[name].[ext]!../index.html');
 const THREE = require('three');
 import Framework from './framework'
 import Lsystem, {linkedListToString} from './lsystem'
