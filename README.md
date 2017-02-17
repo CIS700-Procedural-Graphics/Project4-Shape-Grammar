@@ -9,7 +9,7 @@
 
 **Please be nice this took a looooooong time :'(**
 
-![](./ss1)
+![](./ss1.png)
 
 ## Setup
 - Please run npm install, as I changed the package.json so I could load in .OBJs. 
@@ -59,7 +59,7 @@ this.grammar['P'] = [
 ```
 
 #### The view from the Upper East Side
-![](./ss3)
+![](./ss3.png)
 
 ### Parent-Child depedencies, and more than just cubes
 - As mentioned in the comments in my code, these next three symbols in my grammar are PARENT dependent. What this means is they are only constructed after certain conditions have been met by their parent geometry (e.g. subdivided twice, etc.). Once these said conditions are met, I uses these symbols to either spawn fancy little rooftop gardens on top of skyscrapers (because you know, those rich midtown denizens can't get enough of the happy-hour rooftop chats), as well as generate watertowers on top of the SOHO lofts and Uptown Brownstones (They need to get their water somehow, but TBH I'm not sure how midtown gets their water... someone enlighten me please). The rooftop gardens and watertowers are scaled accordingly to their parent geometry as well, so it doesn't look awkward.
@@ -82,7 +82,7 @@ this.grammar['B'] = [
 ```
 
 #### Spacious Loft in SOHO for $10000/month
-![](./ss4)
+![](./ss4.png)
 
 ### RenderEngine
 - The `renderengine.js` file is the rendered we were required to make to interpret our grammar.
@@ -90,4 +90,5 @@ this.grammar['B'] = [
 
 ## City Generation
 
-![](./ss6)
+#### Manhattan
+![](./ss6.png)
