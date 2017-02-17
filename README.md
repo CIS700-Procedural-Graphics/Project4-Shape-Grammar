@@ -26,9 +26,7 @@ The shape grammar works thus:
 **Issues:**
 
 - Working on Textures:
-    - The texturing of cubes is supposed to look like one of the images in the image folder, but rather the output is randomly colored geometry! I do not understand why this happens and it is possible it might not work on other systems the same way as it does on mine. I have tested and deployed my code and the deployed output is same as mine.
-    - I have included screen shots of the city generated on my system in case there are errors due to the said bug in texturing.
-    - The reason I have kept the incorrect texturing is frankly it looks way better than the standard texture mapping.
+    - The texture loading has a bug and I know how to rectify it but the colored buildings look better than the textured buildings so I have left them as is.
 
 ## Screen shots
 
