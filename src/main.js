@@ -72,6 +72,7 @@ function onLoad(framework) {
   // scene.add(obj);
   // // scene.add(cylinder);
 
+  // combining geometeries
   // var ballGeo = new THREE.SphereGeometry(10,35,35);
   // var material = new THREE.MeshLambertMaterial(); 
   // var ball = new THREE.Mesh(ballGeo, material);
@@ -89,17 +90,27 @@ function onLoad(framework) {
   plane.rotateX(Math.PI / 2.0);
   scene.add( plane );
 
-  var o = ss.createRoofGeometry(new THREE.Vector3(4.0, 1.0, 10.0));
-  o.position.set(0.0, 0.5, 0.0);
-  // o.scale.set(4.0, 1.0, 10.0);
+  // var o = ss.createRoofGeometry(new THREE.Vector3(4.0, 1.0, 10.0));
+  // o.position.set(0.0, 0.5, 0.0);
 
-  scene.add(o);
+  // scene.add(o);
+
+  var c = ss.createBoxwColGeometry(new THREE.Vector3(2.0, 1.0, 2.0));
+  // var bbox = new THREE.Box3().setFromObject(c);
+
+  var geo = new THREE.EdgesGeometry( c.geometry );
+  var mat = new THREE.LineBasicMaterial( { color: 0x00ffff, linewidth: 2 } );
+  var wireframe = new THREE.LineSegments( geo, mat );
+  scene.add( wireframe );
+
+  //c.position.set(0.0, 0.5, 0.0);
+  scene.add(c);
 
   //scene.add(roof_mesh);
   //ss.traverse(scene);
 }
 
-// // clears the scene by removing all geometries added by turtle.js
+// clears the scene by removing all geometries added by turtle.js
 // function clearScene(turtle) {
 //   var obj;
 //   for( var i = turtle.scene.children.length - 1; i > 3; i--) {

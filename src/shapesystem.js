@@ -66,7 +66,7 @@ export default function shapeSystem(axiom, grammar, scene) {
 	  var oning = new THREE.BoxGeometry( 1.0, 1.0, 1.0 );
 	  var v = oning.vertices; 
 
-	  console.log(oning.vertices);
+	  // console.log(oning.vertices);
 	  var sx = (scale.x - width) / (scale.x * 2.0);
 	  var sz = (scale.z - width) / (scale.z * 2.0);
 
@@ -105,6 +105,47 @@ export default function shapeSystem(axiom, grammar, scene) {
 		roof_mesh.scale.set(scale.x, scale.y, scale.z);
 
 		return roof_mesh;
+	}
+
+	// Scale of the space
+	// Width for how much space on the perimeter should the columns take up
+	this.createBoxwColGeometry = function(scale, width) {
+		if (!width) {
+			width = 0.25;
+		}
+
+		var sx = (scale.x - width) / scale.x;
+		var sz = (scale.z - width) / scale.z;
+
+		var geo = new THREE.BoxGeometry( sx, 1.0, sz );
+		var v = geo.vertices;
+
+		var r = width / 4.0;
+		
+		var colGeo1 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo1.translate(sx / 2.0 + r, 0.0, sz / 2.0 + r);
+
+		var colGeo2 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo2.translate(sx / 2.0 + r, 0.0, -sz / 2.0 - r);
+
+		var colGeo3 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo3.translate(-sx / 2.0 - r, 0.0, sz / 2.0 + r);
+
+		var colGeo4 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo4.translate(-sx / 2.0 - r, 0.0, -sz / 2.0 - r);
+
+		geo.merge(colGeo1);
+		geo.merge(colGeo2);
+		geo.merge(colGeo3);
+		geo.merge(colGeo4);
+
+		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial());
+		
+		mesh.scale.set(scale.x, scale.y, scale.z);
+
+
+
+		return mesh;
 	}
 
 }
