@@ -4,7 +4,18 @@ export function v3(x, y, z) {
   return new THREE.Vector3(x, y, z);
 };
 
+export function v(x) {
+  return new THREE.Vector3(x, x, x);
+}
+
+export function clamp(a, b, c) {
+  return Math.min(Math.max(a, b), c);
+}
+
 export function rgb(r, g, b) {
+  r = clamp(0, r, 255);
+  g = clamp(0, g, 255);
+  b = clamp(0, b, 255);
   return {r, g, b};
 };
 
@@ -29,9 +40,21 @@ export function randRange(a,b) {
 };
 
 export function randChoice(list) {
-  return list[Math.random() * list.length];
+  return list[Math.floor(Math.random() * list.length)];
 }
 
 export function randInt(a,b) {
-  return Math.floor(Math.randRange(a, b));
+  return Math.floor(randRange(a, b));
+}
+
+export function dot(a,b) {
+  let total = 0;
+  for (let i = 0; i < a.length; i++) {
+    total += a[i] * b[i];
+  }
+  return total;
+}
+
+export function within(x, y, lx, ly, mx, my) {
+  return lx <= x && x < mx && ly <= y && y < my;
 }

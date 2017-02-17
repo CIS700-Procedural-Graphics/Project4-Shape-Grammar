@@ -3,7 +3,6 @@ import DAT from 'dat-gui'
 
 import LSystem from './LSystem';
 import Drawer from './Drawer';
-import { v3, rgb, randColor, randGray, randSign, upperRand, randRange } from './Utils'
 
 const THREE = require('three');
 const OrbitControls = require('three-orbit-controls')(THREE)
@@ -23,7 +22,7 @@ export default class Framework {
     this.renderer = new THREE.WebGLRenderer( { antialias: true } );
     this.stats = new Stats();
     this.meshes = {}; // imported meshes
-    this.iterations = 7; // default testing
+    this.iterations = 12; // default testing
   }
 
   /***********
@@ -43,7 +42,7 @@ export default class Framework {
 
   doLsystem() {
     let result = this.lsystem.doIterations(Math.floor(this.iterations));
-    Framework.printSymbols(result);
+    // Framework.printSymbols(result);
     this.drawer = new Drawer(this.scene, this.meshes);
     this.drawer.renderSymbols(result);
   }
@@ -64,7 +63,7 @@ export default class Framework {
     this.rendererSetup();
     this.statsSetup();
     this.lightSetup();
-    this.guiSetup();
+    // this.guiSetup();
   }
 
   loadResources(callback) {
@@ -109,7 +108,7 @@ export default class Framework {
   }
 
   cameraSetup() {
-    this.camera.position.set(1, 1, 2);
+    this.camera.position.set(0, 10, 10);
     this.camera.lookAt(new THREE.Vector3(0,0,0));
     let controls = new OrbitControls(this.camera, this.renderer.domElement);
     controls.enableDamping = true;
@@ -158,11 +157,6 @@ export default class Framework {
 
     this.gui.add(this.guiVars, 'fov', 0, 180).onChange((val) => {
       this.camera.updateProjectionMatrix();
-    });
-
-    this.gui.add(this.guiVars, 'axiom').onChange((val) => {
-      // this.lsystem.UpdateAxiom(val);
-      // this.doLsystem(this.lsystem, this.lsystem.iterations, turtle);
     });
 
     this.gui.add(this, 'iterations', 0, 12).step(1).onChange((val) => {

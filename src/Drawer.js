@@ -99,7 +99,6 @@ export default class Drawer {
       let convertedColor = Drawer._getColor(color);
       let material = new THREE.MeshLambertMaterial({side: THREE.DoubleSide, color: convertedColor});
       if (type in this.meshes) {
-        console.log(type);
         let obj = this.meshes[type].clone();
         obj.material = material;
         return obj;
