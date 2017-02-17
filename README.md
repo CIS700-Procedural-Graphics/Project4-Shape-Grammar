@@ -1,45 +1,45 @@
 
 # Project 4: Shape Grammar
 
-For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
+#### Grammar design:  
+turtle.js is where all the magic happens.
+- Everything starts with a giant cube. The cube divides and takes different paths to generate different buildings.
+  - The most probable case is the cube getting divided into more cubes. Also, This is the only thing that happens when the cube is too big to create other geometries.
+  - When a cube divides, 9 or less new cubes are formed, mostly taller than the original cube (unless it is too far away from the area with high population density).
+  - Sometimes, if the dividing cube is small enough and closer to the downtown, it turns into a cylinder, and cylinders have their own different life story.
+  - Sometimes, offsprings are not created upon division, or only a few of them are created to avoid a uniform grid pattern. This also gives rise to empty blocks. When such empty blocks are created near the downtown, a fancy spiral building with is created. If the empty blocks are far away, a monument may get created with a little probability. The monument has scale issues that need to be fixed.
+- A cylinder never gets divided. Whenever a cylinder is in the list of current nodes, it gets expanded into more cylinders at each iteration and becomes a skyscraper.
+- The monument starts from being a pyramid, and becomes something like a usual monument. At every iteration, pillars are added, steps are reduced, and the top part is enlarged.
+- There is a limit to the number of times anything can be divided (to avoid needle buildings).
+- Buildings are rotated a bit to avoid too much uniformity. Even after scaling them while rotating them, they sometimes intersect one another.
+- The height of the buildings drop off with distance from the point with high population density. The point of highest density is chosen randomly (at some distance around the center), so results will vary at every execution. 
 
-**Goal:** to model an urban environment using a shape grammar. 
+#### Issues:
+- There is a texture tiling issue. Even after creating a copy of the material, changing the tiling parameters, changes them on all the cubes.
+- The monument has scale issues.
+- The intersection tests of geometry with the ground plane and with water bodies is buggy.
+- I sort of invented my own noise algorithm because Perlin noise was too much work. It is bad.
 
-**Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
+#### Screen Shots:
+##### City :
+The dropoff due to population density can be seen.
+![](./samples/pop.PNG)
 
-## Symbol Node (5 points)
-Modify your symbol node class to include attributes necessary for rendering, such as
-- Associated geometry instance
-- Position
-- Scale 
-- Anything else you may need
+##### Downtown :
+The cylindrical towers can be seen here.
+![](./samples/cyl1.PNG)
 
-## Grammar design (55 points)
-- Design at least five shape grammar rules for producing procedural buildings. Your buildings should vary in geometry and decorative features (beyond just differently-scaled cubes!). At least some of your rules should create child geometry that is in some way dependent on its parent’s state. (20 points)
-    - Eg. A building may be subdivided along the x, y, or z axis into two smaller buildings
-    - Some of your rules must be designed to use some property about its location. (10 points)
-    - Your grammar should have some element of variation so your buildings are non-deterministic.  Eg. your buildings sometimes subdivide along the x axis, and sometimes the y. (10 points)   
-- Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
+##### Spiral Tower:
+![](./samples/spiral1.PNG)
 
-## Create a city (30 points)
-- Add a ground plane or some other base terrain to your scene (0 points, come on now)
-- Using any strategy you’d like, procedurally generate features that demarcate your city into different areas in an interesting and plausible way (Just a uniform grid is neither interesting nor plausible). (20 points)
-    - Suggestions: roads, rivers, lakes, parks, high-population density
-    - Note, these features don’t have to be directly visible, like high-population density, but they should somehow be visible in the appearance or arrangement of your buildings. Eg. High population density is more likely to generate taller buildings
-- Generate buildings throughout your city, using information about your city’s features. Color your buildings with a method that uses some aspect of its state. Eg. Color buildings by height, by population density, by number of rules used to generate it. (5 points)
-- Document your grammar rules and general approach in the readme. (5 points)
-- ???
-- Profit.
+![](./samples/spiral2.PNG)
 
-## Make it interesting (10)
-Experiment! Make your city a work of art.
+##### Monument:
+![](./samples/mon1.PNG)
 
+![](./samples/mon2.PNG)
 
-## Warnings:
-You can very easily blow up three.js with this assignment. With a very simple grammar, our medium quality machine was able to handle 100 buildings with 6 generations each, but be careful if you’re doing this all CPU-side.
+![](./samples/mon3.PNG)
 
-## Suggestions for the overachievers:
-Go for a very high level of decorative detail!
-Place buildings with a strategy such that buildings have doors and windows that are always accessible.
-Generate buildings with coherent interiors
-If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+#### Demo:
+https://rms13.github.io/Project4-Shape-Grammar/
