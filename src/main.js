@@ -42,6 +42,9 @@ var geoknot = new THREE.TorusKnotGeometry( 10, 3, 132, 11 );
 var mknot = new THREE.MeshBasicMaterial( { color: 0x0080FF } );
 var torusKnot = new THREE.Mesh( geoknot, mknot );
 
+var gladosGeo = new THREE.Geometry();
+var glados;
+
 var box = new THREE.BoxGeometry( 1, 1, 1 );
 var cube = new THREE.Mesh( box, building_Material );
 
@@ -190,6 +193,45 @@ function onreset(scene)
   // renderbuildings(scene);
 }
 
+function shadows(scene)
+{
+  //Create a WebGLRenderer and turn on shadows in the renderer
+  var renderer = new THREE.WebGLRenderer();
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+
+  //Create a DirectionalLight and turn on shadows for the light
+  var light = new THREE.DirectionalLight( 0xffffff, 1, 100 );
+  light.position.set( 0, 1, 0 ); 			//default; light shining from top
+  light.castShadow = true;            // default false
+  scene.add( light );
+
+    //Set up shadow properties for the light
+  light.shadow.mapSize.width = 512;  // default
+  light.shadow.mapSize.height = 512; // default
+  light.shadow.camera.near = 0.5;       // default
+  light.shadow.camera.far = 500      // default
+
+  //Create a sphere that cast shadows (but does not receive them)
+  var sphereGeometry = new THREE.SphereBufferGeometry( 5, 32, 32 );
+  var sphereMaterial = new THREE.MeshStandardMaterial( { color: 0xff0000 } );
+  var sphere = new THREE.Mesh( sphereGeometry, sphereMaterial );
+  sphere.castShadow = true; //default is false
+  sphere.receiveShadow = false; //default
+  scene.add( sphere );
+
+  //Create a plane that receives shadows (but does not cast them)
+  var planeGeometry = new THREE.PlaneBufferGeometry( 20, 20, 32, 32 );
+  var planeMaterial = new THREE.MeshStandardMaterial( { color: 0x00ff00 } )
+  var plane = new THREE.Mesh( planeGeometry, planeMaterial );
+  plane.receiveShadow = true;
+  scene.add( plane );
+
+  //Create a helper for the shadow camera (optional)
+  var helper = new THREE.CameraHelper( light.shadow.camera );
+  scene.add( helper );
+}
+
 //------------------------------------------------------------------------------
 function cleanscene(scene)
 {
@@ -297,9 +339,20 @@ function createCity(scene)
   scene.add( torus );
 
   //create torus knot building
-  torusKnot.position.set(guiParameters.city_center_x, radius, guiParameters.city_center_z);
-  torusKnot.scale.set(0.05*radius, 0.05*radius, 0.05*radius);
-  scene.add( torusKnot );
+  // torusKnot.position.set(guiParameters.city_center_x, radius, guiParameters.city_center_z);
+  // torusKnot.scale.set(0.05*radius, 0.05*radius, 0.05*radius);
+  // scene.add( torusKnot );
+
+  var objLoader = new THREE.OBJLoader();
+  objLoader.load('geometry/glados.obj', function(obj)
+  {
+      gladosGeo = obj.children[0].geometry;
+      var mglados = new THREE.MeshBasicMaterial( { color: 0x0080FF } );
+      glados = new THREE.Mesh(gladosGeo, mglados);
+      glados.position.set(guiParameters.city_center_x, 0.1*radius, guiParameters.city_center_z);
+      glados.scale.set(0.005*radius, 0.005*radius, 0.005*radius);
+      scene.add( glados );
+  });
 
   //----------------------------------------------------------------------------
   var numberOfLayers = 3;
@@ -341,7 +394,7 @@ function createCity(scene)
         var roadplane = new THREE.Mesh( geo, mat );
         roadplane.rotateX(PI * 0.5);
         roadplane.position.set(roadpoints.vertices[k].x + guiParameters.city_center_x,
-                               0.1,
+                               0.15,
                                roadpoints.vertices[k].y + guiParameters.city_center_z);
         roadplane.scale.set(1.5,1.5,1.5);
         scene.add( roadplane );
@@ -433,7 +486,7 @@ function createCity(scene)
         var mat = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
         var roadplane = new THREE.Mesh( geo, mat );
         roadplane.rotateX(PI * 0.5);
-        roadplane.position.set(roadpoints.vertices[k].x + guiParameters.city_center_x, 0.1, roadpoints.vertices[k].y + guiParameters.city_center_z);
+        roadplane.position.set(roadpoints.vertices[k].x + guiParameters.city_center_x, 0.15, roadpoints.vertices[k].y + guiParameters.city_center_z);
         roadplane.scale.set(1.5,1.5,1.5);
         scene.add( roadplane );
       }
@@ -457,6 +510,8 @@ function onLoad(framework)
   guiParameters.city_center_z = (-10.0 + Math.random() * 20.0);
 
   createCity(scene);
+
+  // shadows(scene);
 }
 
 // called on frame updates
@@ -465,6 +520,10 @@ function onUpdate(framework)
   if(torusKnot)
   {
     torusKnot.rotateY(1/50.0);
+  }
+  if(glados)
+  {
+    glados.rotateY(1/50.0);
   }
 }
 
