@@ -58,7 +58,7 @@ this.grammar['P'] = [
 ]
 ```
 
-#### The view from the Upper East Side
+#### The view from the Upper West Side
 ![](./ss3.png)
 
 ### Parent-child depedencies, and more than just cubes!
@@ -117,3 +117,5 @@ Now onto how I made the city itself.
 cb = new CityBuilder('UMDP', tree_mesh, 12);
 ```
 
+## Future Work
+- I definitely had more things lined up to add in (textures, more detail), but unfortunately what you see here took longer than expected, and we only had a little more than a week, so hopefully this redention of NYC is at least somewhat pleasing to the eye :)
