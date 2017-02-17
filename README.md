@@ -1,45 +1,56 @@
 
 # Project 4: Shape Grammar
 
-For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
+## Generating Buildings
+All buildings start off as a single box geometry of sizes (small, medium, large)
+with some minor variations. The height of the buildings are determined by a population map
+that can be imported from an image file.
 
-**Goal:** to model an urban environment using a shape grammar. 
+The first iteration of the shape grammar determines whether the building will have
+side panels.
 
-**Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
+A=>C,  A=>S
 
-## Symbol Node (5 points)
-Modify your symbol node class to include attributes necessary for rendering, such as
-- Associated geometry instance
-- Position
-- Scale 
-- Anything else you may need
+In the next iteration, the side panels will terminate. The other symbols will randomly
+select between uniform vertical division of the block, or the same division with
+differentiation of the top and bottom levels.
 
-## Grammar design (55 points)
-- Design at least five shape grammar rules for producing procedural buildings. Your buildings should vary in geometry and decorative features (beyond just differently-scaled cubes!). At least some of your rules should create child geometry that is in some way dependent on its parent’s state. (20 points)
-    - Eg. A building may be subdivided along the x, y, or z axis into two smaller buildings
-    - Some of your rules must be designed to use some property about its location. (10 points)
-    - Your grammar should have some element of variation so your buildings are non-deterministic.  Eg. your buildings sometimes subdivide along the x axis, and sometimes the y. (10 points)   
-- Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
+C=>U, C=>T/U/B, S=>X
 
-## Create a city (30 points)
-- Add a ground plane or some other base terrain to your scene (0 points, come on now)
-- Using any strategy you’d like, procedurally generate features that demarcate your city into different areas in an interesting and plausible way (Just a uniform grid is neither interesting nor plausible). (20 points)
-    - Suggestions: roads, rivers, lakes, parks, high-population density
-    - Note, these features don’t have to be directly visible, like high-population density, but they should somehow be visible in the appearance or arrangement of your buildings. Eg. High population density is more likely to generate taller buildings
-- Generate buildings throughout your city, using information about your city’s features. Color your buildings with a method that uses some aspect of its state. Eg. Color buildings by height, by population density, by number of rules used to generate it. (5 points)
-- Document your grammar rules and general approach in the readme. (5 points)
-- ???
-- Profit.
+The next iteration adds details to the levels. The top levels have a ticker or a
+scaled block. The bottom levels are scaled larger. The middle levels select between
+alternating level sizes, billboards or signs.
 
-## Make it interesting (10)
-Experiment! Make your city a work of art.
+U=>{billboards, signs, alternating scaling}
 
+## Placing Buildings
+The entire city is represented by a grid system like Sim City. Each time
+a building is placed, the grid locations are marked as occupied to prevent overlapping buildings.
 
-## Warnings:
-You can very easily blow up three.js with this assignment. With a very simple grammar, our medium quality machine was able to handle 100 buildings with 6 generations each, but be careful if you’re doing this all CPU-side.
+Buildings are placed probabilistically based on the population map using
+the pointalism algorithm we talked about in class. Random points are selected from
+the grid and will be kept or discarded using the population map value as a threshold.
 
-## Suggestions for the overachievers:
-Go for a very high level of decorative detail!
-Place buildings with a strategy such that buildings have doors and windows that are always accessible.
-Generate buildings with coherent interiors
-If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+I also implemented a HTML5 canvas based lsystem to generate the roads. This is
+still a work in progress as it does not take into account any additional parameters.
+My intention is to translate the canvas values into the city grid. This way, buildings
+will not over lap with roads.
+
+## Fun Features
+The ticker textures on the top of buildings are generated procedurally. Normally,
+we load an image into Three.js to use as a texture, but its actually possible to use
+an HTML5 canvas instead [[2]](http://learningthreejs.com/blog/2013/08/02/how-to-do-a-procedural-city-in-100lines/) ! Just draw on a canvas element and then pass it directly
+into THREE.texture(canvas).
+
+## Demo
+![image](https://i.imgur.com/HrDAwEA.jpg)
+Demo: https://iambrian.github.io/Project4-Shape-Grammar/
+
+# Resources
+[1] Borrowed some of the ticker messages from Sim City: http://simcity.wikia.com/wiki/List_of_news_ticker_messages
+
+[2] Procedural Textures using canvas: http://learningthreejs.com/blog/2013/08/02/how-to-do-a-procedural-city-in-100lines/
+
+[3] Subversion city generator for inspiration: https://www.youtube.com/watch?v=FR9xI0GgrBY
+
+[4] Also Mirror's Edge for inspiration: http://imgur.com/LsvEPJW
