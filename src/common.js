@@ -28,6 +28,11 @@ class Bounds
 	{
 		return this.min.z < z && this.max.z > z;
 	}
+
+	contains(p)
+	{
+		return this.min.x < p.x && this.min.y < p.y && this.max.x > p.x && this.max.y > p.y;
+	}
 }
 
 export {Bounds}

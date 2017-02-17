@@ -308,15 +308,40 @@ class Generator
 		hulls = this.sliceHullSet(hulls, yAxis, 11, count * scale, function(hull, sliceOffset){ return hull.bounds.intersectsY(sliceOffset); });
 		console.log("Hulls: " + hulls.length);
 
+		var cellScale = count * scale / 11;
+		var cellBounds = [];
+
+		// Top cell
+		cellBounds.push(new Common.Bounds(new THREE.Vector2( 4 * cellScale, 1 * cellScale ), new THREE.Vector2( 7 * cellScale, 4 * cellScale )));
+		cellBounds.push(new Common.Bounds(new THREE.Vector2( 4 * cellScale, 7 * cellScale ), new THREE.Vector2( 7 * cellScale, 10 * cellScale )));
+		
+		// Horizontal cells
+		cellBounds.push(new Common.Bounds(new THREE.Vector2( 1 * cellScale, 4 * cellScale ), new THREE.Vector2( 4 * cellScale, 7 * cellScale )));
+		cellBounds.push(new Common.Bounds(new THREE.Vector2( 4 * cellScale, 4 * cellScale ), new THREE.Vector2( 7 * cellScale, 7 * cellScale )));
+		cellBounds.push(new Common.Bounds(new THREE.Vector2( 7 * cellScale, 4 * cellScale ), new THREE.Vector2( 10 * cellScale, 7 * cellScale )));
+
+		// Last cell
+		cellBounds.push(new Common.Bounds(new THREE.Vector2( 7 * cellScale, 7 * cellScale ), new THREE.Vector2( 10 * cellScale, 10 * cellScale )));
+
 		// Save geo for display
 		for(var h = 0; h < hulls.length; h++)
 		{
 			if(!hulls[h].isValid())
 				continue;
 
-			var height = 0;// h * .1;
-			
 			hulls[h].calculateVertices();
+
+			var bounded = false;
+			for(var b = 0; b < cellBounds.length; b++)
+			{
+				if(cellBounds[b].contains(hulls[h].midpoint))
+					bounded = true;
+			}
+
+			if(!bounded)
+				continue;
+			
+			var height = 0;
 			pointsGeo.vertices.push(new THREE.Vector3( hulls[h].midpoint.x, height, hulls[h].midpoint.y));
 
 			for(var s = 0; s < hulls[h].segments.length; s++)
