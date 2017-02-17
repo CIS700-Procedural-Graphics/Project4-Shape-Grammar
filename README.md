@@ -39,8 +39,8 @@ I will explain the details and considerations that went into developing my NYC S
   new Rule(0.2, 'E'),
   new Rule(0.2, 'W')
 ]
-	this.grammar['M'] = [
-		new Rule(0.25, 'N'),
+this.grammar['M'] = [
+  new Rule(0.25, 'N'),
   new Rule(0.25, 'S'),
   new Rule(0.25, 'E'),
   new Rule(0.25, 'W')
@@ -61,7 +61,7 @@ this.grammar['P'] = [
 #### The view from the Upper East Side
 ![](./ss3.png)
 
-### Parent-Child depedencies, and more than just cubes
+### Parent-child depedencies, and more than just cubes!
 - As mentioned in the comments in my code, these next three symbols in my grammar are PARENT dependent. What this means is they are only constructed after certain conditions have been met by their parent geometry (e.g. subdivided twice, etc.). Once these said conditions are met, I uses these symbols to either spawn fancy little rooftop gardens on top of skyscrapers (because you know, those rich midtown denizens can't get enough of the happy-hour rooftop chats), as well as generate watertowers on top of the SOHO lofts and Uptown Brownstones (They need to get their water somehow, but TBH I'm not sure how midtown gets their water... someone enlighten me please). The rooftop gardens and watertowers are scaled accordingly to their parent geometry as well, so it doesn't look awkward.
 	- This satisfies the requirement of not just differently scaled cubes, and parent-child geometry relationships. 
 ```javascript
@@ -87,8 +87,33 @@ this.grammar['B'] = [
 ### RenderEngine
 - The `renderengine.js` file is the rendered we were required to make to interpret our grammar.
 
-
 ## City Generation
+
+Now onto how I made the city itself.
+
+### Initialization
+- I threw down a flat 10x20 plane, and colored it the color of NYC pavement.
+- Then I tossed in a green 2x5 plane, and put it roughly where central park would be.
+- Finally, I threw in 4 base shapes, one each for Downtown, Midtown, Uptown, and Central Park.
+
+#### Initial scene after one iteration
+![](./ss7.png)
+
+### Population Density
+- I tried to correctly model the population density of NYC as closely as possible. Obviously, all of Manhattan is packed. However, it's known knowledge that Midtown has the highest, more tourist friendly buildings, and just south of Midtown is Chinatown/SOHO, where the buildings are noticeable shorter. Uptown, while having no shortage of tall buildings, is filled with more residential brownstones/redstones rather than the fancy skyscrapers of midtown or the chill lofts of SOHO. Thus, while the population density of Manhattan may just be red all over, I made the assumption that for Manhattan, more people live in Midtown than Uptown, and more people live in Uptown than Soho (including non-permanent residents, such as tourists, etc.). In addition, I sound some color packs that, in my opinion, correctly captures the 'atmosphere' and 'environment' color Uptown, Midtown, and Downtown, respectively (Central Park is just green trees of differing sizes). 
 
 #### Manhattan
 ![](./ss6.png)
+
+### Central Park
+- While I alreaady demarcated various zones throughout my city, I really wanted to get Central Park into the model. While my city is procedurally generated at random, I did set in some bounding boxes so no buildings will EVER get generated into where Central Park will lie, and took a OBJ tree and basically chose random spots inside the park to place copies of this tree, with it's height varying according the my previously defined shape grammar.
+
+#### Best park in the world IMO
+![](./ss8.png)
+
+### Modifying the iterations
+- While it was not required to have our project include interactivity, you can modify the number of iterations in the `main.js` file on line 58. Just edit the third parameter:
+```javascript
+cb = new CityBuilder('UMDP', tree_mesh, 12);
+```
+
