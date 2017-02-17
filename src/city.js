@@ -141,7 +141,7 @@ export default class City {
 			var lot = lots[i];
 			var pos = lot.position;
 			var isPark = Math.random() > 0.95;
-			var savedOffset;
+			var savedOffset = null;
 
 			// Adjust building size according to the lot's maxHeight
 			var sz = buildingSize * lot.maxHeight / this.baseHeight;

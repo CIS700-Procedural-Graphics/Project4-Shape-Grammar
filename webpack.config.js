@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+  context: __dirname + '/src',
   entry: path.join(__dirname, "src/main"),
   output: {
     filename: "./bundle.js"
@@ -19,6 +20,14 @@ module.exports = {
         test: /\.glsl$/,
         loader: "webpack-glsl"
       },
+      {
+        test: /\.mtl$/,
+        loader: 'three-mtl-loader'
+      },
+      {
+        test: /\.obj$/,
+        loader: 'jser-three-obj-loader'
+      }
     ]
   },
   devtool: 'source-map',

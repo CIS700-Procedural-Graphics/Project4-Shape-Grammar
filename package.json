@@ -13,10 +13,10 @@
   "dependencies": {
     "dat-gui": "^0.5.0",
     "gl-matrix": "^2.3.2",
-    "jser-three-obj-loader": "^1.0.0",
+    
     "stats-js": "^1.0.0-alpha1",
     "three": "^0.82.1",
-    "three-mtl-loader": "^1.0.1",
+    
     "three-obj-loader": "^1.0.2",
     "three-orbit-controls": "^82.1.0"
   },
@@ -29,6 +29,8 @@
     "simple-git": "^1.65.0",
     "webpack": "^1.13.3",
     "webpack-dev-server": "^1.16.2",
-    "webpack-glsl-loader": "^1.0.1"
+    "webpack-glsl-loader": "^1.0.1",
+    "jser-three-obj-loader": "^1.0.0",
+    "three-mtl-loader": "^1.0.1"
   }
 }

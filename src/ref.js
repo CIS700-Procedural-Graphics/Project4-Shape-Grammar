@@ -32,6 +32,10 @@ export const Geometry = {
   TREE: {
     path: 'tree',
     obj:{},
+  },
+  ROAD: {
+    path: 'road',
+    obj: {}
   }
   // STORE_FRONT: { // -> can function as GROUND_FLOOR_APT or GROUND_FLOOR_SKY
   //   path: '', //TODO
