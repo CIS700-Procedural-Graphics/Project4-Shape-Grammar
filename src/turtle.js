@@ -57,90 +57,6 @@ export default class Turtle {
 
     init()
     {   
-        //TEST
-//        var geometry = new THREE.CubeGeometry( 1, 1, 1 );
-//        
-//        geometry.faces.splice( 3, 1 );
-//        geometry.faceVertexUvs[0].splice( 3, 1 );
-//        
-//        // change UVs for the top face
-//        // - it is the roof so it wont use the same texture as the side of the building
-//        // - set the UVs to the single coordinate 0,0. so the roof will be the same color
-//        //   as a floor row.
-//        geometry.faceVertexUvs[0][2][0].set( 0, 0 );
-//        geometry.faceVertexUvs[0][2][1].set( 0, 0 );
-//        geometry.faceVertexUvs[0][2][2].set( 0, 0 );
-//        //geometry.faceVertexUvs[0][2][3].set( 0, 0 );
-//        
-//        // generate the texture
-//        var texture = new THREE.Texture( generateTexture() );
-//        texture.anisotropy = this.renderer.getMaxAnisotropy();
-//        texture.needsUpdate = true;
-//        
-//        //build the mesh and add to scene
-//        var material  = new THREE.MeshLambertMaterial({
-//            map     : texture,
-//            vertexColors    : THREE.VertexColors
-//        });
-//        var buildingMesh= new THREE.Mesh( geometry, material );
-//        this.scene.add(buildingMesh);
-//        
-//        function generateTexture() 
-//        {
-//            // build a small canvas 32x64 and paint it in white
-//            var canvas  = document.createElement( 'canvas' );
-//            canvas.width = 32;
-//            canvas.height    = 64;
-//            var context = canvas.getContext( '2d' );
-//            // plain it in white
-//            context.fillStyle    = '#ffffff';
-//            context.fillRect( 0, 0, 32, 64 );
-//            // draw the window rows - with a small noise to simulate light variations in each room
-//            for( var y = 2; y < 64; y += 2 ){
-//                for( var x = 0; x < 32; x += 2 ){
-//                    var value   = Math.floor( Math.random() * 64 );
-//                    context.fillStyle = 'rgb(' + [value, value, value].join( ',' )  + ')';
-//                    context.fillRect( x, y, 2, 1 );
-//                }
-//            }   
-//
-//        // build a bigger canvas and copy the small one in it
-//        // This is a trick to upscale the texture without filtering
-//        var canvas2 = document.createElement( 'canvas' );
-//        canvas2.width    = 512;
-//        canvas2.height   = 1024;
-//        var context = canvas2.getContext( '2d' );
-//        // disable smoothing
-//        context.imageSmoothingEnabled        = false;
-//        context.webkitImageSmoothingEnabled  = false;
-//        context.mozImageSmoothingEnabled = false;
-//        // then draw the image
-//        context.drawImage( canvas, 0, 0, canvas2.width, canvas2.height );
-//        // return the just built canvas2
-//        return canvas2;
-//        }
-        
-        //L_CORNER: XY-(-20, -30)
-//        var position = new THREE.Vector3(-85, 0, -70);
-//        this.createCube(position, 20, 20, 20);
-//        this.AddGeomToScene();
-        
-//        for(var i = 0; i < 20; i++)
-//            console.log(Math.floor((Math.random() * 200) % 200) - 100);
-        
-        
-        //var geometry = new THREE.CubeGeometry( 10, 10, 10);
-        //var material = new THREE.MeshPhongMaterial( { map: THREE.ImageUtils.loadTexture('images/generic_2.jpg') } );
-  
-        //var cube = new THREE.Mesh( geometry, material );
-        //this.scene.add( cube );
-        
-//        var position = new THREE.Vector3(50, 50, 50);
-//        this.createCube(position, 20, 20, 20);
-//        this.AddGeomToScene();
-        
-        //TEST END
-        
         //Adding base plane
         var geometry = new THREE.PlaneGeometry( 250, 250, 20, 20);
         var material3 = new THREE.MeshLambertMaterial( {color: 0xe3e0e0, side: THREE.DoubleSide} );
@@ -220,15 +136,13 @@ export default class Turtle {
         this.scene.add( Wplane );
         
         //randomly creating a bunch of cubes in the scene
-        for(var i = 0; i < 60; i++)
+        for(var i = 0; i < 100; i++)
         {
             var pos_x = Math.floor((Math.random() * 200) % 200) - 100;
             var pos_z = Math.floor((Math.random() * 200) % 200) - 100;
             
             if(!((pos_x >= 45 && pos_x <= 100 && pos_z >= 45 && pos_z <=100) || (pos_x >= -85 && pos_x <= -20 && pos_z >= -75 && pos_z <= -25)))
             {   
-//                console.log("pos_z : " + pos_z);
-//                console.log("pos_x : " + pos_x);
                 var position = new THREE.Vector3(pos_x, 0, pos_z);
                 this.createCube(position, 20, 20, 20);
             }
@@ -236,7 +150,12 @@ export default class Turtle {
         
         //displaying the geometry to the scene
         this.AddGeomToScene();
-    
+        
+            //TEST
+//        var pos = new THREE.Vector3(0,0,0);
+//        this.createCube(pos, 20, 20, 20, false);
+//        this.CreateTower(this.NodeArr[this.NodeArr.length - 1], 10);
+//        this.AddGeomToScene();
         
     };
     
@@ -272,6 +191,8 @@ export default class Turtle {
             }
             this.first = false;
             this.AddGeomToScene();
+        
+            console.log(this.NodeArr.length);
     };
     
     addNode()
@@ -759,158 +680,4 @@ export default class Turtle {
                 this.scene.add(this.NodeArr[i].geometry);
             }
     };
-    
-    //turtle set angle
-//    setAngle(angle_in)
-//    {
-//        if (typeof this.angle !== "undefined") {
-//			this.angle = angle_in;
-//		}   
-//        var a = angle_in;
-//        this.angle = angle_in;
-//        console.log(this.angle);
-    //}
-    
-//    Adostuff()
-//    {
-//        for(var i = 0 ; i < 10 ; i++)
-//        {
-//            var new_fm = new THREE.Mesh(global_obj, leafMaterial);
-//            new_fm.name = "fruit" + i;
-//            new_fm.position.set(i, 0, 0);
-//            this.scene.add(new_fm);
-//        }
-        
-        
-//        var leafMaterial = new THREE.MeshLambertMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-//        var fruit = this.scene.getObjectByName("fruit");
-//        if(typeof fruit !== 'undefined')
-//            {
-//               console.log("fruit is not undefined");
-////                for(var i = 0; i < 10 ; i++)
-////                {
-//                    //debugger;
-////                    var new_fm = new THREE.Mesh(fruit, leafMaterial);
-////                    new_fm.name = "fruit" + 1;
-////                    new_fm.position.set(1, 0, 0);
-////                    this.scene.add(new_fm);
-//                    
-//                //}
-//                //console.log(fruit.position)
-//            }
-    
-    //}
-                   
-//    XrotateTurtle(x, y, z) {
-//        
-//        //console.log(this.angle);
-//        
-//        var e = new THREE.Euler(
-//                x * 3.14/180,
-//				y * 3.14/180,
-//				z * 3.14/180);
-//        this.state.dir.applyEuler(e);
-//    }
-//
-//    
-//    
-//    //stores the position of the turtle in a stack
-//    storeTurtlePosition()
-//    {
-//        var i = new TurtleState(this.state.pos, this.state.dir);
-//        this.stack.push(i);
-//    }
-//    
-//    restoreTurtlePosition()
-//    {
-//        this.state = this.stack.pop();
-//    }
-    
-    // Resets the turtle's position to the origin
-    // and its orientation to the Y axis
-    clear() {
-        this.state = new TurtleState(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));        
-    }
-
-    // A function to help you debug your turtle functions
-    // by printing out the turtle's current state.
-    printState() {
-        console.log(this.state.pos)
-        console.log(this.state.dir)
-    }
-
-    // Rotate the turtle's _dir_ vector by each of the 
-    // Euler angles indicated by the input.
-    rotateTurtle(x, y, z) {
-        
-        //console.log("Rotating");
-        
-        var e = new THREE.Euler(
-                x * 3.14/180,
-				y * 3.14/180,
-				z * 3.14/180);
-        this.state.dir.applyEuler(e);
-    }
-
-    // Translate the turtle along the input vector.
-    // Does NOT change the turtle's _dir_ vector
-    moveTurtle(x, y, z) {
-	    var new_vec = THREE.Vector3(x, y, z);
-	    this.state.pos.add(new_vec);
-    };
-
-    // Translate the turtle along its _dir_ vector by the distance indicated
-    moveForward(dist) {
-        var newVec = this.state.dir.multiplyScalar(dist);
-        this.state.pos.add(newVec);
-    };
-    
-    // Make a cylinder of given length and width starting at turtle pos
-    // Moves turtle pos ahead to end of the new cylinder
-    makeCylinder(len, width) {
-        //console.log("Moving forward");
-        //console.log(width);
-        
-        var geometry = new THREE.CylinderGeometry(width, width, len);
-        var material = new THREE.MeshBasicMaterial( {color: 0x7D4900} );
-        var cylinder = new THREE.Mesh( geometry, material );
-        this.scene.add( cylinder );
-
-        //Orient the cylinder to the turtle's current direction
-        var quat = new THREE.Quaternion();
-        quat.setFromUnitVectors(new THREE.Vector3(0,1,0), this.state.dir);
-        var mat4 = new THREE.Matrix4();
-        mat4.makeRotationFromQuaternion(quat);
-        cylinder.applyMatrix(mat4);
-
-
-        //Move the cylinder so its base rests at the turtle's current position
-        var mat5 = new THREE.Matrix4();
-        var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * len));
-        mat5.makeTranslation(trans.x, trans.y, trans.z);
-        cylinder.applyMatrix(mat5);
-
-        //Scoot the turtle forward by len units
-        this.moveForward(len/2);
-    };
-    
-    // Call the function to which the input symbol is bound.
-    // Look in the Turtle's constructor for examples of how to bind 
-    // functions to grammar symbols.
-//    renderSymbol(symbolNode) {
-//        //this.scale = symbolNode.it/10;
-//        //console.log("scale " + this.scale);
-//        var func = this.renderGrammar[symbolNode.value];
-//        if (func) {
-//            func();
-//        }
-//    };
-//
-//    // Invoke renderSymbol for every node in a linked list of grammar symbols.
-//    renderSymbols(linkedList) {
-//        var currentNode;
-//        for(currentNode = linkedList.head; currentNode != null; currentNode = currentNode.next) {
-//            this.renderSymbol(currentNode);
-//        }
-//    }
 }
