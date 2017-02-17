@@ -1,6 +1,6 @@
 const THREE = require('three');
 import { Node } from './linkedlist'
-import { Geometry } from './main'
+import { Geometry } from './ref'
 
 
 export function Rule(prob, func) {
