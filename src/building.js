@@ -18,6 +18,8 @@ class BuildingLot
 	{
 		this.points = [];
 		this.normals = [];
+		this.hasCap = false;
+		this.center = THREE.Vector2(0,0);
 	}
 
 	addPoint(x, y)
@@ -28,6 +30,7 @@ class BuildingLot
 	buildNormals()
 	{
 		var l = this.points.length;
+		this.center = new THREE.Vector2(0,0);
 
 		for(var i = 0; i < l; i++)
 		{
@@ -46,7 +49,11 @@ class BuildingLot
 
 			var n = n1.add(n2).multiplyScalar(.5);
 			this.normals[i] = n.normalize();
+
+			this.center.add(p);
 		}
+
+		this.center.multiplyScalar(1.0 / l);
 	}
 }
 
@@ -122,8 +129,30 @@ class MassShape
 			}
 		}
 
+		// End the 
+		if(this.lot.hasCap)
+		{
+			var center = this.lot.center;
+			var height = this.profile.points[this.profile.points.length - 1].y;
+			var vertex = new THREE.Vector3(center.x, height, center.y);
+			geometry.vertices.push(vertex);
+
+
+			for(var v = 0; v < boundaryVertexCount; v++)
+			{
+
+				var v1 = offset + v;
+				var v2 = offset + ((v + 1) % boundaryVertexCount);
+				var v3 = geometry.vertices.length - 1;
+
+				geometry.faces.push(new THREE.Face3(v1, v2, v3));
+			}
+		}
+
 		geometry.mergeVertices();
 		geometry.computeFlatVertexNormals();
+
+		material.side = THREE.DoubleSide;
 
 		var mesh = new THREE.Mesh(geometry, material);
 

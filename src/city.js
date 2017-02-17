@@ -2,6 +2,7 @@ const THREE = require('three');
 const Random = require("random-js");
 
 import * as Common from './common.js'
+import * as Building from './building.js'
 
 class Voronoi
 {
@@ -20,6 +21,7 @@ class ConvexHull
 		this.segments = [];
 		this.vertices = [];
 		this.midpoint = new THREE.Vector2(0,0);
+		this.area = 0;
 	}
 
 	getCenter()
@@ -37,6 +39,22 @@ class ConvexHull
 	addSegment(normal, direction, midpoint, min, max)
 	{
 		this.segments.push({ valid : false, normal: normal.clone(), dir: direction.clone(), midpoint: midpoint.clone(), min : 1000, max : -1000});
+	}
+
+	calculateArea()
+	{
+		var area = 0;
+		for(var i = 0; i < this.vertices.length; i++)
+		{
+			var nextIndex = (i+1) % this.vertices.length;
+
+			var v = this.vertices[i];
+			var next = this.vertices[nextIndex];
+
+			area += v.x * next.y - v.y * next.x;
+		}
+
+		this.area = Math.abs(area) * .5;
 	}
 
 	// Sorts the vertices with the gift wrapping algorithm
@@ -80,6 +98,8 @@ class ConvexHull
 
 		if(unorderedVertices.length != this.vertices.length)
 			console.log("Convex hull vertex sort did not work: " + unorderedVertices.length + " original points, result: " + this.vertices.length)
+
+		this.calculateArea();
 	}
 
 	calculateVertices()
@@ -278,12 +298,13 @@ class Generator
 	// (super important each point is inside each cell)
 	// Generate convex hulls
 	// Subdivide convex hulls in X and Y, 9 times
-	build(scene)
+	// Extract sections from this subdivision
+	// Ignore border sections, as I have no time to deal with edge cases (no pun intended)
+	buildHulls(scene, random)
 	{
 		// count * count final points
 		var count = 30;
 		var scale = 2;
-  		var random = new Random(Random.engines.mt19937().autoSeed());
 
   		var geometry = new THREE.Geometry();
   		var pointsGeo = new THREE.Geometry();
@@ -362,48 +383,54 @@ class Generator
 		// Last cell
 		cellBounds.push(new Common.Bounds(new THREE.Vector2( 7 * cellScale, 7 * cellScale ), new THREE.Vector2( 10 * cellScale, 10 * cellScale )));
 
+		var boundedHulls = new Array();
+
+		for(var i = 0; i < 6; i++)
+			boundedHulls.push(new Array());
+
 		// Save geo for display
 		for(var h = 0; h < hulls.length; h++)
 		{
-			if(!hulls[h].isValid())
+			var hull = hulls[h];
+
+			if(!hull.isValid())
 				continue;
 
-			hulls[h].calculateVertices();
+			hull.calculateVertices();
 
 			var bounded = false;
 			for(var b = 0; b < cellBounds.length; b++)
 			{
-				if(cellBounds[b].contains(hulls[h].midpoint))
+				if(cellBounds[b].contains(hull.midpoint))
+				{
 					bounded = true;
+					boundedHulls[b].push(hull);
+					break;
+				}
 			}
 
 			if(!bounded)
 				continue;
 
-			hulls[h].sortVertices();
+			hull.sortVertices();
 			
 			var height = 0;
-			pointsGeo.vertices.push(new THREE.Vector3( hulls[h].midpoint.x, height, hulls[h].midpoint.y));
+			pointsGeo.vertices.push(new THREE.Vector3( hull.midpoint.x, height, hull.midpoint.y));
 
-			for(var s = 0; s < hulls[h].segments.length; s++)
+			for(var i = 0; i < hull.vertices.length; i++)
 			{
-				var segment = hulls[h].segments[s];
+				var i1 = (i+1) % hull.vertices.length;
+				var v = hull.vertices[i];
+				var v1 = hull.vertices[i1];
 
-				if(!segment.valid)
-					continue;
+				geometry.vertices.push(new THREE.Vector3( v.x, height, v.y ));
+				geometry.vertices.push(new THREE.Vector3( v1.x, height, v1.y ));
 
-				var from = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.min));
-				var to = segment.midpoint.clone().add(segment.dir.clone().multiplyScalar(segment.max));
-				
-				geometry.vertices.push(new THREE.Vector3( from.x, height, from.y ))
-				geometry.vertices.push(new THREE.Vector3( to.x, height, to.y ))
-
-				pointsGeo.vertices.push(new THREE.Vector3( from.x, height, from.y));
-				pointsGeo.vertices.push(new THREE.Vector3( to.x, height, to.y));
+				pointsGeo.vertices.push(new THREE.Vector3( v.x, height, v.y ));
 			}
 		}
 
-  		console.log(geometry.vertices.length);
+  // 		console.log(geometry.vertices.length);
 
   		var lineMaterial = new THREE.LineBasicMaterial( {color: 0xffffff} );
 		var line = new THREE.LineSegments(geometry, lineMaterial);
@@ -413,6 +440,66 @@ class Generator
 		pointsMaterial.size = .1;
 		var pointsMesh = new THREE.Points( pointsGeo, pointsMaterial );
 		scene.add( pointsMesh );
+
+
+		return boundedHulls;
+	}
+
+	buildLots(hullContainer, random)
+	{
+		var lotContainer = [];
+
+		for(var i = 0; i < hullContainer.length; i++)
+		{
+			lotContainer.push(new Array());
+			var hulls = hullContainer[i];
+
+			for(var h = 0; h < hulls.length; h++)
+			{
+				var hull = hulls[h];
+
+				// If it is too small, no lot
+				// If it is medium sized, it can be ignored with a probability
+				if(hull.area > .5 && (random.real(0,1) > .1 || hull.area > 1.5))
+				{
+					var lot = new Building.BuildingLot();
+
+					// Yes, directly reuse them ;)
+					lot.points = hull.vertices;
+					lot.buildNormals();
+					lot.hasCap = true;
+
+					lotContainer[i].push(lot);
+				}
+			}
+		}
+
+		return lotContainer;
+	}
+
+	build(scene)
+	{
+  		var random = new Random(Random.engines.mt19937().autoSeed());
+		var hulls = this.buildHulls(scene, random);
+		var lots = this.buildLots(hulls, random);
+
+		var baseLotProfile = new Building.Profile();
+		baseLotProfile.addPoint(1.1, 0.0);
+		baseLotProfile.addPoint(1.1, .025);
+		baseLotProfile.addPoint(1.2, .025);
+		baseLotProfile.addPoint(1.2, .075);
+		baseLotProfile.addPoint(1.3, .075);
+
+		for(var i = 0; i < lots.length; i++)
+		{
+			for(var j = 0; j < lots[i].length; j++)
+			{
+				// The blocks profiles are also mass shapes
+				var shape = new Building.MassShape(lots[i][j], baseLotProfile);
+				var mesh = shape.generateMesh();
+				scene.add(mesh);
+			}
+		}
 	}
 }
 

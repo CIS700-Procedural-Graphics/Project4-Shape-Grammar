@@ -76,12 +76,12 @@ function onLoad(framework)
     lot.addPoint(Math.cos(a) * r, Math.sin(a) * r);
   }
 
-  var shape = new Building.MassShape(lot, profile);
-  var mesh = shape.generateMesh();
+  // var shape = new Building.MassShape(lot, profile);
+  // var mesh = shape.generateMesh();
   // scene.add(mesh);
 
-  var rule = new Building.Rule();
-  rule.componentWise = true;
+  // var rule = new Building.Rule();
+  // rule.componentWise = true;
   // rule.evaluate(shape, scene);
 
   Engine.rubik = new Rubik.Rubik();
