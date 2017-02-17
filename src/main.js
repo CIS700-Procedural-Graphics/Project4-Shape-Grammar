@@ -7,6 +7,14 @@ import Turtle from './turtle.js'
 
 var turtle;
 
+// var img = [];
+// var img1 = [];
+// for(var i=0; i<40; i++)
+// {
+//   img[i]=[];
+//   img1[i]=[];
+// }
+
 // called after the scene loads
 function onLoad(framework) {
   var scene = framework.scene;
@@ -21,13 +29,6 @@ function onLoad(framework) {
   directionalLight.position.set(1, 3, 2);
   directionalLight.position.multiplyScalar(10);
   scene.add(directionalLight);
-
-  var geometry = new THREE.PlaneGeometry( 20*2, 20*2, 32 );
-  var material = new THREE.MeshBasicMaterial( {color: 0x23525f, side: THREE.DoubleSide} );
-  var plane = new THREE.Mesh( geometry, material );
-  plane.position.set(9,0,9);
-  plane.rotateX(90*3.14/180);
-  scene.add( plane );
 
   // set camera position
   camera.position.set(10, 10, 20);
