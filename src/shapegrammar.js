@@ -8,38 +8,44 @@ class Rule {
 export default class ShapeGrammar {
 	constructor() {
 		this.grammar = {};
+    this.grammar['U'] = [
+      new Rule(0.3, 'N'),
+      new Rule(0.3, 'S'),
+      new Rule(0.2, 'E'),
+      new Rule(0.2, 'W')
+    ]
 		this.grammar['M'] = [
-			new Rule(1.0, 'MM')
+			new Rule(0.25, 'N'),
+      new Rule(0.25, 'S'),
+      new Rule(0.25, 'E'),
+      new Rule(0.25, 'W')
 		]
-	}
-
-	expand() {
-		var shape_ll = stringToLinkedList(this.initial_state);
-		for (var i = 0; i < this.iterations; i++) {
-			var curr = shape_ll.head;
-			while (curr !== undefined) {
-				var sym = curr.symbol;
-				if (this.grammar[sym]) {
-					var rand = Math.rand();
-					var sum = 0;
-					var successor_str;
-					for (var i = 0; i < this.grammar[sym].length; i++) {
-						var rule = this.grammar[sym][i];
-						sum += rule.probability;
-						if (sum >= rand) {
-							successor_str = rule.successor;
-							break;
-						}
-					}
-					var old_next = curr.next;
-					replaceShapeNode(shape_ll, curr, successor_str);
-					curr = old_next;
-				}
-				else {
-					curr = curr.next;
-				}
-			}
-		}
-		return shape_ll;
-	}
+    this.grammar['D'] = [
+      new Rule(0.3, 'N'),
+      new Rule(0.3, 'S'),
+      new Rule(0.2, 'E'),
+      new Rule(0.2, 'W')
+    ]
+    this.grammar['P'] = [
+      new Rule(0.33, '1'),
+      new Rule(0.33, '2'),
+      new Rule(0.33, '3')
+    ]
+    // the below two grammars are parent dependant! 
+    // this one builds a garden on top of a sky scraper (LUXURIOUS MIDTOWN)
+    this.grammar['S'] = [
+      new Rule(0.50, 'G'),
+      new Rule(0.50, 'F')
+    ]
+    // this one makes water towers on top of a loft (SOHO)
+    this.grammar['L'] = [
+      new Rule(0.8, 'T'),
+      new Rule(0.2, 'F')
+    ]
+    // this one makes water towers on top of a brownstone (UPTOWN)
+    this.grammar['B'] = [
+      new Rule(0.25, 'T'),
+      new Rule(0.75, 'F')
+    ]
+ 	}
 }
