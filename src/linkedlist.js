@@ -2,8 +2,6 @@ const THREE = require('three');
 
 export class Node {
 	constructor(shape, iter) {
-		// this.prev = null;
-		// this.next = null;
 		this.scale = new THREE.Vector3(1, 1, 1);
 		this.position = new THREE.Vector3(0, 0, 0);
 		this.rotation = new THREE.Vector3(0, 0, 0);
@@ -12,18 +10,6 @@ export class Node {
 		this.shape = shape ? shape : 'GROUND_FLOOR_APT';
 		this.iteration = iter ? iter : 0;		
 	}
-
-	// setPrev(prev) {
-	// 	this.prev = prev;
-	// }
-
-	// setNext(next) {
-	// 	this.next = next;
-	// }
-
-	// setIteration(iter) {
-	// 	this.iter = iter;
-	// }
 
 	terminate() {
 		this.terminal = true;

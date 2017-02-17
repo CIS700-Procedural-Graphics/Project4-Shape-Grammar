@@ -10,11 +10,8 @@ const OBJLoader = require('jser-three-obj-loader');
 OBJLoader(THREE);
 
 const MTLLoader = require('three-mtl-loader'); 
-// MTLLoader(THREE);
 
-// const MTLLoader = new THREE.MTLLoader();
-
-//TODO: put this in its own file
+// TODO: put this in its own file?
 export const Geometry = {
   SHORT_HOUSE: {
     path: 'window_house', // for test
@@ -27,7 +24,7 @@ export const Geometry = {
   FLOOR_APT: {
     path: 'floor',
     obj: {},
-    sizeRatio: 1,
+    sizeRatio: 1.7,
   },
   GROUND_FLOOR_APT: {
     path: 'floor',
@@ -69,21 +66,13 @@ export const Geometry = {
 var loaded = 0; // Are the geometries loaded? 
 var rendered = false; // Have the shapes been rendered?
 var initRender = true;
+var shadowsOn = false;//true;
 
 var scene;
 var shapeGrammar;
 var city;
 
-function onLoad(framework) {
-  scene = framework.scene;
-  var camera = framework.camera;
-  var renderer = framework.renderer;
-  var gui = framework.gui;
-  var stats = framework.stats;
-
-  renderer.shadowMap.enabled = true;
-  renderer.antialias=  true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+function renderLights() {
 
   var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
   directionalLight.color.setHSL(0.1, 1, 0.95);
@@ -112,6 +101,20 @@ function onLoad(framework) {
   var ambientLight = new THREE.AmbientLight(0x404040);
   ambientLight.intensity = 2.5;
   scene.add(ambientLight);
+}
+
+function onLoad(framework) {
+  scene = framework.scene;
+  var camera = framework.camera;
+  var renderer = framework.renderer;
+  var gui = framework.gui;
+  var stats = framework.stats;
+
+  renderer.shadowMap.enabled = true;
+  renderer.antialias = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  renderLights();
 
   camera.position.set(1, 40, 70);
   camera.lookAt(new THREE.Vector3(0,0,0));
@@ -137,19 +140,27 @@ function onLoad(framework) {
       clearScene();
       resetShapeGrammar();
       rendered = false;
+    },
+    shadows: function() {     
+      clearScene();
+      initRender = false;
+      rendered = false;
+      shadowsOn = !shadowsOn;
     }
   };
 
   gui.add(button,'rerender');
+  gui.add(button,'shadows');
 }
 
 
 /**
   * Clears the scene by removing all geometries 
+  * (Leaves the 3 lights)
   */
 function clearScene() {
   var obj;
-  for( var i = scene.children.length - 1; i > 1; i--) {
+  for( var i = scene.children.length - 1; i > 3; i--) {
     obj = scene.children[i];
     scene.remove(obj);
   }
@@ -169,10 +180,6 @@ function resetShapeGrammar() {
     shapeGrammar.iterations = iter;
   }
 }
-
-//TODO: function initialiing based on noise / city etc. 
-// create city class for this probability
-
 
 /**
   * Load custom geometry .obj's from the assets folder.
@@ -203,7 +210,6 @@ function loadGeometries() {
             objLoader.setPath('./../assets/');
             objLoader.setMaterials(materials);
 
-
             objLoader.load(path + '.obj', function(s){ 
               return (function(obj){
                 obj.position.set(0, 0, 0);
@@ -219,8 +225,9 @@ function loadGeometries() {
                 })
 
                 Geometry[s].obj = obj;
-                obj.castShadow = true;
-                obj.receiveShadow = true;
+
+                obj.castShadow = shadowsOn;
+                obj.receiveShadow = shadowsOn;
 
                 var color = obj.material.color;
                 obj.material =  new THREE.MeshPhongMaterial(obj.material);
@@ -233,9 +240,7 @@ function loadGeometries() {
       );
 
     }(shape));
-      
   }
-
 }
 
 
@@ -243,13 +248,16 @@ function loadGeometries() {
   * Renders the given shapeGrammar
   */
 function renderShapeGrammar(iterations) {
+
+
+  // ground
   var mat = new THREE.MeshLambertMaterial({color: 0xaaaaaa});
   var mesh = new THREE.Mesh(new THREE.PlaneGeometry(60,60), mat);
   mesh.rotation.x = Math.PI / 2;
   mesh.material.side = THREE.DoubleSide;
   mesh.position.set(20,-0.1,20);
-  mesh.receiveShadow = true;
-  mesh.castShadow = true;
+  mesh.receiveShadow = shadowsOn;
+  mesh.castShadow = shadowsOn;
   scene.add(mesh);
 
 
@@ -261,22 +269,17 @@ function renderShapeGrammar(iterations) {
     geo.scale.set(node.scale.x, node.scale.y, node.scale.z);
     geo.position.set(node.position.x, node.position.y, node.position.z);
 
-    // geo.material = Geometry[node.shape].obj.material;
     
     geo.material = Geometry[node.shape].obj.material;
-    // console.log(geo.material.color);
 
     geo.traverse(function(child) {
       if (child instanceof THREE.Mesh) {
         child.material = geo.material;
-        child.castShadow = true;
-        child.receiveShadow = true;
+        child.castShadow = shadowsOn;
+        child.receiveShadow = shadowsOn;
       }
     });
-    // geo.castShadow = true;
-    // geo.receiveShadow = true;
 
-    // console.log(geo.material.color);
     
     if (node.iteration <= iterations) {
      scene.add(geo);

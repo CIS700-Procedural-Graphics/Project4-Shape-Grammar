@@ -91,13 +91,15 @@ function growUpwardsRule(node, shape, iter) {
 }
 
 
-// TODO: pass in iteration # when creating new nodes ?
 export const GrammarRules = 
 {
 	// ----------- Apartment buildings ------------- //
 	'GROUND_FLOOR_APT': [ 
-		new Rule(1, (node, iter) => { 
+		new Rule(1, (node, iter) => { // Subdivide into two
 			var set = new Set();
+			node.scale.x = 1 * node.maxHeight/3;
+			node.scale.z = 1 * node.maxHeight/3;
+
 			var big = copyNodePos(node, 'FLOOR_APT', iter);
 			var little = copyNodePos(node, 'FLOOR_APT', iter);
 			var nodeBox = getBbox(node);
@@ -106,16 +108,20 @@ export const GrammarRules =
 			var angle = n * Math.PI / 2;
 			node.rotation.y += angle;
 
-			var zScale = Math.random() * 0.6 + 0.2;
-			var xScale = Math.random() * 0.6 + 0.2;
+			// Randomly choose the axis to subdivide along (x or z)
+			var rand = Math.random();
+			var a = rand > 0.5 ? 'x' : 'z';
+			var b = rand > 0.5 ? 'z' : 'x';
 
-			big.scale.z *= zScale;	
-			big.position.z += nodeBox.z / 2 * zScale
+			var scale = Math.random() * 0.6 + 0.2;
 
-			little.scale.x *= xScale;
-			little.scale.z *= (1 - zScale);
-			little.position.x += nodeBox.x / 2 * (1 - xScale);
-			little.position.z -= nodeBox.z / 2 * (1 - zScale - 0.1);
+			big.scale[b] *= scale;	
+			big.position[b] += nodeBox[b] / 2 * scale;
+
+			little.scale[a] *= scale;
+			little.scale[b] *= (1 - scale);
+			little.position[a] += nodeBox[a] / 2 * (1 - scale) * Math.random();
+			little.position[b] -= nodeBox[b] / 2 * (1 - scale - 0.1);
 
 			set.add(big);
 			set.add(little);
@@ -132,7 +138,7 @@ export const GrammarRules =
 		}),
 	],
 
-	
+	// ----------- Skyscrapers -------------
 	'GROUND_FLOOR_SKY':[ 
 		//TODO: add rule to replace this with shops n stuff ?? 
 		new Rule(1, (node, iter) => {
@@ -171,26 +177,26 @@ export const GrammarRules =
 			set.add(node);
 			set.add(floor);
 			return set;
-		})
+		}),
 	],
 
 	// ----------- Parks -------------
 	'PARK': [
-		new Rule(0.9, (node, iter) => {
+		new Rule(0.95, (node, iter) => { // Place trees
 			var set = new Set();
 			var tree = copyNodePos(node, 'TREE', iter);
+			tree.scale.set(1,1,1);
 			var nodeBox = getBbox(node);
 			tree.position.y += getBbox(tree).y / 2;
 			var xOffset =  (Math.random() * 2 - 1) * nodeBox.x / 2;
 			tree.position.x += xOffset;
 			tree.position.z += (Math.random() * 2 - 1) * nodeBox.z / 2;
-
-			//TODO: random rotation
+			tree.rotation.y += Math.random() * Math.PI * 2;
 
 			set.add(node);
 			set.add(tree);
 			return set;
 		}), 
-		new Rule(0.1, terminalRule),
+		new Rule(0.05, terminalRule),
 	],
 }
