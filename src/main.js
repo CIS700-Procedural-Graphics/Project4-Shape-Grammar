@@ -86,7 +86,7 @@ function onLoad(framework)
 
   Engine.rubik = new Rubik.Rubik();
   var rubikMesh = Engine.rubik.build();
-  // scene.add(rubikMesh);
+  scene.add(rubikMesh);
 
   // Init Engine stuff
   Engine.scene = scene;
@@ -97,14 +97,17 @@ function onLoad(framework)
 
   var random = new Random(Random.engines.mt19937().seed(2545));
 
-  var speed = .15;
+  var speed =1.15;
 
 
   var city = new City.Generator();
-  city.build(scene);
+  var cityBlocks = city.build(scene);
+
+  Engine.rubik.attachShapesToFace(cityBlocks);
 
   var callback = function() {
     Engine.rubik.animate(random.integer(0, 2), random.integer(0, 2), speed, callback);
+    // Engine.rubik.animate(1,0, speed, callback);
   };
 
   Engine.rubik.animate(0, 0, speed, callback);

@@ -373,23 +373,10 @@ class Generator
 		console.log("Hulls: " + hulls.length);
 
 		var cellScale = count * scale / 11;
-		var cellBounds = [];
-
-		// Top cell
-		cellBounds.push(new Common.Bounds(new THREE.Vector2( 4 * cellScale, 1 * cellScale ), new THREE.Vector2( 7 * cellScale, 4 * cellScale )));
-		cellBounds.push(new Common.Bounds(new THREE.Vector2( 4 * cellScale, 7 * cellScale ), new THREE.Vector2( 7 * cellScale, 10 * cellScale )));
-		
-		// Horizontal cells
-		cellBounds.push(new Common.Bounds(new THREE.Vector2( 1 * cellScale, 4 * cellScale ), new THREE.Vector2( 4 * cellScale, 7 * cellScale )));
-		cellBounds.push(new Common.Bounds(new THREE.Vector2( 4 * cellScale, 4 * cellScale ), new THREE.Vector2( 7 * cellScale, 7 * cellScale )));
-		cellBounds.push(new Common.Bounds(new THREE.Vector2( 7 * cellScale, 4 * cellScale ), new THREE.Vector2( 10 * cellScale, 7 * cellScale )));
-
-		// Last cell
-		cellBounds.push(new Common.Bounds(new THREE.Vector2( 7 * cellScale, 7 * cellScale ), new THREE.Vector2( 10 * cellScale, 10 * cellScale )));
-
+		var cellBounds = this.getSubcellRemapping(cellScale);
 		var boundedHulls = new Array();
 
-		for(var i = 0; i < 6; i++)
+		for(var i = 0; i < cellBounds.length; i++)
 			boundedHulls.push(new Array());
 
 		// Save geo for display
@@ -408,6 +395,7 @@ class Generator
 				if(cellBounds[b].contains(hull.midpoint))
 				{
 					bounded = true;
+					hull.cellIndex = b;
 					boundedHulls[b].push(hull);
 					break;
 				}
@@ -445,8 +433,50 @@ class Generator
 		// var pointsMesh = new THREE.Points( pointsGeo, pointsMaterial );
 		// scene.add( pointsMesh );
 
+		return { hulls: boundedHulls, cells : cellBounds };
+	}
 
-		return boundedHulls;
+	getSubcellRemapping(cellScale)
+	{
+		var cellBounds = [];
+
+		function addSubcells()
+		{
+			for(var x = 0; x < 3; x++)
+			{
+				for(var y = 0; y < 3; y++)
+				{
+					var from =  new THREE.Vector2( (offset.x + x) * cellScale, (offset.y + y) * cellScale );
+					var to = from.clone().add(new THREE.Vector2(cellScale, cellScale));
+
+					cellBounds.push(new Common.Bounds(from, to));
+				}
+			}
+		}
+
+		// Top cell
+		var offset = new THREE.Vector2( 4, 1 );
+		addSubcells();
+
+		// Down cell
+		offset = new THREE.Vector2( 4, 7 );
+		addSubcells();
+		
+		// // Horizontal cells
+		offset = new THREE.Vector2( 1, 4 );
+		addSubcells();
+
+		offset = new THREE.Vector2( 4, 4 );
+		addSubcells();
+
+		offset = new THREE.Vector2( 7, 4 );
+		addSubcells();
+
+		// // Last cell
+		offset = new THREE.Vector2( 7, 7 );
+		addSubcells();
+
+		return cellBounds;
 	}
 
 	buildLots(hullContainer, random)
@@ -482,6 +512,39 @@ class Generator
 		return lotContainer;
 	}
 
+	getMassShapeLot(position, faceLength, depth, height)
+	{			
+		var lot = new Building.BuildingLot();
+		var subdivs = 8;
+		
+		for(var i = 0; i < subdivs; i++)
+		{
+			var a = i * Math.PI * 2 / subdivs;
+			var r = 1.0 - Math.pow(Math.sin(a * 10) * .5 + .5, 5.0) * .5;
+			lot.addPoint(Math.cos(a) * r * .5, Math.sin(a) * r * .5);
+		}
+
+		lot.hasCap = true;
+
+		return lot;
+	}
+
+	getMassShapeProfile(position, faceLength, depth, height)
+	{		
+		var profile = new Building.Profile();
+		profile.addPoint(1.0, 0.0);
+		profile.addPoint(1.0, 1.0);
+
+		profile.addPoint(.9, 1.0);
+		profile.addPoint(.9, 1.1);
+		profile.addPoint(.8, 1.1);
+		profile.addPoint(.8, 1.0);
+
+		profile.addPoint(0.7, 1.0);
+
+		return profile;
+	}
+
 	generateMassShapesForLot(lot, random)
 	{
 		var hull = lot.hull;
@@ -504,7 +567,7 @@ class Generator
 			if(segmentLength < .5)
 				continue;
 
-			var count = Math.floor(Math.pow(random.real(0, 1), 2.0) * 4) + 1;
+			var count = Math.floor(Math.pow(random.real(0, 1), 2.0) * 4 * segmentLength) + 1;
 
 			for(var i = 0; i < count; i++)
 			{
@@ -523,15 +586,22 @@ class Generator
 
 				p.add(segment.normal.clone().multiplyScalar(depth*-.5));
 
-				var cube = new THREE.Mesh( geometry, material );
-				cube.scale.set(faceLength, height, depth);
-				cube.position.copy(new THREE.Vector3( p.x, cube.scale.y * .5, p.y ));
-				cube.lookAt(cube.position.clone().add(normal));
+				var position = new THREE.Vector3( p.x, 0, p.y );
+				var massLot = this.getMassShapeLot(position, faceLength, depth, height);
+				var massProfile = this.getMassShapeProfile(position, faceLength, depth, height);
+
+				var shape = new Building.MassShape(massLot, massProfile)
+				var shapeMesh = shape.generateMesh();
+
+				// var cube = new THREE.Mesh( geometry, material );
+				shapeMesh.scale.set(faceLength, height, depth);
+				shapeMesh.position.copy(position);
+				shapeMesh.lookAt(shapeMesh.position.clone().add(normal));
 
 				var intersects = false;
 				for(var j = 0; j < shapes.length; j++)
 				{
-					if(shapes[j].position.distanceTo(cube.position) < faceLength)
+					if(shapes[j].position.distanceTo(shapeMesh.position) < .5 * faceLength)
 					{
 						intersects = true;
 						break;
@@ -539,7 +609,7 @@ class Generator
 				}
 
 				if(!intersects)
-					shapes.push(cube);
+					shapes.push(shapeMesh);
 			}
 		}
 
@@ -549,32 +619,50 @@ class Generator
 	build(scene)
 	{
   		var random = new Random(Random.engines.mt19937().autoSeed());
-		var hulls = this.buildHulls(scene, random);
+		
+		var hullData = this.buildHulls(scene, random);
+		var hulls = hullData.hulls;
+		var cellBounds = hullData.cells;
 		var lots = this.buildLots(hulls, random);
 
 		var baseLotProfile = new Building.Profile();
 		baseLotProfile.addPoint(1.15, 0.0);
 		baseLotProfile.addPoint(1.15, .025);
-		baseLotProfile.addPoint(1.25, .025);
-		baseLotProfile.addPoint(1.25, .05);
-		baseLotProfile.addPoint(1.35, .05);
+		baseLotProfile.addPoint(1.2, .025);
+		baseLotProfile.addPoint(1.2, .035);
+		baseLotProfile.addPoint(1.35, .035);
+
+		var cityBlocks = [];
 
 		for(var i = 0; i < lots.length; i++)
 		{
+			var group = new THREE.Group();
+
 			for(var j = 0; j < lots[i].length; j++)
 			{
 				// The blocks profiles are also mass shapes
 				var shape = new Building.MassShape(lots[i][j], baseLotProfile);
 				var mesh = shape.generateMesh();
-				scene.add(mesh);
+				group.add(mesh);
 
 				var massShapes = this.generateMassShapesForLot(lots[i][j], random);
 
 				for(var s = 0; s < massShapes.length; s++)
-					scene.add(massShapes[s]);
+					group.add(massShapes[s]);
 			}
 
+			var center = cellBounds[i].min.clone().add(cellBounds[i].max).multiplyScalar(.5);
+			group.position.set(-center.x, 0, -center.y);
+
+			var g2 = new THREE.Group();
+			g2.add(group);
+			g2.userData = { index: i, offset: center }
+			cityBlocks.push(g2);
+
+			// scene.add(g2);
 		}
+
+		return cityBlocks;
 	}
 }
 
