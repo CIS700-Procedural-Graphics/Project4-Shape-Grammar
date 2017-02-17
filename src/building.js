@@ -16,6 +16,7 @@ class BuildingFactory
 	constructor()
 	{
 		this.lots = [];
+		this.profiles = [];
 
 		this.build();
 	}
@@ -30,6 +31,88 @@ class BuildingFactory
 
 		for(var i = 0; i < this.lots.length; i++)
 			this.lots[i].buildNormals();
+
+		this.profiles.push(this.buildSimpleProfile());
+		this.profiles.push(this.buildExtremeProfile());
+	}
+
+	getProfileForShape(random, faceLength, depth, height)
+	{
+		if(height > .75 || random.real(0,1) < .05)
+		{
+			var floors = random.integer(1, 7 * height);
+			var profile = new Profile();
+
+			profile.addPoint(1.05, 0.0);
+			profile.addPoint(1.05, 0.05);
+			profile.addPoint(1.0, 0.05);
+
+			for(var i = 0; i < floors; i++)
+			{
+				var height = (i / floors);
+
+				// Floor separator
+				profile.addPoint(1.0, height - .025);
+				profile.addPoint(1.1, height - .025);
+				profile.addPoint(1.1, height + .025);
+				profile.addPoint(1.0, height + .025);
+			}
+
+			profile.addPoint(1.0, 1.0);
+
+			profile.addPoint(.9, 1.0);
+			profile.addPoint(.9, 1.1);
+			profile.addPoint(.8, 1.1);
+			profile.addPoint(.8, 1.0);
+
+			profile.addPoint(0.7, 1.0);
+
+			return profile;
+		}
+
+		// Almost always simple case
+		if(random.real(0,1) > .15)
+			return this.profiles[0];
+
+		// Extremee
+		return this.profiles[1];
+	}
+
+	buildSimpleProfile()
+	{		
+		var profile = new Profile();
+
+		profile.addPoint(1.05, 0.0);
+		profile.addPoint(1.05, 0.05);
+		profile.addPoint(1.0, 0.05);
+		profile.addPoint(1.0, 1.0);
+
+		profile.addPoint(.9, 1.0);
+		profile.addPoint(.9, 1.1);
+		profile.addPoint(.8, 1.1);
+		profile.addPoint(.8, 1.0);
+
+		profile.addPoint(0.7, 1.0);
+
+		return profile;
+	}
+
+	buildExtremeProfile()
+	{		
+		var profile = new Profile();
+		profile.addPoint(.5, 0.0);
+		profile.addPoint(.5, .2);
+		profile.addPoint(.2, .2);
+		profile.addPoint(.2, 1.0);
+
+		profile.addPoint(.9, 1.0);
+		profile.addPoint(.9, 1.1);
+		profile.addPoint(.8, 1.1);
+		profile.addPoint(.8, 1.0);
+
+		profile.addPoint(0.7, 1.0);
+
+		return profile;
 	}
 
 	getLotForShape(random, faceLength, depth, height)
@@ -45,7 +128,7 @@ class BuildingFactory
 			for(var i = 0; i < subdivs; i++)
 			{
 				var a = i * Math.PI * 2 / subdivs;
-				var r = 1.0 - Math.pow(Math.sin(a * 10) * .5 + .5, 5.0) * .5 * displ;
+				var r = 1.0 - Math.pow(Math.sin(a * 10) * .5 + .5, 5.0) * displ;
 				lot.addPoint(Math.cos(a) * r, Math.sin(a) * r);
 			}
 

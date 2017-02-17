@@ -503,7 +503,7 @@ class Generator
 					lot.buildNormals();
 					lot.hasCap = true;
 					lot.hull = hull;
-					lot.park = (hull.area < .5 || (random.real(0,1) < .1 && hull.area < 2));
+					lot.park = (hull.area < .55 || (random.real(0,1) < .1 && hull.area < 2));
 
 					lotContainer[i].push(lot);
 				}
@@ -528,22 +528,6 @@ class Generator
 		lot.hasCap = true;
 
 		return lot;
-	}
-
-	getMassShapeProfile(position, faceLength, depth, height)
-	{		
-		var profile = new Building.Profile();
-		profile.addPoint(1.0, 0.0);
-		profile.addPoint(1.0, 1.0);
-
-		profile.addPoint(.9, 1.0);
-		profile.addPoint(.9, 1.1);
-		profile.addPoint(.8, 1.1);
-		profile.addPoint(.8, 1.0);
-
-		profile.addPoint(0.7, 1.0);
-
-		return profile;
 	}
 
 	generateMassShapesForLot(lot, random, factory)
@@ -592,7 +576,7 @@ class Generator
 
 				var position = new THREE.Vector3( p.x, 0, p.y );
 				var massLot = factory.getLotForShape(random, faceLength, depth, height);// this.getMassShapeLot(position, faceLength, depth, height);
-				var massProfile = this.getMassShapeProfile(position, faceLength, depth, height);
+				var massProfile = factory.getProfileForShape(random, faceLength, depth, height);
 
 				var shape = new Building.MassShape(massLot, massProfile)
 				var shapeMesh = shape.generateMesh();

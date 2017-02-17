@@ -111,7 +111,7 @@ function onLoad(framework)
     // Engine.rubik.animate(1,0, speed, callback);
   };
 
-  // Engine.rubik.animate(0, 0, speed, callback);
+  Engine.rubik.animate(0, 0, speed, callback);
 }
 
 // called on frame updates
