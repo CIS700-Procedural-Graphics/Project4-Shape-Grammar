@@ -45,10 +45,8 @@ function onLoad(framework) {
   //   doLsystem(lsys, lsys.iterations, turtle);
   // });
 
-  // gui.add(lsys, 'iterations', 0, 12).step(1).onChange(function(newVal) {
-  //   clearScene(turtle);
-  //   doLsystem(lsys, newVal, turtle);
-  // });
+  gui.add(ss, 'iteration', 0, 12).step(1).onChange(function(newVal) {
+  });
 
 
   // var obj = new THREE.Object3D();

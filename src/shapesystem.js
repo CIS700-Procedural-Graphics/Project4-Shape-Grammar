@@ -43,9 +43,15 @@ export default function shapeSystem(axiom, grammar, scene) {
 		}
 	}
 
+	var a = false;
 
 	this.traverse = function(scene) {
-		axiom.draw(scene);
+		if (a === false) {
+			axiom.subdivide();
+			a = true;
+		}
+
+		axiom.draw(scene, this.iterations);
 	}
 	// This function returns a linked list that is the result 
 	// of expanding the L-system's axiom n times.
