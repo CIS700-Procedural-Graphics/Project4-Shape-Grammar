@@ -546,7 +546,7 @@ class Generator
 		return profile;
 	}
 
-	generateMassShapesForLot(lot, random)
+	generateMassShapesForLot(lot, random, factory)
 	{
 		if(lot.park)
 			return [];
@@ -591,14 +591,14 @@ class Generator
 				p.add(segment.normal.clone().multiplyScalar(depth*-.5));
 
 				var position = new THREE.Vector3( p.x, 0, p.y );
-				var massLot = this.getMassShapeLot(position, faceLength, depth, height);
+				var massLot = factory.getLotForShape(random, faceLength, depth, height);// this.getMassShapeLot(position, faceLength, depth, height);
 				var massProfile = this.getMassShapeProfile(position, faceLength, depth, height);
 
 				var shape = new Building.MassShape(massLot, massProfile)
 				var shapeMesh = shape.generateMesh();
 
 				// var cube = new THREE.Mesh( geometry, material );
-				shapeMesh.scale.set(faceLength, height, depth);
+				shapeMesh.scale.set(faceLength * .5, height, depth * .5);
 				shapeMesh.position.copy(position);
 				shapeMesh.lookAt(shapeMesh.position.clone().add(normal));
 
@@ -624,6 +624,8 @@ class Generator
 	{
   		var random = new Random(Random.engines.mt19937().autoSeed());
 		
+
+		var factory = new Building.BuildingFactory();
 		var hullData = this.buildHulls(scene, random);
 		var hulls = hullData.hulls;
 		var cellBounds = hullData.cells;
@@ -651,7 +653,7 @@ class Generator
 				var mesh = shape.generateMesh();
 				geometryBatch.mergeMesh(mesh)
 
-				var massShapes = this.generateMassShapesForLot(lots[i][j], random);
+				var massShapes = this.generateMassShapesForLot(lots[i][j], random, factory);
 
 				for(var s = 0; s < massShapes.length; s++)
 					geometryBatch.mergeMesh(massShapes[s])

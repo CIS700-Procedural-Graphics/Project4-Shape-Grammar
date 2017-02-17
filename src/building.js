@@ -11,6 +11,129 @@ class Shape
 	}
 }
 
+class BuildingFactory
+{
+	constructor()
+	{
+		this.lots = [];
+
+		this.build();
+	}
+
+	build()
+	{
+		this.lots.push(this.buildHLot());
+		this.lots.push(this.buildTLot());
+		this.lots.push(this.buildLLot());
+		this.lots.push(this.buildCLot());
+		this.lots.push(this.buildSquareLot());
+
+		for(var i = 0; i < this.lots.length; i++)
+			this.lots[i].buildNormals();
+	}
+
+	getLotForShape(random, faceLength, depth, height)
+	{
+		if(random.real(0,1) < .2 || (height > 2 && random.real(0,1) < .6))
+		{
+			// Circular
+			var subdivs = random.integer(4, 15);
+			var displ = random.real(0, 1);
+			
+			var lot = new BuildingLot();
+
+			for(var i = 0; i < subdivs; i++)
+			{
+				var a = i * Math.PI * 2 / subdivs;
+				var r = 1.0 - Math.pow(Math.sin(a * 10) * .5 + .5, 5.0) * .5 * displ;
+				lot.addPoint(Math.cos(a) * r, Math.sin(a) * r);
+			}
+
+			return lot;
+		}
+
+		return this.lots[random.integer(0, this.lots.length - 1)];
+	}
+
+	buildSquareLot()
+	{
+		var lot = new BuildingLot();
+
+		lot.addPoint(-1, -1);
+		lot.addPoint(1, -1);
+		lot.addPoint(1, 1);
+		lot.addPoint(-1, 1);
+
+		return lot;
+	}
+
+	buildCLot()
+	{
+		var lot = new BuildingLot();
+
+		lot.addPoint(-1, -1);
+		lot.addPoint(1, -1);
+		lot.addPoint(1, -.5);
+		lot.addPoint(0, -.5);
+		lot.addPoint(0, .5);
+		lot.addPoint(1, .5);
+		lot.addPoint(1, 1);
+		lot.addPoint(-1, 1);
+
+		return lot;
+	}
+
+	buildLLot()
+	{
+		var lot = new BuildingLot();
+
+		lot.addPoint(-1, -1);
+		lot.addPoint(0, -1);
+		lot.addPoint(0, 0);
+		lot.addPoint(1, 0);
+		lot.addPoint(1, 1);
+		lot.addPoint(-1, 1);
+
+		return lot;
+	}
+
+	buildTLot()
+	{
+		var lot = new BuildingLot();
+
+		lot.addPoint(-1, -1);
+		lot.addPoint(0, -1);
+		lot.addPoint(0, -.5);
+		lot.addPoint(1, -.5);
+		lot.addPoint(1, .5);
+		lot.addPoint(0, .5);
+		lot.addPoint(0, 1);
+		lot.addPoint(-1, 1);
+
+		return lot;
+	}
+
+	buildHLot()
+	{
+		var lot = new BuildingLot();
+
+		lot.addPoint(-1, -1);
+		lot.addPoint(-.5, -1);
+		lot.addPoint(-.5, -.5);
+		lot.addPoint(.5, -.5);
+		lot.addPoint(.5, -1);
+		lot.addPoint(1, -1);
+
+		lot.addPoint(1, 1);
+		lot.addPoint(.5, 1);
+		lot.addPoint(.5, .5);
+		lot.addPoint(-.5, .5);
+		lot.addPoint(-.5, 1);		
+
+		return lot;
+	}
+}
+
 // The object that defines the boundaries of the mass shape
 class BuildingLot
 {
@@ -18,7 +141,7 @@ class BuildingLot
 	{
 		this.points = [];
 		this.normals = [];
-		this.hasCap = false;
+		this.hasCap = true;
 		this.center = THREE.Vector2(0,0);
 	}
 
@@ -63,6 +186,7 @@ class Profile
 	constructor()
 	{
 		this.points = [];
+		this.scale = 1.0; // Specifically, height
 	}
 
 	addPoint(x, y)
@@ -129,14 +253,13 @@ class MassShape
 			}
 		}
 
-		// End the 
+		// End the last row of vertices into a cap
 		if(this.lot.hasCap)
 		{
 			var center = this.lot.center;
 			var height = this.profile.points[this.profile.points.length - 1].y;
 			var vertex = new THREE.Vector3(center.x, height, center.y);
 			geometry.vertices.push(vertex);
-
 
 			for(var v = 0; v < boundaryVertexCount; v++)
 			{
@@ -235,4 +358,4 @@ class ShapeBuilder
 
 }
 
-export {Shape, Rule, BuildingLot, Profile, MassShape}
+export {Shape, Rule, BuildingLot, Profile, MassShape, BuildingFactory}
