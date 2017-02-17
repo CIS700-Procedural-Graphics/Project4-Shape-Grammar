@@ -7,14 +7,16 @@ function Rule(successor, probability) {
 	this.probability = probability;
 }
 
-export default function shapeSystem(axiom, grammar, scene) {
+export default function shapeSystem(axiom, scene) {
 	if (axiom instanceof Shape) {
 		this.axiom = axiom;
 	} else {
 		this.axiom = new Shape();
 	}
 
-	this.grammar = grammar;
+
+
+	//this.grammar = grammar;
 	this.iteration = 0;
 	this.scene = scene;
 
@@ -54,6 +56,11 @@ export default function shapeSystem(axiom, grammar, scene) {
 		}
 
 		axiom.draw(scene, this.iterations);
+	}
+
+	this.iterate = function() {
+		// remember scene is available through this.scene
+		console.log('iterate');
 	}
 
 	// Returns a (1, 1, 1) rectangular prism with the top shrunk in so that when scaled

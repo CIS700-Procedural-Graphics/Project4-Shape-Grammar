@@ -28,7 +28,6 @@ export default class Shape {
 
 			// For continuation purposes
 			this.name = 'floor';
-			this.show = true;
 		} else {
 			this.parent = parent;
 			// this.boundingBox = boundingBox;
@@ -41,6 +40,7 @@ export default class Shape {
 			}
 		}
 
+		this.show = true;
 		this.division = ''; // Current subdivision
 		this.children = [];
 	};
@@ -54,6 +54,7 @@ export default class Shape {
 	// Can only create on a building that has floors for the first time
 	// This should only happen once per building and should really be the first thing that happens
 	createFloors(numFloors) {
+			this.show = false;
 			// subdivide
 			var s_factor = 0.5;
 
@@ -90,6 +91,8 @@ export default class Shape {
 			if (axis == null) {
 				axis = 0;
 			}
+
+			this.show = false;
 
 			var s = this.mesh.scale;
 			var p = this.mesh.position;
@@ -171,7 +174,8 @@ export default class Shape {
 			for(var i = 0; i < this.children.length; i++) {
 				this.children[i].draw(scene, n);
 			}
-		} else {
+		}
+		if (this.show === true) {
 			scene.add(this.mesh);
 		}
 	};
