@@ -123,15 +123,19 @@ export default function shapeSystem(axiom, grammar, scene) {
 		var r = width / 4.0;
 		
 		var colGeo1 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo1.scale(1.0/scale.x, 1.0, 1.0/scale.z);
 		colGeo1.translate(sx / 2.0 + r, 0.0, sz / 2.0 + r);
 
 		var colGeo2 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo2.scale(1.0/scale.x, 1.0, 1.0/scale.z);
 		colGeo2.translate(sx / 2.0 + r, 0.0, -sz / 2.0 - r);
 
 		var colGeo3 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo3.scale(1.0/scale.x, 1.0, 1.0/scale.z);
 		colGeo3.translate(-sx / 2.0 - r, 0.0, sz / 2.0 + r);
 
 		var colGeo4 = new THREE.CylinderGeometry(r, r, 1.0, 10.0);
+		colGeo4.scale(1.0/scale.x, 1.0, 1.0/scale.z);
 		colGeo4.translate(-sx / 2.0 - r, 0.0, -sz / 2.0 - r);
 
 		geo.merge(colGeo1);
@@ -140,11 +144,7 @@ export default function shapeSystem(axiom, grammar, scene) {
 		geo.merge(colGeo4);
 
 		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial());
-		
 		mesh.scale.set(scale.x, scale.y, scale.z);
-
-
-
 		return mesh;
 	}
 

@@ -95,7 +95,7 @@ function onLoad(framework) {
 
   // scene.add(o);
 
-  var c = ss.createBoxwColGeometry(new THREE.Vector3(2.0, 1.0, 2.0));
+  var c = ss.createBoxwColGeometry(new THREE.Vector3(2.0, 1.0, 3.0));
   // var bbox = new THREE.Box3().setFromObject(c);
 
   var geo = new THREE.EdgesGeometry( c.geometry );
