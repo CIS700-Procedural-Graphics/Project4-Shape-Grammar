@@ -1,45 +1,49 @@
 
 # Project 4: Shape Grammar
 
-For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
+Name: Rudraksha Shah, PennID: rdimple
 
-**Goal:** to model an urban environment using a shape grammar. 
+**Goal:** to model an urban environment using a shape grammar.
 
-**Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
+## Grammar design
 
-## Symbol Node (5 points)
-Modify your symbol node class to include attributes necessary for rendering, such as
-- Associated geometry instance
-- Position
-- Scale 
-- Anything else you may need
+The shape grammar works thus:
 
-## Grammar design (55 points)
-- Design at least five shape grammar rules for producing procedural buildings. Your buildings should vary in geometry and decorative features (beyond just differently-scaled cubes!). At least some of your rules should create child geometry that is in some way dependent on its parent’s state. (20 points)
-    - Eg. A building may be subdivided along the x, y, or z axis into two smaller buildings
-    - Some of your rules must be designed to use some property about its location. (10 points)
-    - Your grammar should have some element of variation so your buildings are non-deterministic.  Eg. your buildings sometimes subdivide along the x axis, and sometimes the y. (10 points)   
-- Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
+- The scene starts with a base plane being created which gets applied with a random noise between [0,1) over the entire plane to provide a rough terrain like surface.
+- Hills and a lake is generated on the terrain which completes the creation of the terrain.
+- 100 cubes are added to the scene and are randomly distributed throughout the terrain. A bounding box is created around the hills and lake such that no cube will be generated on the lake or on the hills.
+- All the cubes, base plane and cylinder geometry (that comes in later) is applied with a random texture material.
+- RunGeneration loops through all the cubes and by some random chance choses to either subdivide the cube along the X-axis or Z-axis into two new cubes. Scaling of the original cube along the Y-axis is also possible.
+- The cubes that are closer to the centre of the terrain i.e. the downtown region have a probability of becoming a tower instance, in which case it becomes one of the following towers:
+    - A step tower with two antennas.
+    - A step tower with 4 antennas.
+    - A step tower with cylinders as its higher floors.
+    - A spiral tower.
+- Each RunGeneration loops through the existing buildings in the scene and randomly subdivides them.
+- After a certain number of generations if the buildings have reached their maximum possible subdivision limit then no further manipulation is performed.
+- All buildings are randomly seeded and subdivided to avoid any grid patterns.
 
-## Create a city (30 points)
-- Add a ground plane or some other base terrain to your scene (0 points, come on now)
-- Using any strategy you’d like, procedurally generate features that demarcate your city into different areas in an interesting and plausible way (Just a uniform grid is neither interesting nor plausible). (20 points)
-    - Suggestions: roads, rivers, lakes, parks, high-population density
-    - Note, these features don’t have to be directly visible, like high-population density, but they should somehow be visible in the appearance or arrangement of your buildings. Eg. High population density is more likely to generate taller buildings
-- Generate buildings throughout your city, using information about your city’s features. Color your buildings with a method that uses some aspect of its state. Eg. Color buildings by height, by population density, by number of rules used to generate it. (5 points)
-- Document your grammar rules and general approach in the readme. (5 points)
-- ???
-- Profit.
+**Issues:**
 
-## Make it interesting (10)
-Experiment! Make your city a work of art.
+- Working on Textures:
+    - The texture loading has a bug and I know how to rectify it but the colored buildings look better than the textured buildings so I have left them as is.
 
+## Screen shots
 
-## Warnings:
-You can very easily blow up three.js with this assignment. With a very simple grammar, our medium quality machine was able to handle 100 buildings with 6 generations each, but be careful if you’re doing this all CPU-side.
+Colorful City Scape with Hills and Terrain:
+![](./Screen_Shots/i3.png)
 
-## Suggestions for the overachievers:
-Go for a very high level of decorative detail!
-Place buildings with a strategy such that buildings have doors and windows that are always accessible.
-Generate buildings with coherent interiors
-If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+Top View with Lake and building distribution:
+![](./Screen_Shots/i2.png)
+
+Towers in the Downtown:
+![](./Screen_Shots/i1.png)
+
+Step Tower:
+![](./Screen_Shots/i4.png)
+
+Cylinder Tower:
+![](./Screen_Shots/i6.png)
+
+Spiral Tower:
+![](./Screen_Shots/i7.png) ![](./Screen_Shots/i8.png)
