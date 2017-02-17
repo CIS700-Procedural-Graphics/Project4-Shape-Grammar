@@ -6,7 +6,10 @@ var ShapeEnum = Object.freeze({Ring: 0, Wall: 1, Roof1: 2,
 								Roof2: 3, Block: 4, Tower: 5, 
 								Wedge: 6, Emplacement: 7, Cyl: 8, 
 								Other: 999});
-var material = new THREE.MeshPhongMaterial();
+var material = new THREE.MeshPhongMaterial({
+	side: THREE.DoubleSide,
+    color: 0xfefaf0
+    });
 var objLoader = new THREE.OBJLoader();
 var objLibrary = [];
 
@@ -457,6 +460,8 @@ export default class GrammarSystem {
 		if (this.mesh == undefined) {
 			this.mesh = new THREE.Mesh(this.geometry, material);
 			this.mesh.name = "grammarGeo";
+			this.mesh.castShadow = true;
+  			this.mesh.receiveShadow = true;
 			this.scene.add(this.mesh);
 		}
 	}
