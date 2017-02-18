@@ -10,10 +10,10 @@ import Voronoi from './rhill-voronoi-core.js'
 var typeToObjMap = initializeMap();
 var shapeSet;
 
+//bias and gain functions for building height and color
 function bias(b, t) {
     return Math.pow(t, Math.log(b) / Math.log(0.5));
 }
-
 function gain(g, t) {
     if (t < 0.5) {
         return bias(1.0 - g, 2.0*t) / 2; 
@@ -39,11 +39,13 @@ function onLoad(framework) {
   directionalLight.position.multiplyScalar(10);
   scene.add(directionalLight);
 
+  var ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+  scene.add( ambientLight );
+
   // set camera position
   camera.position.set(1, 1, 2);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
-  // initialize LSystem and a Turtle to draw
   shapeSet = new Set();
 
   //initialize the ground
@@ -161,7 +163,7 @@ function onLoad(framework) {
 
           var distanceToCenter = Math.sqrt(midpoint.x*midpoint.x + midpoint.z*midpoint.z); //center is the origin
           var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
-          var buildingHeight = Math.max(Math.round(50.0 * gain(0.8, t)), 4.0);
+          var buildingHeight = Math.max(Math.round(40.0 * gain(0.8, t)), 4.0);
           //width and length are dependent on street length
           futureBuildings.scale = new THREE.Vector3(streetLength, buildingHeight, streetLength);
           futureBuildings.geom_type = 'FutureBuildings';
@@ -212,6 +214,7 @@ function initializeMap() {
   objLoader.load('/geo/ApartmentFloorCorner2.obj', function(obj) { tempMap.set('ApartmentFloorCorner2', obj.children[0].geometry); });
   objLoader.load('/geo/ApartmentRoofSide.obj', function(obj) { typeToObjMap.set('ApartmentRoofSide', obj.children[0].geometry) });
   objLoader.load('/geo/ApartmentRoofCorner.obj', function(obj) { typeToObjMap.set('ApartmentRoofCorner', obj.children[0].geometry) });
+  objLoader.load('/geo/ApartmentRoofCenter.obj', function(obj) { typeToObjMap.set('ApartmentRoofCenter', obj.children[0].geometry) });
 
   //skyscraper objects
   objLoader.load('/geo/SkyscraperSide.obj', function(obj) { typeToObjMap.set('SkyscraperSide', obj.children[0].geometry) });
@@ -223,7 +226,6 @@ function initializeMap() {
 
 function parseShapeSet(scene) {
 
-  
   //var singleGeometry = new THREE.Geometry();
   var dxSampling = 135;
   var dySampling = 135;
@@ -258,7 +260,8 @@ function parseShapeSet(scene) {
 
   }
   
-  //var mesh = new THREE.Mesh(singleGeometry, material);
+  //var singleMaterial = new THREE.MeshLambertMaterial({color: 0xffffff, wireframe: false});
+  //var mesh = new THREE.Mesh(singleGeometry, singleMaterial);
   //scene.add(mesh);
 
 }

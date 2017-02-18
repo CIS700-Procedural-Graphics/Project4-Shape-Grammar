@@ -188,7 +188,7 @@ export default class Lsystem {
 			if (buildingScaleX >= 4.0) {
 
 				//add a little bit of randomness to the height of building
-				var height = replacedShape.scale.y + Math.random()*10.0;
+				var height = Math.round(replacedShape.scale.y + Math.random()*10.0);
 				//type of building depends on the height
 				if (replacedShape.scale.y > 20.0) {
 					buildingType = 'S';
@@ -240,6 +240,14 @@ export default class Lsystem {
 		shape.terminal = false;
 		shape.geom_type = 'ApartmentRoof';
 		shapeSet.add(shape);
+
+		var roofCenter = new Shape('C');
+		roofCenter.mat = new THREE.Matrix4().copy(replacedShape.mat);
+	 	roofCenter.mat.multiply(mat6);
+	 	roofCenter.scale = new THREE.Vector3(replacedShape.scale.x-2.0, 1.0, replacedShape.scale.z-2.0);
+	 	roofCenter.terminal = true;
+	 	roofCenter.geom_type = 'ApartmentRoofCenter';
+	 	shapeSet.add(roofCenter);
 	};
 
 	makeMiddle(shapeSet, replacedShape) {
@@ -585,7 +593,7 @@ export default class Lsystem {
 		var mat6 = new THREE.Matrix4();
 	 	mat6.makeTranslation(0, replacedShape.scale.y - 1.0, 0);
 	 	shape.mat.multiply(mat6);
-		shape.scale = new THREE.Vector3(replacedShape.scale.x, 1, replacedShape.scale.z);
+		shape.scale = new THREE.Vector3(replacedShape.scale.x-0.146*2, 1, replacedShape.scale.z-0.146*2);
 		shape.terminal = true;
 		shape.geom_type = 'SkyscraperRoof';
 		shapeSet.add(shape);
