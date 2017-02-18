@@ -33,7 +33,13 @@ function onLoad(framework) {
   camera.position.set(50, 100, 200);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
-  var axiom = [new Shape()];
+  new Shape(null, )
+  var axiom = [new Shape(), new Shape(), new Shape(), new Shape(), new Shape(), new Shape(), new Shape()];
+  for (var i = 0; i < axiom.length; i++) {
+    var sc = axiom[i].mesh.scale;
+    axiom[i].mesh.position.set((3.0 + sc.x) * i , sc.y / 2.0, sc.z);
+  }
+
   var ss = new ShapeSystem(axiom, scene);
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
@@ -42,7 +48,7 @@ function onLoad(framework) {
 
   gui.add(ss, 'iterate');
 
-  var geometry = new THREE.PlaneGeometry( 20, 20, 32 );
+  var geometry = new THREE.PlaneGeometry( 250, 50, 32 );
   var material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
   plane.rotateX(Math.PI / 2.0);
