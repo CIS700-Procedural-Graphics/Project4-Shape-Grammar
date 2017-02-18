@@ -22,7 +22,7 @@ module.exports = {
       },
       {
         test: /\.(obj|mtl)$/,
-        loader: 'file?name=../assets/[name].[ext]'
+        loader: 'file-loader?name=./../assets/[name].[ext]'
      }
     ]
   },
