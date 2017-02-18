@@ -3,43 +3,39 @@
 
 For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
 
-**Goal:** to model an urban environment using a shape grammar. 
-
-**Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
-
-## Symbol Node (5 points)
-Modify your symbol node class to include attributes necessary for rendering, such as
-- Associated geometry instance
-- Position
-- Scale 
-- Anything else you may need
-
-## Grammar design (55 points)
-- Design at least five shape grammar rules for producing procedural buildings. Your buildings should vary in geometry and decorative features (beyond just differently-scaled cubes!). At least some of your rules should create child geometry that is in some way dependent on its parent’s state. (20 points)
-    - Eg. A building may be subdivided along the x, y, or z axis into two smaller buildings
-    - Some of your rules must be designed to use some property about its location. (10 points)
-    - Your grammar should have some element of variation so your buildings are non-deterministic.  Eg. your buildings sometimes subdivide along the x axis, and sometimes the y. (10 points)   
-- Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
-
-## Create a city (30 points)
-- Add a ground plane or some other base terrain to your scene (0 points, come on now)
-- Using any strategy you’d like, procedurally generate features that demarcate your city into different areas in an interesting and plausible way (Just a uniform grid is neither interesting nor plausible). (20 points)
-    - Suggestions: roads, rivers, lakes, parks, high-population density
-    - Note, these features don’t have to be directly visible, like high-population density, but they should somehow be visible in the appearance or arrangement of your buildings. Eg. High population density is more likely to generate taller buildings
-- Generate buildings throughout your city, using information about your city’s features. Color your buildings with a method that uses some aspect of its state. Eg. Color buildings by height, by population density, by number of rules used to generate it. (5 points)
-- Document your grammar rules and general approach in the readme. (5 points)
-- ???
-- Profit.
-
-## Make it interesting (10)
-Experiment! Make your city a work of art.
+**Goal:** to model an urban environment using a shape grammar.
 
 
-## Warnings:
-You can very easily blow up three.js with this assignment. With a very simple grammar, our medium quality machine was able to handle 100 buildings with 6 generations each, but be careful if you’re doing this all CPU-side.
+## Implementation Details
 
-## Suggestions for the overachievers:
-Go for a very high level of decorative detail!
-Place buildings with a strategy such that buildings have doors and windows that are always accessible.
-Generate buildings with coherent interiors
-If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+I have divided implementation into the main.js file and the shape.js file.
+
+shape.js contains most of the functions that implement the various rules in the Shape class. These are signified by a single digit identifier, and they create shape objects that identify which geometry to use to draw the rule with.
+
+main.js contains the logic to expand the grammar list, which is stored in a global all shapes list variable. There's one function to expand the list by calling their respective rule functions in the Shape class. There's another function to iterate through this list (once it's been completely expanded) and draw all their geometry.
+
+The rules I have implemented are:
+
+1. subdividing along Y axis
+2. creating a tower of cylinders
+3. creating cylinder towers along a bezier curve
+4. creating an archway of hearts along a bezier curve
+5. creating a spiraling tower
+
+Since formation of the buildings are randomly chosen, refresh the page to get different configurations!
+
+
+## Images
+
+
+![alt text](https://github.com/CIS-461-2017/path-tracer-episode-ii-attack-of-the-rays-MegSesh/blob/master/renders/rendered_images_uniform_recur1_ONball.png "Image 1")
+
+
+![alt text](https://github.com/CIS-461-2017/path-tracer-episode-ii-attack-of-the-rays-MegSesh/blob/master/renders/rendered_images_uniform_recur1_ONball.png "Image 1")
+
+
+![alt text](https://github.com/CIS-461-2017/path-tracer-episode-ii-attack-of-the-rays-MegSesh/blob/master/renders/rendered_images_uniform_recur1_ONball.png "Image 1")
+
+
+
+![alt text](https://github.com/CIS-461-2017/path-tracer-episode-ii-attack-of-the-rays-MegSesh/blob/master/renders/rendered_images_uniform_recur1_ONball.png "Image 1")
