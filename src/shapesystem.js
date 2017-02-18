@@ -8,12 +8,18 @@ function Rule(successor, probability) {
 }
 
 export default function shapeSystem(axiom, scene) {
-	if (axiom instanceof Shape) {
+	if (axiom) {
 		this.axiom = axiom;
 	} else {
-		this.axiom = new Shape();
+		this.axiom = [new Shape()];
 	}
 
+	this.grammar = {
+		'bottom' : 'create columns',
+		'building' : 'createFloors or subdivide',
+		'middle': 'possible oning',
+		'top': 'add a roof'
+	};
 
 
 	//this.grammar = grammar;
@@ -46,20 +52,25 @@ export default function shapeSystem(axiom, scene) {
 		}
 	}
 
-	var a = false;
-
-	this.traverse = function(scene) {
-		if (a === false) {
-			axiom.createFloors(3);
-			//axiom.subdivide();
-			a = true;
+	this.traverse = function() {
+		for (var i = 0; i < axiom.length; i++) {
+			axiom[i].draw(this.scene, this.iterations);
 		}
-
-		axiom.draw(scene, this.iterations);
 	}
 
 	this.iterate = function() {
 		// remember scene is available through this.scene
+
+		// Clear everything from the scene
+		// this.scene.children.forEach(function(object){
+		//     scene.remove(object);
+		// });
+
+		axiom[0].subdivide();
+
+		this.traverse();
+
+		this.iterations++
 		console.log('iterate');
 	}
 

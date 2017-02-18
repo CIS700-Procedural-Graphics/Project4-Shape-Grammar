@@ -33,7 +33,7 @@ function onLoad(framework) {
   camera.position.set(50, 100, 200);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
-  var axiom = new Shape();
+  var axiom = [new Shape()];
   var ss = new ShapeSystem(axiom, scene);
 
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {
@@ -48,6 +48,7 @@ function onLoad(framework) {
   plane.rotateX(Math.PI / 2.0);
   scene.add( plane );
 
+  // ss.axiom[0].subdivide(0);
   ss.traverse(scene);
 }
 

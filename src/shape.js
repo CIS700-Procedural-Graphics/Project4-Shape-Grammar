@@ -9,13 +9,21 @@ function randColor() {
 	return Math.random() * 0xffffff;
 };
 
+function mapRand(start, end) {
+	return Math.random * (end - start) + start;
+};
+
+function mat_randColor() {
+	return new THREE.MeshLambertMaterial({color:randColor()});
+}
+
 // Shape Node
 // parent: parent of the node
 // boundingbox: bounding box of the shape in world space
 // geometry: geometry to render
 // children
 export default class Shape {
-	constructor(parent, mesh) {
+	constructor(parent, mesh, name) {
 		if (arguments.length === 0) {
 			// Default empty
 			this.parent = null;
@@ -27,8 +35,14 @@ export default class Shape {
 			this.iteration = 0;
 
 			// For continuation purposes
-			this.name = 'floor';
+			this.name = 'building';
 		} else {
+			if (name) {
+				this.name = name;
+			} else {
+				this.name = '';
+			}
+
 			this.parent = parent;
 			// this.boundingBox = boundingBox;
 			this.mesh = mesh;
@@ -44,11 +58,6 @@ export default class Shape {
 		this.division = ''; // Current subdivision
 		this.children = [];
 	};
-
-
-
-
-	// Creates a gate 
 
 	// Creates floors
 	// Can only create on a building that has floors for the first time
@@ -80,68 +89,68 @@ export default class Shape {
 				new THREE.MeshLambertMaterial( {color: randColor()} ));
 
 				child.position.set(p.x, p.y - s.y / 2.0 + s_axis / 2.0 + s_axis * i, p.z);
-				this.children.push(new Shape(this, child));
+				this.children.push(new Shape(this, child, i.toString())); // Indicate what floor it is
 			}
 	};
 
 	// Subdivides Evenly in Half
-	// Should not be used for in y direction for floor creation
+	// Should not be used for in y direction, instead use floor creation
 	subdivide(axis) { // 0 = x, 1 = y, 2 = z
+		axis = 2;
+		this.show == false;
+
+		var s = this.mesh.scale;
+		var p = this.mesh.position;
+
+		// Random heights for the two different subdivisions
+		var h1 = mapRand(s.y / 2.0, s.y);
+		var h2 = mapRand(s.y / 2.0, s.y);
+
+
+
 		if (this.children.length === 0) {
 			if (axis == null) {
 				axis = 0;
 			}
 
+			this.name = ''; // No longer a building once there are floors
 			this.show = false;
 
-			var s = this.mesh.scale;
-			var p = this.mesh.position;
 
 			if (axis == 0) {
-				var s_child = new THREE.Vector3(s.x / 2.0, s.y, s.z);
-				var p_left = new THREE.Vector3(p.x - s.x / 4.0, p.y, p.z);
-				var p_right = new THREE.Vector3(p.x + s.x / 4.0, p.y, p.z);
+				var sx1 = mapRand(s.x / 4.0, s.x / 2.0);
+				var sx2 = mapRand(s.x / 4.0, s.x / 2.0);
+
+				var sz1 = mapRand(s.z / 2.0, s.z);
+				var sz2 = mapRand(s.z / 2.0, s.z);
+
+				//var s_child = new THREE.Vector3(s.x / 2.0, s.y, s.z);
+				var p_left = new THREE.Vector3(
+					p.x - sx1 / 2.0, 
+					p.y - s.y / 2.0 + h1 / 2.0, 
+					p.z - s.z / 2.0 + sz1 / 2.0);
+				var p_right = new THREE.Vector3(
+					p.x + sx1 / 2.0,
+					p.y - s.y / 2.0 + h2 / 2.0, 
+					p.z - s.z / 2.0 + sz2 / 2.0);
 				
 				var left = new THREE.Mesh(
-								new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-								lambertWhite);
-
-				lambertWhite = new THREE.MeshLambertMaterial( {color: 0x00ffff} );
+								new THREE.BoxGeometry(1.0, 1.0, 1.0),
+								mat_randColor());
+				left.scale.set(sx1, h1, sz1);
 				
 				var right = new THREE.Mesh(
-								new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-								lambertWhite);
+								new THREE.BoxGeometry(1.0, 1.0, 1.0),
+								mat_randColor());
+				right.scale.set(sx2, h2, sz2);
+
 				left.position.set(p_left.x, p_left.y, p_left.z);
 				right.position.set(p_right.x, p_right.y, p_right.z);
-				this.children.push(new Shape(this, left));
-				this.children.push(new Shape(this, right));
-			} else if (axis == 1) {
-				var s = this.mesh.scale;
-				var p = this.mesh.position;
 
-				var s_child = new THREE.Vector3(s.x, s.y / 2.0, s.z);
-
-				var p_bottom = new THREE.Vector3(p.x, p.y - s.y / 4.0, p.z);
-				var p_top = new THREE.Vector3(p.x, p.y + s.y / 4.0, p.z);
-
-				var bottom = new THREE.Mesh(
-					new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-					lambertWhite);
-				bottom.position.set(p_bottom.x, p_bottom.y, p_bottom.z);
-
-				lambertWhite = new THREE.MeshLambertMaterial( {color: 0x00ffff} );
-				var top = new THREE.Mesh(
-					new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-					lambertWhite);
-				top.position.set(p_top.x, p_top.y, p_top.z);
-
-				this.children.push(new Shape(this, top));
-				this.children.push(new Shape(this, bottom));
-
-			} else {
-				var s = this.mesh.scale;
-				var p = this.mesh.position;
-
+				// Add to the childrenc
+				this.children.push(new Shape(this, left, 'building'));
+				this.children.push(new Shape(this, right, 'building'));
+			}  else {
 				var s_child = new THREE.Vector3(s.x, s.y, s.z / 2.0);
 
 				var p_front = new THREE.Vector3(p.x, p.y, p.z + s.z / 4.0);
@@ -149,17 +158,16 @@ export default class Shape {
 
 				var front = new THREE.Mesh(
 					new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-					lambertWhite);
+					mat_randColor());
 				front.position.set(p_front.x, p_front.y, p_front.z);
 
-				lambertWhite = new THREE.MeshLambertMaterial( {color: 0x00ffff} );
 				var back = new THREE.Mesh(
 					new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-					lambertWhite);
+					mat_randColor());
 				back.position.set(p_back.x, p_back.y, p_back.z);
 
-				this.children.push(new Shape(this, front));
-				this.children.push(new Shape(this, back));
+				this.children.push(new Shape(this, front, 'building'));
+				this.children.push(new Shape(this, back, 'building'));
 			}
 		} else {
 			for(var i = 0; i < this.children.length; i++) {
@@ -177,14 +185,9 @@ export default class Shape {
 		}
 		if (this.show === true) {
 			scene.add(this.mesh);
+		} 
+		else {
+			scene.remove(this.mesh);
 		}
 	};
-
-	// Well that didn't work
-	// drawBbox(scene) {
-	// 	var geo = new THREE.EdgesGeometry( this.mesh.geometry );
-	// 	var mat = new THREE.LineBasicMaterial( { color: 0x00ffff, linewidth: 2 } );
-	// 	var wireframe = new THREE.LineSegments( geo, mat );
-	// 	scene.add( wireframe );
-	// };
 }
