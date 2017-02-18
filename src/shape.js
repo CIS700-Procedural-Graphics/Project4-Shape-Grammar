@@ -259,6 +259,8 @@ export default class Shape {
 	// Scale of the space
 	// Width for how much space on the perimeter should the columns take up
 	createBoxwColGeometry(scale, width) {
+		this.name = '';
+
 		if (!width) {
 			width = 0.25;
 		}
@@ -294,7 +296,10 @@ export default class Shape {
 
 		var mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial());
 		mesh.scale.set(scale.x, scale.y, scale.z);
-		return mesh;
+		var p = this.mesh.position;
+		mesh.position.set(p.x, p.y, p.z);
+
+		this.mesh = mesh;
 	}
 
 	// THIS IS WHERE ALL THE GRAMMAR IS BASICALLY
@@ -334,7 +339,8 @@ export default class Shape {
 		} else if (this.name == 'bottom') {
 			if (r < 0.5) {
 				// add columns
-
+				console.log('adding some columns');
+				this.createBoxwColGeometry(this.mesh.scale, this.mesh.scale.x / 4.0);
 			}
 		}
 	};
