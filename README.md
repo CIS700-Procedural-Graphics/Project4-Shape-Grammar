@@ -24,6 +24,9 @@ The rules I have implemented are:
 
 Since formation of the buildings are randomly chosen, refresh the page to get different configurations!
 
+Note: I used this example for the implementation of the water shader
+https://threejs.org/examples/?q=shad#webgl_shaders_ocean
+
 
 ## Images
 
