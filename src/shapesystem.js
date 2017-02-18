@@ -66,7 +66,7 @@ export default function shapeSystem(axiom, scene) {
 		//     scene.remove(object);
 		// });
 
-		axiom[0].subdivide();
+		axiom[0].subdivide(0);
 
 		this.traverse();
 

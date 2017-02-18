@@ -10,7 +10,7 @@ function randColor() {
 };
 
 function mapRand(start, end) {
-	return Math.random * (end - start) + start;
+	return Math.random() * (end - start) + start;
 };
 
 function mat_randColor() {
@@ -96,8 +96,17 @@ export default class Shape {
 	// Subdivides Evenly in Half
 	// Should not be used for in y direction, instead use floor creation
 	subdivide(axis) { // 0 = x, 1 = y, 2 = z
-		axis = 2;
-		this.show == false;
+		// if (axis == 0) {
+		// 	axis = 1;
+		// } else {
+		// 	axis = 0;
+		// }
+
+		// axis = 1;
+
+		console.log(axis)
+
+		// this.show == false;
 
 		var s = this.mesh.scale;
 		var p = this.mesh.position;
@@ -105,7 +114,6 @@ export default class Shape {
 		// Random heights for the two different subdivisions
 		var h1 = mapRand(s.y / 2.0, s.y);
 		var h2 = mapRand(s.y / 2.0, s.y);
-
 
 
 		if (this.children.length === 0) {
@@ -117,20 +125,21 @@ export default class Shape {
 			this.show = false;
 
 
+			var sx1, sx2, sz1, sz2;
+
 			if (axis == 0) {
-				var sx1 = mapRand(s.x / 4.0, s.x / 2.0);
-				var sx2 = mapRand(s.x / 4.0, s.x / 2.0);
+				sx1 = mapRand(s.x / 4.0, s.x / 2.0);
+				sx2 = mapRand(s.x / 4.0, s.x / 2.0);
 
-				var sz1 = mapRand(s.z / 2.0, s.z);
-				var sz2 = mapRand(s.z / 2.0, s.z);
+				sz1 = mapRand(s.z / 2.0, s.z);
+				sz2 = mapRand(s.z / 2.0, s.z);
 
-				//var s_child = new THREE.Vector3(s.x / 2.0, s.y, s.z);
 				var p_left = new THREE.Vector3(
 					p.x - sx1 / 2.0, 
 					p.y - s.y / 2.0 + h1 / 2.0, 
 					p.z - s.z / 2.0 + sz1 / 2.0);
 				var p_right = new THREE.Vector3(
-					p.x + sx1 / 2.0,
+					p.x + sx2 / 2.0,
 					p.y - s.y / 2.0 + h2 / 2.0, 
 					p.z - s.z / 2.0 + sz2 / 2.0);
 				
@@ -147,31 +156,46 @@ export default class Shape {
 				left.position.set(p_left.x, p_left.y, p_left.z);
 				right.position.set(p_right.x, p_right.y, p_right.z);
 
-				// Add to the childrenc
+				// Add to the children
 				this.children.push(new Shape(this, left, 'building'));
 				this.children.push(new Shape(this, right, 'building'));
-			}  else {
-				var s_child = new THREE.Vector3(s.x, s.y, s.z / 2.0);
+			} else {
+				sx1 = mapRand(s.x / 2.0, s.x);
+				sx2 = mapRand(s.x / 2.0, s.x);
 
-				var p_front = new THREE.Vector3(p.x, p.y, p.z + s.z / 4.0);
-				var p_back = new THREE.Vector3(p.x, p.y, p.z - s.z / 4.0);
+				sz1 = mapRand(s.z / 4.0, s.z / 2.0);
+				sz2 = mapRand(s.z / 4.0, s.z / 2.0);
 
-				var front = new THREE.Mesh(
-					new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-					mat_randColor());
-				front.position.set(p_front.x, p_front.y, p_front.z);
+				var p_left = new THREE.Vector3(
+					p.x - s.x / 2.0 + sx1 / 2.0, 
+					p.y - s.y / 2.0 + h1 / 2.0, 
+					p.z - sz1 / 2.0);
+				var p_right = new THREE.Vector3(
+					p.x - s.x / 2.0 + sx2 / 2.0,
+					p.y - s.y / 2.0 + h2 / 2.0, 
+					p.z + sz2 / 2.0);
+				
+				var left = new THREE.Mesh(
+								new THREE.BoxGeometry(1.0, 1.0, 1.0),
+								mat_randColor());
+				left.scale.set(sx1, h1, sz1);
+				
+				var right = new THREE.Mesh(
+								new THREE.BoxGeometry(1.0, 1.0, 1.0),
+								mat_randColor());
+				right.scale.set(sx2, h2, sz2);
 
-				var back = new THREE.Mesh(
-					new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-					mat_randColor());
-				back.position.set(p_back.x, p_back.y, p_back.z);
+				left.position.set(p_left.x, p_left.y, p_left.z);
+				right.position.set(p_right.x, p_right.y, p_right.z);
 
-				this.children.push(new Shape(this, front, 'building'));
-				this.children.push(new Shape(this, back, 'building'));
+				// Add to the children
+				this.children.push(new Shape(this, left, 'building'));
+				this.children.push(new Shape(this, right, 'building'));
 			}
+
 		} else {
 			for(var i = 0; i < this.children.length; i++) {
-				this.children[i].subdivide();
+				this.children[i].subdivide(i % 2);
 			}
 		}
 	};
