@@ -1,4 +1,8 @@
 require('file-loader?name=[name].[ext]!../index.html');
+
+
+
+
 const THREE = require('three');
 import Framework from './framework'
 import Lsystem, {linkedListToString} from './lsystem'
@@ -10,6 +14,8 @@ import {Geometry} from './ref'
 const MTLLoader = require('three-mtl-loader'); 
 const OBJLoader = require('jser-three-obj-loader');
 OBJLoader(THREE);
+
+
 
 var loaded = 0; // Are the geometries loaded? 
 var rendered = false; // Have the shapes been rendered?
@@ -137,11 +143,11 @@ function resetShapeGrammar() {
 function loadGeometries() {
   var mtlLoader = new MTLLoader();
 
-  mtlLoader.setPath('./../assets/');
+  // mtlLoader.setPath('./../assets/');
 
   for (var shape in Geometry) {
     var path = Geometry[shape].path;
-    mtlLoader.load(path + '.mtl', 
+    mtlLoader.load(Geometry[shape].mtlFile, 
       function(shape){
         return (
           function(materials){
@@ -149,10 +155,10 @@ function loadGeometries() {
             var path = Geometry[shape].path;
 
             var objLoader = new THREE.OBJLoader();
-            objLoader.setPath('./../assets/');
+            // objLoader.setPath('./../assets/');
             objLoader.setMaterials(materials);
 
-            objLoader.load(path + '.obj', function(s){ 
+            objLoader.load(Geometry[shape].objFile, function(s){ 
               return (function(obj){
                 obj.position.set(0, 0, 0);
                 obj.rotation.set(0, 0, 0);

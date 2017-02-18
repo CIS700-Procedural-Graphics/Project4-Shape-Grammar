@@ -3,6 +3,7 @@ const path = require('path');
 module.exports = {
   entry: path.join(__dirname, "src/main"),
   output: {
+     path: path.join(__dirname, "build"),
     filename: "./bundle.js"
   },
   module: {
@@ -21,8 +22,8 @@ module.exports = {
       },
       {
         test: /\.(obj|mtl)$/,
-        loader: 'file-loader?name=./../assets/[name].[ext]'
-      }
+        loader: 'file?name=../assets/[name].[ext]'
+     }
     ]
   },
   devtool: 'source-map',
