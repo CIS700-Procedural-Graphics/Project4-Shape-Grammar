@@ -14,13 +14,13 @@ export default function shapeSystem(axiom, scene) {
 		this.axiom = [new Shape()];
 	}
 
-	this.grammar = {
-		'bottom' : 'create columns',
-		'building' : 'createFloors or subdivide',
-		'middle': 'possible oning',
-		'top': 'add a roof'
-	};
-
+	// LOL JK FORGET THIS, JUST GO TO ITERATE I MEAN IT"S JUST THERE, BYE
+	// this.grammar = {
+	// 	'bottom' : 'create columns',
+	// 	'building' : 'createFloors or subdivide',
+	// 	'middle': 'possible oning',
+	// 	'top': 'add a roof'
+	// }; 
 
 	//this.grammar = grammar;
 	this.iteration = 0;
@@ -59,16 +59,15 @@ export default function shapeSystem(axiom, scene) {
 	}
 
 	this.iterate = function() {
-		// remember scene is available through this.scene
+		for (var i = 0; i < axiom.length; i++) {
+			var a = axiom[i];
 
-		// Clear everything from the scene
-		// this.scene.children.forEach(function(object){
-		//     scene.remove(object);
-		// });
-
-		axiom[0].subdivide(0);
+			// Iterate
+			a.iterate();
+		}
 
 		this.traverse();
+		
 
 		this.iterations++
 		console.log('iterate');

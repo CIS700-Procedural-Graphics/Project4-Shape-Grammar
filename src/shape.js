@@ -63,60 +63,53 @@ export default class Shape {
 	// Can only create on a building that has floors for the first time
 	// This should only happen once per building and should really be the first thing that happens
 	createFloors(numFloors) {
-			this.show = false;
-			// subdivide
-			var s_factor = 0.5;
+		this.show = false;
+		this.name = ''; // No longer a building
 
-			var s = this.mesh.scale;
-			var p = this.mesh.position;
+		// subdivide
+		var s_factor = 0.5;
 
-			var s_child = s.clone();
-			var s_axis;
+		var s = this.mesh.scale;
+		var p = this.mesh.position;
 
-			if (numFloors != null && numFloors > 0) {
-				numFloors = Math.floor(numFloors);
-				s_axis = 1.0 / numFloors;
-			} else {
-				numFloors = 2.0;
-				s_axis = 0.5;
+		var s_child = s.clone();
+		var s_axis;
+
+		if (numFloors != null && numFloors > 0) {
+			numFloors = Math.floor(numFloors);
+			s_axis = 1.0 / numFloors;
+		} else {
+			numFloors = 2.0;
+			s_axis = 0.5;
+		}
+
+		s_axis = s.y * s_axis;
+		s_child.setComponent(1, s_axis);
+
+		for(var i = 0; i < numFloors; i++) {
+			var child = new THREE.Mesh(new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
+			new THREE.MeshLambertMaterial( {color: randColor()} ));
+
+			child.position.set(p.x, p.y - s.y / 2.0 + s_axis / 2.0 + s_axis * i, p.z);
+			var shape = new Shape(this, child, i.toString());
+			if (i == numFloors - 1) {
+				shape.name = 'top';
 			}
-
-			s_axis = s.y * s_axis;
-			s_child.setComponent(1, s_axis);
-
-			for(var i = 0; i < numFloors; i++) {
-				var child = new THREE.Mesh(new THREE.BoxGeometry(s_child.x, s_child.y, s_child.z),
-				new THREE.MeshLambertMaterial( {color: randColor()} ));
-
-				child.position.set(p.x, p.y - s.y / 2.0 + s_axis / 2.0 + s_axis * i, p.z);
-				this.children.push(new Shape(this, child, i.toString())); // Indicate what floor it is
-			}
+			this.children.push(shape);
+		}
 	};
 
 	// Subdivides Evenly in Half
 	// Should not be used for in y direction, instead use floor creation
 	subdivide(axis) { // 0 = x, 1 = y, 2 = z
-		// if (axis == 0) {
-		// 	axis = 1;
-		// } else {
-		// 	axis = 0;
-		// }
-
-		// axis = 1;
-
-		console.log(axis)
-
-		// this.show == false;
-
-		var s = this.mesh.scale;
-		var p = this.mesh.position;
-
-		// Random heights for the two different subdivisions
-		var h1 = mapRand(s.y / 2.0, s.y);
-		var h2 = mapRand(s.y / 2.0, s.y);
-
-
 		if (this.children.length === 0) {
+			var s = this.mesh.scale;
+			var p = this.mesh.position;
+
+			// Random heights for the two different subdivisions
+			var h1 = mapRand(s.y / 2.0, s.y);
+			var h2 = mapRand(s.y / 2.0, s.y);
+
 			if (axis == null) {
 				axis = 0;
 			}
@@ -199,6 +192,30 @@ export default class Shape {
 			}
 		}
 	};
+
+	// THIS IS WHERE ALL THE GRAMMAR IS BASICALLY
+	// This is called by the ShapeSystem whatever.
+	iterate() {
+		var r = Math.random();
+
+		if (this.children.length > 0) {
+			for(var i = 0; i < this.children.length; i++) {
+				this.children[i].iterate();
+			}
+		}
+
+		if (this.name == 'building') {
+			if (r < 0.8) {
+				// Subdivide
+
+				this.subdivide(0);
+			} else {
+				r = Math.random();
+
+				this.createFloors(6); // Creates floors
+			}
+		}
+	}
 
 	draw(scene, n) {
 		// if (n < this.iteration && this.children.length != 0) {
