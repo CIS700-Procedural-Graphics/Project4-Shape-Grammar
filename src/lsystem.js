@@ -188,7 +188,7 @@ export default class Lsystem {
 			if (buildingScaleX >= 5.0) {
 
 				//add a little bit of randomness to the height of building
-				var height = Math.max(Math.round(replacedShape.scale.y + Math.random()*10.0), 5.0);
+				var height = Math.max(Math.round(replacedShape.scale.y + Math.random()*5.0), 5.0);
 				//type of building depends on the height
 				if (height > 30.0) {
 					buildingType = 'S';

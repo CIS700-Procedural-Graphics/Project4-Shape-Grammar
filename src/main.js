@@ -153,7 +153,7 @@ function onLoad(framework) {
 
           var distanceToCenter = Math.sqrt(midpoint.x*midpoint.x + midpoint.z*midpoint.z); //center is the origin
           var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
-          var buildingHeight = Math.max(Math.round(50.0 * gain(0.9, t)), 4.0);
+          var buildingHeight = Math.max(Math.round(50.0 * gain(0.8, t)), 4.0);
           //width and length are dependent on street length
           futureBuildings.scale = new THREE.Vector3(streetLength, buildingHeight, streetLength);
           futureBuildings.geom_type = 'FutureBuildings';
@@ -218,6 +218,13 @@ function initializeMap() {
   return tempMap;
 }
 
+function palette(t) {
+  return new THREE.Color(
+    0.5 + 0.3*Math.cos( 6.28318*(1.0*t+0.0) ), 
+    0.5 + 0.3*Math.cos( 6.28318*(1.0*t+0.1) ), 
+    0.5 + 0.3*Math.cos( 6.28318*(1.0*t+0.2) ));
+}
+
 function parseShapeSet(scene) {
 
   //var singleGeometry = new THREE.Geometry();
@@ -234,13 +241,18 @@ function parseShapeSet(scene) {
       box = new THREE.Geometry();
     }
 
-    //set color based on distance from center
+    //set color based on distance from center (colorFactor) and height from ground (palette)
     var position = new THREE.Vector3(0, 0, 0).applyMatrix4(shape.mat);
     var distanceToCenter = Math.sqrt(position.x*position.x + position.z*position.z); //center is the origin
     var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
-    var colorFactor = Math.max(gain(0.7, t), 0.2);
-    var material = new THREE.MeshLambertMaterial({color: 0xffffff, shading: THREE.FlatShading });
-    material.color.setRGB(colorFactor, colorFactor, colorFactor);
+    var colorFactor = gain(0.7, t)*0.7+0.3;
+    var material;
+    if (shape.geom_type === 'SkyscraperCorner' || shape.geom_type === 'SkyscraperSide' || shape.geom_type === 'SkyscraperRoof') {
+      material = new THREE.MeshLambertMaterial({color: palette(50.0/60.0).multiplyScalar(colorFactor), shading: THREE.FlatShading });
+    }
+    else {
+      material = new THREE.MeshLambertMaterial({color: palette(position.y/80.0).multiplyScalar(colorFactor), shading: THREE.FlatShading });
+    }
 
     var boxMesh = new THREE.Mesh(box, material);
 
