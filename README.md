@@ -13,17 +13,19 @@ For 19th/20th century apartments, I used two reference images.
 
 
 ![](./img/ref1.jpg)
+
 The first image is of the New York Times building constructed in 1889 and is still standing today. What I took from this image is that there are 1-story as well as 2-story windows. In addition, arched windows seem like a common decor. The other 19th/20th century apartment image is black and white, so the brown-yellow coloring of this building also tells me more about the material used to construct it.
 
 
 ![](./img/ref2.jpg)
+
 The second image is of the Old Metropolitan Opera House built in 1883 near Times Square. There generally seems to have an extruded "ledge" near the top of every window. In addition, the roof is relatively flat and has multiple "ledge" extrusions.
 
 
 For modern skyscrapers, I used a reference image of the Wall Street skyline.
 
 
-![](./images/ref3.jpg)
+![](./img/ref3.jpg)
 The modern skyscrapers are a lot simpler compared to the 19th/20th century apartments. Either the windows on each floor are horizontally aligned or vertically aligned. In addition, the color of the buildings have a blue tint because the windows are generally reflecting the colors of the sky.
 
 ## Design
@@ -57,7 +59,7 @@ I colored the buildings with a gain function so that the farther away a building
 - Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
 
 ## Optimizations
--Did not save geometry in each Shape Node, instead just used the geom_type to add the geometry to the scene.
--Removed unneeded "new" objects because Google Chrome's garbage collection is not that good.
--Deleted unseen faces of each building polygon to avoid unncessary lambertian shading.
+- Did not save geometry in each Shape Node. Instead, just used the geom_type to add the geometry to the scene.
+- Removed unneeded "new" objects because web browser garbage collection is not that great.
+- Deleted unseen faces of each building geometry model to avoid unncessary lambertian shading.
 
