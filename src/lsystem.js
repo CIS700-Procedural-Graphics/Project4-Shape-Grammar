@@ -101,16 +101,11 @@ export default class Lsystem {
 		var finalShapes = this.shapes;
 
 		for (var count = 0; count < n; count++) {
-
-			//var tempShapes = new Set();
-
 			//iterate through the current shapes
 			for(var shape of finalShapes.values()) {
-				//if shape is terminal, do not replace using grammar, just add to new set
-				if (shape.terminal) {
-					//tempShapes.add(shape);
-				}
-				else {
+
+				//if shape is terminal, do not replace using grammar
+				if (!shape.terminal) {
 					//iterate through the grammar to find matching symbol
 					for (var key in this.grammar) {
 						if (shape.symbol === key) {
@@ -121,6 +116,7 @@ export default class Lsystem {
 								var rule = this.grammar[key][i];
 								sumProbability += rule.probability;
 								if (seed <= sumProbability) {
+
 									//walk through successor string and apply each function to shape
 									for (var j = 0; j < rule.successorString.length; j++) {
 										var successor = rule.successorString[j];
@@ -131,6 +127,7 @@ export default class Lsystem {
 								            finalShapes.delete(shape);
 								        }
 							    	}
+
 							        //break forloop through rules, since rule is found
 									break;
 								}
@@ -142,7 +139,6 @@ export default class Lsystem {
 
 				}
 	        }
-	        //finalShapes = tempShapes;
     	}
 
 		return finalShapes;
@@ -151,29 +147,24 @@ export default class Lsystem {
 	splitStreet(shapeSet, replacedShape) {
 
 		var buildingScaleX = 3.0*replacedShape.scale.x/5.0;
-		var buildingScaleZ = replacedShape.scale.z/8.0 + 2.0;
+		var buildingScaleZ = replacedShape.scale.z/9.0 + 2.0;
 		//offset buildings from center of street
 		var displacement = (buildingScaleZ / 2.0) + 5.0;
 
 		var shape1 = new Shape('X');
 		shape1.mat = new THREE.Matrix4().copy(replacedShape.mat);
 		//apply translation
-		var mat4 = new THREE.Matrix4();
-	 	mat4.makeTranslation(0.0, 0.0, displacement);
-	 	shape1.mat.multiply(mat4);
+	 	shape1.mat.multiply(new THREE.Matrix4().makeTranslation(0.0, 0.0, displacement));
 	 	//apply scale
 		shape1.scale = new THREE.Vector3( buildingScaleX, replacedShape.scale.y, buildingScaleZ);
 		shape1.terminal = false;
 		shape1.geom_type = 'StreetSide';
 		shapeSet.add(shape1);
 
-
 		var shape2 = new Shape('X');
 		shape2.mat = new THREE.Matrix4().copy(replacedShape.mat);
 		//apply translation
-		var mat5 = new THREE.Matrix4();
-	 	mat5.makeTranslation(0.0, 0.0, -displacement);
-	 	shape2.mat.multiply(mat5);
+	 	shape2.mat.multiply(new THREE.Matrix4().makeTranslation(0.0, 0.0, -displacement));
 	 	//apply scale
 		shape2.scale = new THREE.Vector3( buildingScaleX, replacedShape.scale.y, buildingScaleZ);
 		shape2.terminal = false;
@@ -214,9 +205,7 @@ export default class Lsystem {
 
 				//apply translation
 				var dx = totalX + (buildingScaleX/2.0) - (replacedShape.scale.x/2.0);
-				var mat4 = new THREE.Matrix4();
-			 	mat4.makeTranslation(dx, 0.0, 0.0);
-			 	shape1.mat.multiply(mat4);
+			 	shape1.mat.multiply(new THREE.Matrix4().makeTranslation(dx, 0.0, 0.0));
 
 			 	//add a little bit of randomness to z scale of building
 			 	var buildingScaleZ = Math.max(replacedShape.scale.z - Math.round(-Math.random()*4.0+2.0), 4.0);
@@ -266,9 +255,7 @@ export default class Lsystem {
 		shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 		//apply translation
-		var mat6 = new THREE.Matrix4();
-	 	mat6.makeTranslation(0, 2.0, 0);
-	 	shape.mat.multiply(mat6);
+	 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(0, 2.0, 0));
 
 		shape.scale = new THREE.Vector3(replacedShape.scale.x, replacedShape.scale.y - 3.0, replacedShape.scale.z);
 		shape.terminal = false;
@@ -287,9 +274,7 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(0, sumFloorHeight, 0);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(0, sumFloorHeight, 0));
 
 			shape.scale = new THREE.Vector3(replacedShape.scale.x, floorHeight, replacedShape.scale.z);
 			shape.terminal = false;
@@ -337,9 +322,7 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
@@ -364,16 +347,12 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 		 	//apply rotation
-		  	var q1 = new THREE.Quaternion();
-		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI/2.0);
-		  	var mat5 = new THREE.Matrix4();
-		 	mat5.makeRotationFromQuaternion(q1);
-		 	shape.mat.multiply(mat5);
+		 	shape.mat.multiply(new THREE.Matrix4().makeRotationFromQuaternion(
+		 		new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI/2.0)
+		 		));
 
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
@@ -398,16 +377,12 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 		 	//apply rotation
-		  	var q1 = new THREE.Quaternion();
-		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-		  	var mat5 = new THREE.Matrix4();
-		 	mat5.makeRotationFromQuaternion(q1);
-		 	shape.mat.multiply(mat5);
+		 	shape.mat.multiply(new THREE.Matrix4().makeRotationFromQuaternion(
+		 		new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI)
+		 		));
 
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
@@ -432,16 +407,12 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 			//apply rotation
-		  	var q1 = new THREE.Quaternion();
-		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 3.0*Math.PI/2.0);
-		  	var mat5 = new THREE.Matrix4();
-		 	mat5.makeRotationFromQuaternion(q1);
-		 	shape.mat.multiply(mat5);
+		 	shape.mat.multiply(new THREE.Matrix4().makeRotationFromQuaternion(
+		 		new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 3.0*Math.PI/2.0)
+		 		));
 
 			shape.scale = new THREE.Vector3(1.0, 1.0, 1.0);
 			shape.terminal = true;
@@ -476,9 +447,7 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 			shape.scale = new THREE.Vector3(1.0, replacedShape.scale.y - 1.0, 1.0);
 			shape.terminal = true;
@@ -503,16 +472,12 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 		 	//apply rotation
-		  	var q1 = new THREE.Quaternion();
-		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI/2.0);
-		  	var mat5 = new THREE.Matrix4();
-		 	mat5.makeRotationFromQuaternion(q1);
-		 	shape.mat.multiply(mat5);
+		 	shape.mat.multiply(new THREE.Matrix4().makeRotationFromQuaternion(
+		 		new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI/2.0)
+		 		));
 
 			shape.scale = new THREE.Vector3(1.0, replacedShape.scale.y - 1.0, 1.0);
 			shape.terminal = true;
@@ -537,16 +502,12 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 		 	//apply rotation
-		  	var q1 = new THREE.Quaternion();
-		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
-		  	var mat5 = new THREE.Matrix4();
-		 	mat5.makeRotationFromQuaternion(q1);
-		 	shape.mat.multiply(mat5);
+		 	shape.mat.multiply(new THREE.Matrix4().makeRotationFromQuaternion(
+		 		new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI)
+		 		));
 
 			shape.scale = new THREE.Vector3(1.0, replacedShape.scale.y - 1.0, 1.0);
 			shape.terminal = true;
@@ -571,16 +532,12 @@ export default class Lsystem {
 			shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 			//apply translation
-			var mat6 = new THREE.Matrix4();
-		 	mat6.makeTranslation(xPos, 0, zPos);
-		 	shape.mat.multiply(mat6);
+		 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(xPos, 0, zPos));
 
 			//apply rotation
-		  	var q1 = new THREE.Quaternion();
-		  	q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 3.0*Math.PI/2.0);
-		  	var mat5 = new THREE.Matrix4();
-		 	mat5.makeRotationFromQuaternion(q1);
-		 	shape.mat.multiply(mat5);
+		 	shape.mat.multiply(new THREE.Matrix4().makeRotationFromQuaternion(
+		 		new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 3.0*Math.PI/2.0)
+		 		));
 
 			shape.scale = new THREE.Vector3(1.0, replacedShape.scale.y - 1.0, 1.0);
 			shape.terminal = true;
@@ -601,10 +558,8 @@ export default class Lsystem {
 	makeSkyscraperRoof(shapeSet, replacedShape) {
 		var shape = new Shape('T');
 		shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
-		var mat6 = new THREE.Matrix4();
-	 	mat6.makeTranslation(0, replacedShape.scale.y - 1.0, 0);
-	 	shape.mat.multiply(mat6);
-	 	//scale the edges down a litle bit, to match window thickness (numbers from obj file)
+	 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(0, replacedShape.scale.y - 1.0, 0));
+	 	//scale the edges down a litle bit, to match window thickness (exact numbers from obj file)
 		shape.scale = new THREE.Vector3(replacedShape.scale.x-0.146*2, 1, replacedShape.scale.z-0.146*2);
 		shape.terminal = true;
 		shape.geom_type = 'SkyscraperRoof';
@@ -613,6 +568,7 @@ export default class Lsystem {
 
 	stackSkyscraper(shapeSet, replacedShape) {
 
+		//base case, if skyscraper is getting too small
 		if (replacedShape.scale.x <= 4.0 || replacedShape.scale.z <= 4.0 || replacedShape.scale.y <= 7.0) {
 			//does not stack anymore, type 'U'
 			var skyscraper = new Shape('U');
@@ -637,11 +593,9 @@ export default class Lsystem {
 		var topSkyscraper = new Shape('S');
 		topSkyscraper.mat = new THREE.Matrix4().copy(replacedShape.mat);
 		//apply translation
-		var mat6 = new THREE.Matrix4();
-	 	mat6.makeTranslation(0, bottomHeight, 0);
-	 	topSkyscraper.mat.multiply(mat6);
+	 	topSkyscraper.mat.multiply(new THREE.Matrix4().makeTranslation(0, bottomHeight, 0));
 	 	//apply scale, height is original - bottomHeight, scale down x and z
-		topSkyscraper.scale = new THREE.Vector3(replacedShape.scale.x-1.0, replacedShape.scale.y - bottomHeight, replacedShape.scale.z-1.0);
+		topSkyscraper.scale = new THREE.Vector3(replacedShape.scale.x-1.0, replacedShape.scale.y-bottomHeight, replacedShape.scale.z-1.0);
 		topSkyscraper.terminal = false;
 		topSkyscraper.geom_type = 'Skyscraper';
 		shapeSet.add(topSkyscraper);

@@ -39,7 +39,7 @@ function onLoad(framework) {
   directionalLight.position.multiplyScalar(10);
   scene.add(directionalLight);
 
-  var ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+  var ambientLight = new THREE.AmbientLight( 0x505050 ); // soft white light
   scene.add( ambientLight );
 
   // set camera position
@@ -53,11 +53,9 @@ function onLoad(framework) {
   var planeMaterial = new THREE.MeshLambertMaterial({color: 0x8BA870, side: THREE.DoubleSide, shading: THREE.FlatShading });
   var plane = new THREE.Mesh(planeGeometry, planeMaterial);
   //apply rotation
-  var qPlane = new THREE.Quaternion();
-  qPlane.setFromAxisAngle(new THREE.Vector3(1.0, 0.0, 0.0), -Math.PI/2.0);
-  var matPlane = new THREE.Matrix4();
-  matPlane.makeRotationFromQuaternion(qPlane);
-  plane.applyMatrix(matPlane);
+  plane.applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(
+    new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1.0, 0.0, 0.0), -Math.PI/2.0)
+    ));
   scene.add(plane);
 
   /*
@@ -100,13 +98,14 @@ function onLoad(framework) {
   //draw Voronoi diagram
   if ( diagram ) {
 
-    //var lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-    var streetMaterial = new THREE.MeshLambertMaterial({ color: 0x708090, shading: THREE.FlatShading });
     var edges = diagram.edges;
     var nEdges = edges.length;
     var v1, v2;
     if (nEdges) {
+
+      var singleStreetGeometry = new THREE.Geometry();
       var edge;
+
       while (nEdges--) {
 
         //get the two vertices that make up the line
@@ -118,48 +117,39 @@ function onLoad(framework) {
         //var stroke = new THREE.Geometry();
         //stroke.vertices.push(new THREE.Vector3(v1.x, 0, v1.y));
         //stroke.vertices.push(new THREE.Vector3(v2.x, 0, v2.y));
+        //var lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
         //var line = new THREE.Line( stroke, lineMaterial );
         //scene.add( line );
 
         //create and add street to scene
-        var streetMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), streetMaterial);
+        var streetMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1));
         //apply scale
         var dx = v2.x - v1.x;
         var dz = v2.y - v1.y;
         var streetLength = Math.sqrt(dx*dx + dz*dz);
-        var mat4 = new THREE.Matrix4();
-        mat4.makeScale(streetLength, 1, 2);
-        streetMesh.applyMatrix(mat4);
+        streetMesh.applyMatrix(new THREE.Matrix4().makeScale(streetLength, 1, 2));
         //apply rotation
         var streetVec = new THREE.Vector2(dx, dz);
         var angle = -1.0* streetVec.angle();
-        var q = new THREE.Quaternion();
-        q.setFromAxisAngle(new THREE.Vector3(0.0, 1.0, 0.0), angle);
-        var mat5 = new THREE.Matrix4();
-        mat5.makeRotationFromQuaternion(q);
-        streetMesh.applyMatrix(mat5);
+        streetMesh.applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(
+          new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0.0, 1.0, 0.0), angle)
+          ));
         //apply translation
         var midpoint = new THREE.Vector3((v1.x + v2.x)/2.0, 0.0, (v1.y + v2.y)/2.0);
-        var mat6 = new THREE.Matrix4();
-        mat6.makeTranslation(midpoint.x, midpoint.y, midpoint.z);
-        streetMesh.applyMatrix(mat6);
-        scene.add(streetMesh);
+        streetMesh.applyMatrix(new THREE.Matrix4().makeTranslation(midpoint.x, midpoint.y, midpoint.z));
+        singleStreetGeometry.merge(streetMesh.geometry, streetMesh.matrix);
 
         //bound the buildings near center of plane
-        if (streetLength > 20 &&  streetLength < 120 &&
+        if (streetLength > 25 &&  streetLength < 120 &&
           Math.abs(midpoint.x) < dxSampling && Math.abs(midpoint.z) < dySampling) {
           //make primitve shape for future buildings using the street edge
           var futureBuildings = new Shape('N');
           //apply translation
-          var mat6 = new THREE.Matrix4();
-          mat6.makeTranslation(midpoint.x, midpoint.y, midpoint.z);
-          futureBuildings.mat = mat6;
+          futureBuildings.mat = new THREE.Matrix4().makeTranslation(midpoint.x, midpoint.y, midpoint.z);
           //apply rotation
-          var q1 = new THREE.Quaternion();
-          q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
-          var mat5 = new THREE.Matrix4();
-          mat5.makeRotationFromQuaternion(q1);
-          futureBuildings.mat.multiply(mat5);
+          futureBuildings.mat.multiply(new THREE.Matrix4().makeRotationFromQuaternion(
+            new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle)
+            ));
 
           var distanceToCenter = Math.sqrt(midpoint.x*midpoint.x + midpoint.z*midpoint.z); //center is the origin
           var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
@@ -172,6 +162,11 @@ function onLoad(framework) {
         }
         
       }
+
+      var streetMaterial = new THREE.MeshLambertMaterial({ color: 0x708090, shading: THREE.FlatShading });
+      var singleStreetMesh = new THREE.Mesh(singleStreetGeometry, streetMaterial);
+      scene.add(singleStreetMesh);
+
     }
   }
 
@@ -250,9 +245,7 @@ function parseShapeSet(scene) {
     var boxMesh = new THREE.Mesh(box, material);
 
     //apply scale
-    var mat4 = new THREE.Matrix4();
-    mat4.makeScale(shape.scale.x, shape.scale.y, shape.scale.z);
-    boxMesh.applyMatrix(mat4);
+    boxMesh.applyMatrix(new THREE.Matrix4().makeScale(shape.scale.x, shape.scale.y, shape.scale.z));
     //apply transformation
     boxMesh.applyMatrix(shape.mat);
     scene.add(boxMesh);
