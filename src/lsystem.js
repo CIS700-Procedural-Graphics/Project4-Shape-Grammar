@@ -9,10 +9,11 @@ function Rule(prob, str) {
 
 // Implement a linked list class and its requisite functions
 // as described in the homework writeup
+// WARNING: position is at BOTTOM CENTER of shape, as defined in OBJ files
 export class Shape {
 	constructor(symbol) {
     	this.symbol = symbol;
-	    //this.position = new THREE.Vector3(0, 0, 0); //WARNING: position is at BOTTOM CENTER of shape, as defined in OBJ files
+	    //this.position = new THREE.Vector3(0, 0, 0); 
 	    //this.rotation = new THREE.Vector3(0, 0, 0);
 	    this.mat; //keeps track of position and rotation
 	    this.scale; //scale.y is the height of shape
@@ -55,8 +56,8 @@ export default class Lsystem {
 
 		//skyscraper rules
 		this.grammar['S'] = [
-			new Rule(0.4, 'ht'),
-			new Rule(0.6, 'g')
+			new Rule(0.6, 'ht'),
+			new Rule(0.4, 'g')
 		];
 		this.grammar['U'] = [
 			new Rule(1.0, 'ht')
@@ -101,13 +102,13 @@ export default class Lsystem {
 
 		for (var count = 0; count < n; count++) {
 
-			var tempShapes = new Set();
+			//var tempShapes = new Set();
 
 			//iterate through the current shapes
 			for(var shape of finalShapes.values()) {
 				//if shape is terminal, do not replace using grammar, just add to new set
 				if (shape.terminal) {
-					tempShapes.add(shape);
+					//tempShapes.add(shape);
 				}
 				else {
 					//iterate through the grammar to find matching symbol
@@ -126,7 +127,8 @@ export default class Lsystem {
 										//get the bind function associated with symbol
 										var func = this.renderGrammar[successor];
 								        if (func) {
-								            func(tempShapes, shape);
+								            func(finalShapes, shape);
+								            finalShapes.delete(shape);
 								        }
 							    	}
 							        //break forloop through rules, since rule is found
@@ -140,7 +142,7 @@ export default class Lsystem {
 
 				}
 	        }
-	        finalShapes = tempShapes;
+	        //finalShapes = tempShapes;
     	}
 
 		return finalShapes;
@@ -187,7 +189,7 @@ export default class Lsystem {
 		while (totalX < maxX) {
 			var spaceBetweenBuilding = Math.round(Math.random() * 3.0) + 2.0;
 			totalX = totalX + spaceBetweenBuilding;
-			var buildingScaleX = Math.round(Math.random() * 6.0) + 6.0;
+			var buildingScaleX = Math.round(Math.random() * replacedShape.scale.x / 3.0) + 5.0;
 			//if over the maximum width, clamp it
 			if (totalX + buildingScaleX > maxX) {
 				buildingScaleX = maxX - totalX;
@@ -197,7 +199,7 @@ export default class Lsystem {
 				//add a little bit of randomness to the height of building
 				var height = Math.max(Math.round(replacedShape.scale.y + Math.random()*10.0), 5.0);
 				//type of building depends on the height
-				if (height > 20.0) {
+				if (height > 30.0) {
 					buildingType = 'S';
 					geometryType = 'Skyscraper';
 				}

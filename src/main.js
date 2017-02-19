@@ -62,7 +62,7 @@ function onLoad(framework) {
 
   /*
   //SINGLE BUILDING DEBUGGING PURPOSES
-  var building = new Shape('S');
+  var building = new Shape('A');
   //apply translation
   var mat6 = new THREE.Matrix4();
   mat6.makeTranslation(20, 0, 0);
@@ -72,17 +72,6 @@ function onLoad(framework) {
   building.geom_type = 'Apartment';
   building.terminal = false;
   shapeSet.add(building);
-
-  var building2 = new Shape('U');
-  //apply translation
-  var mat6 = new THREE.Matrix4();
-  mat6.makeTranslation(0, 0, 0);
-  building2.mat = mat6;
-  //apply scale
-  building2.scale = new THREE.Vector3(7, 20, 5);
-  building2.geom_type = 'Apartment';
-  building2.terminal = false;
-  shapeSet.add(building2);
   */
   
   //compute Voronoi diagram
@@ -91,12 +80,18 @@ function onLoad(framework) {
   var diagram;
   var xo = 0;
   var yo = 0;
-  var dxSampling = 140;
-  var dySampling = 140;
+  var dxSampling = 150;
+  var dySampling = 150;
   for (var i=0; i<25; i++) {
     sites.push({
+      /*
+      //random sampling
       x:Math.round(xo+2*(Math.random()-0.5)*dxSampling),
       y:Math.round(yo+2*(Math.random()-0.5)*dySampling)
+      */
+      //stratified sampling
+      x: dxSampling*2.0/5.0*(i%5.0) - dxSampling + Math.random()*dxSampling*2.0/5.0,
+      y: dySampling*2.0/5.0*Math.floor(i/5.0) - dySampling + Math.random()*dySampling*2.0/5.0
     });
   }
   var bbox = {xl:-400,xr:400,yt:-300,yb:300};
@@ -151,7 +146,7 @@ function onLoad(framework) {
         scene.add(streetMesh);
 
         //bound the buildings near center of plane
-        if (streetLength > 20 &&  streetLength < 90 &&
+        if (streetLength > 20 &&  streetLength < 120 &&
           Math.abs(midpoint.x) < dxSampling && Math.abs(midpoint.z) < dySampling) {
           //make primitve shape for future buildings using the street edge
           var futureBuildings = new Shape('N');
@@ -168,7 +163,7 @@ function onLoad(framework) {
 
           var distanceToCenter = Math.sqrt(midpoint.x*midpoint.x + midpoint.z*midpoint.z); //center is the origin
           var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
-          var buildingHeight = Math.max(Math.round(40.0 * gain(0.9, t)), 4.0);
+          var buildingHeight = Math.max(Math.round(50.0 * gain(0.9, t)), 4.0);
           //width and length are dependent on street length
           futureBuildings.scale = new THREE.Vector3(streetLength, buildingHeight, streetLength);
           futureBuildings.geom_type = 'FutureBuildings';
@@ -231,8 +226,8 @@ function initializeMap() {
 function parseShapeSet(scene) {
 
   //var singleGeometry = new THREE.Geometry();
-  var dxSampling = 140;
-  var dySampling = 140;
+  var dxSampling = 150;
+  var dySampling = 150;
 
   for (var shape of shapeSet.values()) {
 
@@ -248,7 +243,7 @@ function parseShapeSet(scene) {
     var position = new THREE.Vector3(0, 0, 0).applyMatrix4(shape.mat);
     var distanceToCenter = Math.sqrt(position.x*position.x + position.z*position.z); //center is the origin
     var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
-    var colorFactor = Math.max(gain(0.8, t), 0.2);
+    var colorFactor = Math.max(gain(0.7, t), 0.2);
     var material = new THREE.MeshLambertMaterial({color: 0xffffff, shading: THREE.FlatShading });
     material.color.setRGB(colorFactor, colorFactor, colorFactor);
 
