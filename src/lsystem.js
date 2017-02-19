@@ -14,10 +14,10 @@ export class Shape {
     	this.symbol = symbol;
 	    //this.position = new THREE.Vector3(0, 0, 0); //WARNING: position is at BOTTOM CENTER of shape, as defined in OBJ files
 	    //this.rotation = new THREE.Vector3(0, 0, 0);
-	    this.mat = new THREE.Matrix4(); //keeps track of position and rotation
-	    this.scale = new THREE.Vector3(1, 1, 1); //scale.y is the height of shape
-	    this.terminal = false;
-	    this.geom_type = 'Unknown';
+	    this.mat; //keeps track of position and rotation
+	    this.scale; //scale.y is the height of shape
+	    this.terminal;
+	    this.geom_type;
 	}
 };
 
@@ -28,6 +28,7 @@ export default class Lsystem {
 		this.shapes = new Set();
 		this.grammar = {};
 
+		//splitting into building rules
 		this.grammar['N'] = [
 			new Rule(1.0, 'x')
 		];
@@ -54,6 +55,10 @@ export default class Lsystem {
 
 		//skyscraper rules
 		this.grammar['S'] = [
+			new Rule(0.4, 'ht'),
+			new Rule(0.6, 'g')
+		];
+		this.grammar['U'] = [
 			new Rule(1.0, 'ht')
 		];
 
@@ -69,7 +74,8 @@ export default class Lsystem {
 	        'w' : this.makeWindows.bind(this),
 
 	        'h' : this.makeSkyscraperBase.bind(this),
-	        't' : this.makeSkyscraperRoof.bind(this)
+	        't' : this.makeSkyscraperRoof.bind(this),
+	        'g' : this.stackSkyscraper.bind(this)
 	    };
 	    
 		// Set up the axiom shapes
@@ -142,31 +148,32 @@ export default class Lsystem {
 
 	splitStreet(shapeSet, replacedShape) {
 
-		var buildingZScale = Math.floor(replacedShape.scale.z/8.0);
-		var displacement = (buildingZScale / 2.0) + 3.0;
+		var buildingScaleX = 3.0*replacedShape.scale.x/5.0;
+		var buildingScaleZ = replacedShape.scale.z/8.0 + 2.0;
+		//offset buildings from center of street
+		var displacement = (buildingScaleZ / 2.0) + 5.0;
 
 		var shape1 = new Shape('X');
 		shape1.mat = new THREE.Matrix4().copy(replacedShape.mat);
-
 		//apply translation
 		var mat4 = new THREE.Matrix4();
 	 	mat4.makeTranslation(0.0, 0.0, displacement);
 	 	shape1.mat.multiply(mat4);
-
-		shape1.scale = new THREE.Vector3(3.0 * replacedShape.scale.x/5.0, replacedShape.scale.y, buildingZScale + 2.0);
+	 	//apply scale
+		shape1.scale = new THREE.Vector3( buildingScaleX, replacedShape.scale.y, buildingScaleZ);
 		shape1.terminal = false;
 		shape1.geom_type = 'StreetSide';
 		shapeSet.add(shape1);
 
+
 		var shape2 = new Shape('X');
 		shape2.mat = new THREE.Matrix4().copy(replacedShape.mat);
-
 		//apply translation
 		var mat5 = new THREE.Matrix4();
 	 	mat5.makeTranslation(0.0, 0.0, -displacement);
 	 	shape2.mat.multiply(mat5);
-
-		shape2.scale = new THREE.Vector3(3.0 * replacedShape.scale.x/5.0, replacedShape.scale.y, buildingZScale + 2.0);
+	 	//apply scale
+		shape2.scale = new THREE.Vector3( buildingScaleX, replacedShape.scale.y, buildingScaleZ);
 		shape2.terminal = false;
 		shape2.geom_type = 'StreetSide';
 		shapeSet.add(shape2);
@@ -176,21 +183,21 @@ export default class Lsystem {
 		var buildingType;
 		var geometryType;
 		var totalX = 0;
-		var maxX = replacedShape.scale.x;
+		var maxX = Math.round(replacedShape.scale.x);
 		while (totalX < maxX) {
-			var spaceBetweenBuilding = Math.floor(Math.random() * 4.0) + 2.0;
+			var spaceBetweenBuilding = Math.round(Math.random() * 3.0) + 2.0;
 			totalX = totalX + spaceBetweenBuilding;
-			var buildingScaleX = Math.floor(Math.random() * 3.0) + 6.0;
+			var buildingScaleX = Math.round(Math.random() * 6.0) + 6.0;
 			//if over the maximum width, clamp it
 			if (totalX + buildingScaleX > maxX) {
 				buildingScaleX = maxX - totalX;
 			}
-			if (buildingScaleX >= 4.0) {
+			if (buildingScaleX >= 5.0) {
 
 				//add a little bit of randomness to the height of building
-				var height = Math.round(replacedShape.scale.y + Math.random()*10.0);
+				var height = Math.max(Math.round(replacedShape.scale.y + Math.random()*10.0), 5.0);
 				//type of building depends on the height
-				if (replacedShape.scale.y > 20.0) {
+				if (height > 20.0) {
 					buildingType = 'S';
 					geometryType = 'Skyscraper';
 				}
@@ -200,6 +207,7 @@ export default class Lsystem {
 				}
 
 				var shape1 = new Shape(buildingType);
+				shape1.geom_type = geometryType;
 				shape1.mat = new THREE.Matrix4().copy(replacedShape.mat);
 
 				//apply translation
@@ -208,10 +216,11 @@ export default class Lsystem {
 			 	mat4.makeTranslation(dx, 0.0, 0.0);
 			 	shape1.mat.multiply(mat4);
 
+			 	//add a little bit of randomness to z scale of building
+			 	var buildingScaleZ = Math.max(replacedShape.scale.z - Math.round(-Math.random()*4.0+2.0), 4.0);
 			 	//set the width to be buildingScaleX
-				shape1.scale = new THREE.Vector3(buildingScaleX, height, Math.max(replacedShape.scale.z - Math.round(-Math.random()*4.0+2.0), 4.0)  );
+				shape1.scale = new THREE.Vector3(buildingScaleX, height, buildingScaleZ);
 				shape1.terminal = false;
-				shape1.geom_type = geometryType;
 				shapeSet.add(shape1);
 				totalX = totalX + buildingScaleX;
 			}
@@ -593,10 +602,47 @@ export default class Lsystem {
 		var mat6 = new THREE.Matrix4();
 	 	mat6.makeTranslation(0, replacedShape.scale.y - 1.0, 0);
 	 	shape.mat.multiply(mat6);
+	 	//scale the edges down a litle bit, to match window thickness (numbers from obj file)
 		shape.scale = new THREE.Vector3(replacedShape.scale.x-0.146*2, 1, replacedShape.scale.z-0.146*2);
 		shape.terminal = true;
 		shape.geom_type = 'SkyscraperRoof';
 		shapeSet.add(shape);
+	}
+
+	stackSkyscraper(shapeSet, replacedShape) {
+
+		if (replacedShape.scale.x <= 4.0 || replacedShape.scale.z <= 4.0 || replacedShape.scale.y <= 7.0) {
+			//does not stack anymore, type 'U'
+			var skyscraper = new Shape('U');
+			skyscraper.mat = new THREE.Matrix4().copy(replacedShape.mat);
+			skyscraper.scale = new THREE.Vector3(replacedShape.scale.x, replacedShape.scale.y, replacedShape.scale.z);
+			skyscraper.terminal = false;
+			skyscraper.geom_type = 'Skyscraper';
+			shapeSet.add(skyscraper);
+			return;
+		}
+
+		//bottom does not stack anymore, type 'U'
+		var bottomHeight = Math.round(replacedShape.scale.y / 2.618);
+		var bottomSkyscraper = new Shape('U');
+		bottomSkyscraper.mat = new THREE.Matrix4().copy(replacedShape.mat);
+		bottomSkyscraper.scale = new THREE.Vector3(replacedShape.scale.x, bottomHeight, replacedShape.scale.z);
+		bottomSkyscraper.terminal = false;
+		bottomSkyscraper.geom_type = 'Skyscraper';
+		shapeSet.add(bottomSkyscraper);
+
+		//top can continue to stack, type 'S'
+		var topSkyscraper = new Shape('S');
+		topSkyscraper.mat = new THREE.Matrix4().copy(replacedShape.mat);
+		//apply translation
+		var mat6 = new THREE.Matrix4();
+	 	mat6.makeTranslation(0, bottomHeight, 0);
+	 	topSkyscraper.mat.multiply(mat6);
+	 	//apply scale, height is original - bottomHeight, scale down x and z
+		topSkyscraper.scale = new THREE.Vector3(replacedShape.scale.x-1.0, replacedShape.scale.y - bottomHeight, replacedShape.scale.z-1.0);
+		topSkyscraper.terminal = false;
+		topSkyscraper.geom_type = 'Skyscraper';
+		shapeSet.add(topSkyscraper);
 	}
 
 }

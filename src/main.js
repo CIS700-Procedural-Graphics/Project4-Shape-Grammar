@@ -50,7 +50,7 @@ function onLoad(framework) {
 
   //initialize the ground
   var planeGeometry = new THREE.PlaneGeometry(800, 600);
-  var planeMaterial = new THREE.MeshLambertMaterial({color: 0x8BA870, side: THREE.DoubleSide});
+  var planeMaterial = new THREE.MeshLambertMaterial({color: 0x8BA870, side: THREE.DoubleSide, shading: THREE.FlatShading });
   var plane = new THREE.Mesh(planeGeometry, planeMaterial);
   //apply rotation
   var qPlane = new THREE.Quaternion();
@@ -62,22 +62,27 @@ function onLoad(framework) {
 
   /*
   //SINGLE BUILDING DEBUGGING PURPOSES
-  var building = new Shape('A');
+  var building = new Shape('S');
   //apply translation
   var mat6 = new THREE.Matrix4();
-  mat6.makeTranslation(4, 0, 10);
-  building.mat.multiply(mat6);
-  //apply rotation
-  var q1 = new THREE.Quaternion();
-  q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), 30 * Math.PI/180.0);
-  var mat5 = new THREE.Matrix4();
-  mat5.makeRotationFromQuaternion(q1);
-  building.mat.multiply(mat5);
+  mat6.makeTranslation(20, 0, 0);
+  building.mat = mat6;
   //apply scale
-  building.scale = new THREE.Vector3(7, 15, 5);
+  building.scale = new THREE.Vector3(7, 20, 5);
   building.geom_type = 'Apartment';
   building.terminal = false;
   shapeSet.add(building);
+
+  var building2 = new Shape('U');
+  //apply translation
+  var mat6 = new THREE.Matrix4();
+  mat6.makeTranslation(0, 0, 0);
+  building2.mat = mat6;
+  //apply scale
+  building2.scale = new THREE.Vector3(7, 20, 5);
+  building2.geom_type = 'Apartment';
+  building2.terminal = false;
+  shapeSet.add(building2);
   */
   
   //compute Voronoi diagram
@@ -85,10 +90,10 @@ function onLoad(framework) {
   var sites = [];
   var diagram;
   var xo = 0;
-  var dxSampling = 135;
   var yo = 0;
-  var dySampling = 135;
-  for (var i=0; i<30; i++) {
+  var dxSampling = 140;
+  var dySampling = 140;
+  for (var i=0; i<25; i++) {
     sites.push({
       x:Math.round(xo+2*(Math.random()-0.5)*dxSampling),
       y:Math.round(yo+2*(Math.random()-0.5)*dySampling)
@@ -100,8 +105,8 @@ function onLoad(framework) {
   //draw Voronoi diagram
   if ( diagram ) {
 
-    var lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
-    var streetMaterial = new THREE.MeshLambertMaterial({ color: 0x708090 });
+    //var lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+    var streetMaterial = new THREE.MeshLambertMaterial({ color: 0x708090, shading: THREE.FlatShading });
     var edges = diagram.edges;
     var nEdges = edges.length;
     var v1, v2;
@@ -113,6 +118,7 @@ function onLoad(framework) {
         edge = edges[nEdges];
         v1 = edge.va;
         v2 = edge.vb;
+
         //VORONOI EDGES DEBUGGING PURPOSES
         //var stroke = new THREE.Geometry();
         //stroke.vertices.push(new THREE.Vector3(v1.x, 0, v1.y));
@@ -121,8 +127,7 @@ function onLoad(framework) {
         //scene.add( line );
 
         //create and add street to scene
-        var street = new THREE.BoxGeometry(1, 1, 1);
-        var streetMesh = new THREE.Mesh(street, streetMaterial);
+        var streetMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), streetMaterial);
         //apply scale
         var dx = v2.x - v1.x;
         var dz = v2.y - v1.y;
@@ -153,7 +158,7 @@ function onLoad(framework) {
           //apply translation
           var mat6 = new THREE.Matrix4();
           mat6.makeTranslation(midpoint.x, midpoint.y, midpoint.z);
-          futureBuildings.mat.multiply(mat6);
+          futureBuildings.mat = mat6;
           //apply rotation
           var q1 = new THREE.Quaternion();
           q1.setFromAxisAngle(new THREE.Vector3(0, 1, 0), angle);
@@ -163,7 +168,7 @@ function onLoad(framework) {
 
           var distanceToCenter = Math.sqrt(midpoint.x*midpoint.x + midpoint.z*midpoint.z); //center is the origin
           var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
-          var buildingHeight = Math.max(Math.round(40.0 * gain(0.8, t)), 4.0);
+          var buildingHeight = Math.max(Math.round(40.0 * gain(0.9, t)), 4.0);
           //width and length are dependent on street length
           futureBuildings.scale = new THREE.Vector3(streetLength, buildingHeight, streetLength);
           futureBuildings.geom_type = 'FutureBuildings';
@@ -174,10 +179,9 @@ function onLoad(framework) {
       }
     }
   }
-  
 
   var lsys = new Lsystem(shapeSet);
-  shapeSet = lsys.doIterations(5);
+  shapeSet = lsys.doIterations(8);
 
   //parse the shape set and adds to scene
   parseShapeSet(scene);
@@ -206,20 +210,20 @@ function initializeMap() {
   var objLoader = new THREE.OBJLoader();
 
   //apartment objects
-  objLoader.load('/geo/ApartmentBaseSide.obj', function(obj) { typeToObjMap.set('ApartmentBaseSide', obj.children[0].geometry) });
-  objLoader.load('/geo/ApartmentBaseCorner.obj', function(obj) { typeToObjMap.set('ApartmentBaseCorner', obj.children[0].geometry) });
-  objLoader.load('/geo/ApartmentFloorSide1.obj', function(obj) { tempMap.set('ApartmentFloorSide1', obj.children[0].geometry); });
-  objLoader.load('/geo/ApartmentFloorCorner1.obj', function(obj) { tempMap.set('ApartmentFloorCorner1', obj.children[0].geometry); });
-  objLoader.load('/geo/ApartmentFloorSide2.obj', function(obj) { tempMap.set('ApartmentFloorSide2', obj.children[0].geometry); });
-  objLoader.load('/geo/ApartmentFloorCorner2.obj', function(obj) { tempMap.set('ApartmentFloorCorner2', obj.children[0].geometry); });
-  objLoader.load('/geo/ApartmentRoofSide.obj', function(obj) { typeToObjMap.set('ApartmentRoofSide', obj.children[0].geometry) });
-  objLoader.load('/geo/ApartmentRoofCorner.obj', function(obj) { typeToObjMap.set('ApartmentRoofCorner', obj.children[0].geometry) });
-  objLoader.load('/geo/ApartmentRoofCenter.obj', function(obj) { typeToObjMap.set('ApartmentRoofCenter', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentBaseSide.obj', function(obj) { typeToObjMap.set('ApartmentBaseSide', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentBaseCorner.obj', function(obj) { typeToObjMap.set('ApartmentBaseCorner', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentFloorSide1.obj', function(obj) { tempMap.set('ApartmentFloorSide1', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentFloorCorner1.obj', function(obj) { tempMap.set('ApartmentFloorCorner1', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentFloorSide2.obj', function(obj) { tempMap.set('ApartmentFloorSide2', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentFloorCorner2.obj', function(obj) { tempMap.set('ApartmentFloorCorner2', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentRoofSide.obj', function(obj) { typeToObjMap.set('ApartmentRoofSide', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentRoofCorner.obj', function(obj) { typeToObjMap.set('ApartmentRoofCorner', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentRoofCenter.obj', function(obj) { typeToObjMap.set('ApartmentRoofCenter', obj.children[0].geometry) });
 
   //skyscraper objects
-  objLoader.load('/geo/SkyscraperSide.obj', function(obj) { typeToObjMap.set('SkyscraperSide', obj.children[0].geometry) });
-  objLoader.load('/geo/SkyscraperCorner.obj', function(obj) { typeToObjMap.set('SkyscraperCorner', obj.children[0].geometry) });
-  objLoader.load('/geo/SkyscraperRoof.obj', function(obj) { typeToObjMap.set('SkyscraperRoof', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleSkyscraperSide.obj', function(obj) { typeToObjMap.set('SkyscraperSide', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleSkyscraperCorner.obj', function(obj) { typeToObjMap.set('SkyscraperCorner', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleSkyscraperRoof.obj', function(obj) { typeToObjMap.set('SkyscraperRoof', obj.children[0].geometry) });
 
   return tempMap;
 }
@@ -227,8 +231,8 @@ function initializeMap() {
 function parseShapeSet(scene) {
 
   //var singleGeometry = new THREE.Geometry();
-  var dxSampling = 135;
-  var dySampling = 135;
+  var dxSampling = 140;
+  var dySampling = 140;
 
   for (var shape of shapeSet.values()) {
 
@@ -240,12 +244,14 @@ function parseShapeSet(scene) {
       box = new THREE.Geometry();
     }
 
+    //set color based on distance from center
     var position = new THREE.Vector3(0, 0, 0).applyMatrix4(shape.mat);
     var distanceToCenter = Math.sqrt(position.x*position.x + position.z*position.z); //center is the origin
     var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
     var colorFactor = Math.max(gain(0.8, t), 0.2);
-    var material = new THREE.MeshLambertMaterial({color: 0xffffff, wireframe: false});
+    var material = new THREE.MeshLambertMaterial({color: 0xffffff, shading: THREE.FlatShading });
     material.color.setRGB(colorFactor, colorFactor, colorFactor);
+
     var boxMesh = new THREE.Mesh(box, material);
 
     //apply scale
