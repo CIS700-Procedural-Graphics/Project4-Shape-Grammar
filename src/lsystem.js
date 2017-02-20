@@ -16,11 +16,34 @@ var tree = 0
 /***************************************************/
 /**************** LINKED LIST CLASS ****************/
 /***************************************************/
+function rgbOneComponentToHex(rgbCol) {
+    var hex = rgbCol.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function fullRGBToHex(r, g, b) {
+    return "#" + rgbOneComponentToHex(r) + rgbOneComponentToHex(g) + rgbOneComponentToHex(b);
+}
+
 function Node(p, n, v) {
 	this.prev = p;
 	this.next = n;
 	this.character = v;
 };
+
+function objHeightFromLevel(y) {
+    if (y > 50) {
+        return 2;
+    } else if (y > 40) {
+        return 4;
+    } else if (y > 30) {
+        return 8;
+    } else if (y > 20) {
+        return 16;
+    } else {
+        return 20;
+    }
+}
 
 function LinkedList() {
     this.head = null;
@@ -67,8 +90,6 @@ function LinkedList() {
 };
 /**************** end: LINKED LIST CLASS ****************/
 
-
-
 // TODO: Turn the string into linked list 
 export function stringToLinkedList(input_string) {
 	// ex. assuming input_string = "F+X"
@@ -108,7 +129,7 @@ export function linkedListToString(linkedList) {
 		onNode = onNode.next;
 	}
 
-	console.log("in linkedListToString: with output: "+ result);
+	// console.log("in linkedListToString: with output: "+ result);
 
 	return result;
 }
@@ -151,7 +172,7 @@ function replaceNode(linkedList, char, replacementString) {
 export default function Lsystem(axiom, grammar, iterations) {
 
 	// default LSystem
-	this.begAxiom = "FX";
+	this.begAxiom = "DC";
 	/*
 	if (tree == 0) {
 		this.begAxiom = "FX";
@@ -162,30 +183,37 @@ export default function Lsystem(axiom, grammar, iterations) {
 	this.axiom = this.begAxiom;
 	this.grammar = {};
 	this.grammar['X'] = [
-		new Rule(0.6, "F-[B[X]+XC]+FA[+FXBC]-X"), // tree 0
-		new Rule(0.6, "F−[B+XC]+FA[+FC]-X"), // tree 1
+		new Rule(0.6, 'X'), 
+		new Rule(0.6, "F−[B+XC]+FA[+FC]-X"), 
 		new Rule(0.6, '-FAXBC')
 	];
 	// adding in my rules -HB
 	this.grammar['F'] = [
-		new Rule(0.7, "FF"), // tree 0
-		new Rule(0.6, "FF"), // tree 1
+		new Rule(0.7, 'CC'), 
+		new Rule(0.6, 'FF'), 
 		new Rule(0.6, '-FX')
 	];
 	this.grammar['A'] = [
-		new Rule(0.6, "FF"), // tree 0
-		new Rule(0.6, "FF"), // tree 1
+		new Rule(0.6, 'FF'), 
+		new Rule(0.6, 'FF'), 
 		new Rule(0.4, 'A')
 	];
 	this.grammar['B'] = [
-		new Rule(0.6, "FF"), // tree 0
-		new Rule(0.6, "FF"), // tree 1
+		new Rule(0.6, 'BC'), 
+		new Rule(0.6, 'B'), 
 		new Rule(0.3, 'B')
 	];
 	this.grammar['C'] = [
-		new Rule(0.5, "C"), // tree 0
-		new Rule(0.5, "C"), // tree 1
+		new Rule(0.5, 'CBB'), 
+		new Rule(0.5, 'C'), 
 		new Rule(0.5, 'C')
+	];
+	// START BUILDING MAIN SCENE: perlin terrian and water plane
+	// 		ALWAYS MUST BE FIRST IN AXIOM
+	this.grammar['D'] = [ 
+		new Rule(0.5, 'D'),
+		new Rule(0.5, 'D'), 
+		new Rule(0.5, 'D')
 	];
 
 	this.iterations = 0; 
@@ -232,9 +260,11 @@ export default function Lsystem(axiom, grammar, iterations) {
 	}
 
 	this.doIterations = function(n, tree) {
-		console.log("before this.doIterationsFromAxiom");
-		console.log("this.begAxiom: " + this.begAxiom);
+		//console.log("before this.doIterationsFromAxiom");
+		//console.log("this.begAxiom: " + this.begAxiom);
+		console.log("HERE W25;AD");
 		var listOut = this.doIterationsFromAxiom(n, tree, this.begAxiom);
+		console.log("HERE W25;AD23232323");
 		return listOut;
 	}
 
@@ -262,18 +292,18 @@ export default function Lsystem(axiom, grammar, iterations) {
 			return stringToLinkedList(inputtedAxiom);
 		} 
 
-		console.log("here1");
+		// console.log("here1");
 
 		var i = 0;
 		var list = stringToLinkedList(inputtedAxiom);
 
 		var stringListOfChars = "";
 
-		console.log("here2");
+		// console.log("here2");
 
-		console.log("N - OLDITER : " + (n - oldIter));
-		console.log("N : " + n);
-		console.log("OLD ITER: " + oldIter);
+		// console.log("N - OLDITER : " + (n - oldIter));
+		// console.log("N : " + n);
+		// console.log("OLD ITER: " + oldIter);
 
 		var loopOver = n - oldIter;
 		if (loopOver < 0) {
@@ -307,13 +337,13 @@ export default function Lsystem(axiom, grammar, iterations) {
 
 			//iterate
 			i++;	
-			console.log("ITERATED I: " + i);
+			// console.log("ITERATED I: " + i);
 
 			// continue with current axiom
 			var list = currList;
 		}
 
-		console.log("here3");
+		// console.log("here3");
 		
 		console.log("finished this set of doIterations: current string: " + linkedListToString(list));
 		return list;

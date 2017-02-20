@@ -1,49 +1,5 @@
 const THREE = require('three')
 
-
-/**********************************************************************/
-/**************** TREE CLASS FOR BUILDING SHAPEGRAMMAR ****************/
-/**********************************************************************/
-
-function TreeNode() {
-    this.parent = null;
-    this.children = new Array();
-    this.position = {
-        x: 0,
-        y: 0, 
-        z: 0
-    };
-
-    this.addChild = function(child) {
-        if (buildFrom) {
-            this.children.push(child);
-        }
-    }
-
-    this.buildFrom = true;
-
-    this.xyDim = 0;
-    this.objType = 0; //types include: 0cube, 1cyliner, 2cone
-    this.meshAttrib = new THREE.MeshLambertMaterial({ color : fullRGBToHex(125, 125, 125) }); // can be redecl later
-}
-
-function Tree() {
-    this.head = null;
-
-    this.connectParentAndChild = function(a, b) {
-        if (a != null) {
-            a.children.push(b);
-        }
-        if (b != null) {
-            b.parent = a;
-        }
-        return;
-    }
-}
-
-/**************** end: TREE CLASS FOR BUILDING SHAPEGRAMMAR ****************/
-
-
 function copyOneStateToNew(s1) {
     return new TurtleState(s1.pos, s1.dir);
 }
@@ -76,6 +32,7 @@ export default class Turtle {
 
         this.prevSavedStates = [];
 
+
         this.tree = 0; // SETTING TURTLE'S CURRENT TREE STATE
 
         // TODO: Start by adding rules for '[' and ']' then more!
@@ -87,15 +44,15 @@ export default class Turtle {
                 'F' : this.doNothing(),//this.makeCylinder.bind(this, 2, 0.1), // move forward 1 step
 
                 // the ones i added
-                'X' : this.doNothing(),//this.findNewStartLocation(), // does nothing just to control curve
+                'X' : this.findNewStartLocation(), // does nothing just to control curve
                 'A' : this.doNothing(),
-                'B' : this.doNothing(),
-                'C' : this.doNothing(),
+                'B' : this.buildPillarsOnGlobalLoc.bind(this),
+                'C' : this.buildCubeOnGlobalLoc.bind(this),
                 // the ones required to implement
                 '[' : this.doNothing(),//this.saveCurrState.bind(this),
                 ']' : this.doNothing(),//this.goToPrevState.bind(this),
                 // ENVIRONMENT CONSTRUCTION
-                'D' : this.buildLandAndWater.bind(this)
+                'D' : this.buildBaseEnvironment.bind(this)
             };
         } else {
             this.renderGrammar = grammar;
@@ -487,16 +444,16 @@ export default class Turtle {
     rotateTurtle(x, y, z) {
         var e = new THREE.Euler(
                 x * 3.14/180,
-                y * 3.14/180,
-                z * 3.14/180);
+				y * 3.14/180,
+				z * 3.14/180);
         this.state.dir.applyEuler(e);
     }
 
     // Translate the turtle along the input vector.
     // Does NOT change the turtle's _dir_ vector
     moveTurtle(x, y, z) {
-        var new_vec = THREE.Vector3(x, y, z);
-        this.state.pos.add(new_vec);
+	    var new_vec = THREE.Vector3(x, y, z);
+	    this.state.pos.add(new_vec);
     };
 
     // Translate the turtle along its _dir_ vector by the distance indicated
@@ -537,90 +494,18 @@ export default class Turtle {
     // Call the function to which the input symbol is bound.
     // Look in the Turtle's constructor for examples of how to bind 
     // functions to grammar symbols.
-    // renderSymbol(symbolNode) {
-    //     var func = this.renderGrammar[symbolNode.character];
-    //     if (func) {
-    //         func();
-    //     }
-    // };
+    renderSymbol(symbolNode) {
+        var func = this.renderGrammar[symbolNode.character];
+        if (func) {
+            func();
+        }
+    };
 
     // Invoke renderSymbol for every node in a linked list of grammar symbols.
     renderSymbols(linkedList) {
-        var fullTree = this.buildTree(linkedList);
-
-        renderTree(fullTree);
-    }
-
-    renderObject(treeNode) {
-        var xLoc = treeNode.position.x;
-        var yLoc = treeNode.position.y;
-        var zLoc = treeNode.position.z;
-
-        var cubeHeight = this.newCubeDim(yLoc);
-        var cubeShift = cubeHeight/2;
-        var width = treeNode.xyDim;
-
-        // cube = 0
-        var geometry = new THREE.BoxGeometry( width, cubeHeight, width);
-        if (treeNode.objType == '1') {
-            geometry = new THREE.CylinderGeometry( width/2, width/2, cubeHeight);
-        } else if (treeNode.objType == '2') {
-            geometry = new THREE.CylinderGeometry( width/4, width/2, cubeHeight);
+        var currentNode;
+        for(currentNode = linkedList.head; currentNode != null; currentNode = currentNode.next) {
+            this.renderSymbol(currentNode);
         }
-        var material = treeNode.meshAttrib;
-        var cube = new THREE.Mesh( geometry, material );
-        
-        var quat = new THREE.Quaternion();
-        quat.setFromUnitVectors(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,1));
-        var mat4 = new THREE.Matrix4();
-        mat4.makeRotationFromQuaternion(quat);
-        cube.applyMatrix(mat4);
-
-        cube.position.y += cubeShift;
-
-        this.scene.add(cube);
-    }
-
-    renderTree(tree) {
-        if (tree != null) {
-            this.renderObject(tree.head);
-
-            var currentNode;
-            for (var i =0; i<tree.children.length; i++) {
-                this.renderTree(tree.children[i]);
-            }
-        }
-        
-    }
-
-    buildTree(list) {
-        var t = new TreeNode();
-        t.position.x = 0;
-        t.position.y = 0;
-        t.position.z = 0;
-
-        // NOTE: ASSUMING NOT GIVING EMPTY LIST : BASE ALWAYS HAS D AT LEAST FOR BASE ENVIRONMENT
-        var onElement = list.head;
-        while (onElement != null) {
-            if (onElement.char == '[') {
-
-            } else if (onElement.char == ']') {
-
-            } else if (onElement.char == 'A') {
-                this.doNothing();
-            } else if (onElement.char == 'B') {
-                this.doNothing();
-            } else if (onElement.char == 'C') {
-                this.doNothing();
-            } else if (onElement.char == 'D') {
-
-            } else {
-                console.log("WHAT HAPPENED?!!! : FOUND UNKNOWN CHARACTER : " + onElement.char);
-            }
-
-
-            onElement = onElement.next;
-        }
-
     }
 }

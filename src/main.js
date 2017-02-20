@@ -58,7 +58,9 @@ function onLoad(framework) {
 
   gui.add(iter, 'iters', 0, 12).listen().step(1).onChange(function(newVal) {
     clearScene(turtle);
-
+    if (lsys.iterations == 0) {
+      doLsystem(lsys, iter.iters, turtle);
+    }
     if (iter.iters > lsys.iterations) {
       // then the tree is growing
       console.log("INSIDE MAIN: iter.iters: " + iter.iters + " lsys.iterations: " + lsys.iterations);
@@ -110,6 +112,8 @@ function doRestForBuild(turtle, result) {
   turtle.tree = whichTree.tree;
 
   // rendering resulting structuring
+  
+  // turtle.renderTree(result);
   turtle.renderSymbols(result);
 }
 
@@ -125,6 +129,7 @@ function buildOnOldSystem(lsystem, iterations, turtle) {
     var result = lsystem.axiom;
     console.log("error? : 2" );
     var listFromOld = lsystem.doIterationsFromAxiom(iterations, whichTree.tree, result);
+    var listFromTree = 
     doRestForBuild(turtle, listFromOld);
 }
 
