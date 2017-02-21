@@ -25,6 +25,7 @@ function TreeNode() {
     this.addChild = function(child) {
         if (this.buildFrom) {
             this.children.push(child);
+            child.parent = this;
         }
     }
 
@@ -32,6 +33,7 @@ function TreeNode() {
         if (this.buildFrom) {
             var child = new TreeNode();
             this.children.push(child);
+            child.parent = this;
             return child;
         }
         return null;
@@ -42,14 +44,9 @@ function TreeNode() {
 function Tree() {
     this.head = null;
 
+    // assuming a and b are not null
     this.connectParentAndChild = function(a, b) {
-        if (a != null) {
-            a.children.push(b);
-        }
-        if (b != null) {
-            b.parent = a;
-        }
-        return;
+        a.addChild(b);
     }
 }
 
@@ -120,120 +117,27 @@ export default class Turtle {
             b : 240
         }
 
-        this.globalLoc = {
-            x: 0,
-            y: 0,
-            z: 0
-        }
+        // this.globalLoc = {
+        //     x: 0,
+        //     y: 0,
+        //     z: 0
+        // }
 
-        this.baseHeight = 10;
+        // this.baseHeight = 10;
     }
 
     doNothing() {
         // NOTHING
     }
 
-    findNewStartLocation() {
+    // findNewStartLocation() {
         
-    }
-
-    // buildCubeOnGlobalLoc(){
-    //     var cubeHeight = this.newCubeDim(this.globalLoc.y);
-    //     var cubeShift = cubeHeight/2;
-    //     var geometry = new THREE.BoxGeometry( cubeHeight, cubeHeight, cubeHeight);
-    //     var texture = new THREE.ImageUtils.loadTexture( '/img/5.jpeg' );
-    //     var material = new THREE.MeshLambertMaterial({ color: fullRGBToHex(0, 255, 0)} );
-    //     var cube = new THREE.Mesh( geometry, material );
-    //     console.log("issue is here : 1");
-    //     cube.position.y = this.globalLoc.y + cubeShift;
-    //     console.log("issue is here : 2");
-    //     this.scene.add(cube);
-
-
-    //     this.globalLoc.x = cube.position.x;
-    //     var cubeY = cube.position.y;
-    //     this.globalLoc.y = cubeY + cubeShift;
-    //     this.globalLoc.z = cube.position.z;
     // }
 
-    // buildPillarsOnGlobalLoc(){
-    //     var cubeHeight = this.newCubeDim(this.globalLoc.y);
-    //     var cubeShift = cubeHeight/2;
-    //     var width = cubeHeight/4;
-    //     var geometry = new THREE.BoxGeometry( width, cubeHeight, width);
-
-    //     var hex1 = fullRGBToHex(255, 255, 0);
-    //     var hex2 = fullRGBToHex(255, 120, 0);
-    //     var hex3 = fullRGBToHex(255, 0, 120);
-    //     var hex4 = fullRGBToHex(0, 255, 120);
-
-    //     var color1 = fullRGBToHex(0,0,0);
-    //     var color2 = fullRGBToHex(0,0,0);
-    //     var color3 = fullRGBToHex(0,0,0);
-    //     var color4 = fullRGBToHex(0,0,0);
-
-    //     var arrangement = Math.floor(Math.random()*cubeHeight % 4);
-    //     if (arrangement == 0) {
-    //         color1 = hex1;
-    //         color2 = hex2;
-    //         color3 = hex3;
-    //         color4 = hex4;
-    //     } else if (arrangement == 1) {
-    //         color1 = hex2;
-    //         color2 = hex3;
-    //         color3 = hex4;
-    //         color4 = hex1;
-    //     } else if (arrangement == 2) {
-    //         color1 = hex3;
-    //         color2 = hex4;
-    //         color3 = hex2;
-    //         color4 = hex1;
-    //     } else {
-    //         color1 = hex3;
-    //         color2 = hex4;
-    //         color3 = hex2;
-    //         color4 = hex1;
-    //     }
-
-    //     var material1 = new THREE.MeshLambertMaterial({ color: color1} );
-    //     var material2 = new THREE.MeshLambertMaterial({ color: color2} );
-    //     var material3 = new THREE.MeshLambertMaterial({ color: color3} );
-    //     var material4 = new THREE.MeshLambertMaterial({ color: color4} );
-    //     var cube1 = new THREE.Mesh( geometry, material1 );
-    //     var cube2 = new THREE.Mesh( geometry, material2 );
-    //     var cube3 = new THREE.Mesh( geometry, material3 );
-    //     var cube4 = new THREE.Mesh( geometry, material4 );
-    //     console.log("issue is here : 1");
-    //     cube1.position.y = this.globalLoc.y + cubeShift;
-    //     cube2.position.y = this.globalLoc.y + cubeShift;
-    //     cube3.position.y = this.globalLoc.y + cubeShift;
-    //     cube4.position.y = this.globalLoc.y + cubeShift;
-    //     console.log("issue is here : 2");
-    //     this.scene.add(cube1);
-    //     this.scene.add(cube2);
-    //     this.scene.add(cube3);
-    //     this.scene.add(cube4);
-
-    //     this.globalLoc.x = cube1.position.x;
-    //     var cubeY = cube1.position.y;
-    //     this.globalLoc.y = cubeShift + cubeY;
-    //     this.globalLoc.z = cube1.position.z;
-
-    //     var moveBy = width;
-    //     cube1.position.x -= moveBy;
-    //     cube1.position.z -= moveBy;
-    //     cube2.position.x += moveBy;
-    //     cube2.position.z -= moveBy;
-    //     cube3.position.x -= moveBy;
-    //     cube3.position.z += moveBy;
-    //     cube4.position.x += moveBy;
-    //     cube4.position.z += moveBy;
+    // buildBaseEnvironment(){
+    //     this.buildLandAndWater();
+    //     this.buildBaseLandMounds();
     // }
-
-    buildBaseEnvironment(){
-        this.buildLandAndWater();
-        this.buildBaseLandMounds();
-    }
 
     newCubeDim(y) {
         if (y > 50) {
@@ -249,106 +153,73 @@ export default class Turtle {
         }
     }
 
-    buildBaseLandMounds() {
-        // dist from 3 chosen locations 
-        // loc 1
-        // loc 2
-        // loc 3
-        // for now just 1 loc
-        var cubeHeight = 20;
-        var cubeShift = cubeHeight/2;
-        var width = 200;
-        var geometry = new THREE.BoxGeometry( width, cubeHeight, width);
-        var texture = new THREE.ImageUtils.loadTexture( '/img/5.jpeg' );
-        var material = new THREE.MeshLambertMaterial( {map: texture} );
-        var cube = new THREE.Mesh( geometry, material );
+    // buildBaseLandMounds() {
+    //     // dist from 3 chosen locations 
+    //     // loc 1
+    //     // loc 2
+    //     // loc 3
+    //     // for now just 1 loc
+    //     var cubeHeight = 20;
+    //     var cubeShift = cubeHeight/2;
+    //     var width = 200;
+    //     var geometry = new THREE.BoxGeometry( width, cubeHeight, width);
+    //     var texture = new THREE.ImageUtils.loadTexture( '/img/5.jpeg' );
+    //     var material = new THREE.MeshLambertMaterial( {map: texture} );
+    //     var cube = new THREE.Mesh( geometry, material );
         
-        var quat = new THREE.Quaternion();
-        quat.setFromUnitVectors(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,1));
-        var mat4 = new THREE.Matrix4();
-        mat4.makeRotationFromQuaternion(quat);
-        cube.applyMatrix(mat4);
+    //     var quat = new THREE.Quaternion();
+    //     quat.setFromUnitVectors(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,1));
+    //     var mat4 = new THREE.Matrix4();
+    //     mat4.makeRotationFromQuaternion(quat);
+    //     cube.applyMatrix(mat4);
 
-        cube.position.y += cubeShift;
+    //     cube.position.y += cubeShift;
 
-        this.scene.add(cube);
-        this.globalLoc.x = cube.position.x;
-        var cubeY = cube.position.y;
-        this.globalLoc.y = cubeShift + cubeY;
-        this.globalLoc.z = cube.position.z;
-    }
+    //     this.scene.add(cube);
+    //     this.globalLoc.x = cube.position.x;
+    //     var cubeY = cube.position.y;
+    //     this.globalLoc.y = cubeShift + cubeY;
+    //     this.globalLoc.z = cube.position.z;
+    // }
 
-    buildLandAndWater() {
-        // WATER
-        var geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 10,10 );
-        var materialWater = new THREE.MeshLambertMaterial({ color: fullRGBToHex(this.color.r, this.color.g, this.color.b),
-                                                            transparent:true,
-                                                            opacity: 0.5,
-                                                            side: THREE.DoubleSide });
-        //new THREE.MeshBasicMaterial( {color: fullRGBToHex(this.color.r, this.color.g, this.color.b), side: THREE.DoubleSide} );
-        var planeWater = new THREE.Mesh( geometry, materialWater );
-        this.scene.add(planeWater);
+    // buildLandAndWater() {
+    //     // WATER
+    //     var geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 10,10 );
+    //     var materialWater = new THREE.MeshLambertMaterial({ color: fullRGBToHex(this.color.r, this.color.g, this.color.b),
+    //                                                         transparent:true,
+    //                                                         opacity: 0.5,
+    //                                                         side: THREE.DoubleSide });
+    //     //new THREE.MeshBasicMaterial( {color: fullRGBToHex(this.color.r, this.color.g, this.color.b), side: THREE.DoubleSide} );
+    //     var planeWater = new THREE.Mesh( geometry, materialWater );
+    //     this.scene.add(planeWater);
 
 
-        var quat = new THREE.Quaternion();
-        quat.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1));
-        var mat4 = new THREE.Matrix4();
-        mat4.makeRotationFromQuaternion(quat);
-        planeWater.applyMatrix(mat4);
+    //     var quat = new THREE.Quaternion();
+    //     quat.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1));
+    //     var mat4 = new THREE.Matrix4();
+    //     mat4.makeRotationFromQuaternion(quat);
+    //     planeWater.applyMatrix(mat4);
 
-        planeWater.position.y = this.baseHeight - 2;
+    //     planeWater.position.y = this.baseHeight - 2;
 
-        // GROUND
+    //     // GROUND
 
-        var texture, materialGround, planeGround;
+    //     var texture, materialGround, planeGround;
 
-        texture = new THREE.ImageUtils.loadTexture( '/img/dirtTerrain.jpeg' );
-        texture.wrapS =  THREE.RepeatWrapping; 
-        texture.wrapT =  THREE.RepeatWrapping;
-        texture.repeat.set( 1, 1 ); 
+    //     texture = new THREE.ImageUtils.loadTexture( '/img/dirtTerrain.jpeg' );
+    //     texture.wrapS =  THREE.RepeatWrapping; 
+    //     texture.wrapT =  THREE.RepeatWrapping;
+    //     texture.repeat.set( 1, 1 ); 
 
-        // var renderObj = {
-        //   vShade: '/src/shaders/environ-vert.glsl',
-        //   fShade: '/src/shaders/workingRef-frag_norm.glsl',
-        // }
+    //     var geometryGround = new THREE.PlaneBufferGeometry( 1000, 1000, 10,10 );
+    //     materialGround = new THREE.MeshLambertMaterial({ map : texture });
+    //     planeGround = new THREE.Mesh(geometryGround, materialGround);
+    //     planeGround.material.side =  THREE.DoubleSide;
 
-        // var workingMaterial = new THREE.ShaderMaterial({
-        //   uniforms: {
-        //     image: { // Check the Three.JS documentation for the different allowed types and values
-        //       type: "t", 
-        //       value: THREE.ImageUtils.loadTexture('/img/5.jpeg')
-        //     }
-        //   },
-        //   vertexShader: require('./shaders/environ-vert.glsl'),
-        //   fragmentShader: require('./shaders/workingRef-frag_norm.glsl')
-        // });
+    //     planeGround.applyMatrix(mat4);
 
-        var geometryGround = new THREE.PlaneBufferGeometry( 1000, 1000, 10,10 );
-        materialGround = new THREE.MeshLambertMaterial({ map : texture });
-        planeGround = new THREE.Mesh(geometryGround, materialGround);
-        planeGround.material.side =  THREE.DoubleSide;
-        //planeGround.position.x = 100;
-
-        planeGround.applyMatrix(mat4);
-
-        // MAKE GROUND PLANE HAVE NOISE VARIATION
-
-        // planeGround.geometry.dynamic = true;
-        // console.log("HERE25");
-        // for (var i = 0; i < planeGround.geometry.vertices.length; i++) {
-        //     var heightAdd = this.findPerlinHeight(planeGround.geometry.vertices[i].position.x,
-        //                                           planeGround.geometry.vertices[i].position.z);
-
-        //     console.log("before adding to geometry pos attribute");
-        //     planeGround.geometry.vertices[i].position.z += heightAdd;
-            
-        //     console.log("after adding to geometry pos attribute");
-        //     console.log("here1: " + count);
-        //     count += 1;
-        // }
-        //planeGround.geometry.verticesNeedUpdate = true;
-        this.scene.add(planeGround);
-    }
+    //     this.scene.add(planeGround);
+    // }
 
     makeValBetween0and1(val) {
         if (val < 0) {
@@ -495,57 +366,57 @@ export default class Turtle {
         console.log(this.state.dir)
     }
 
-    // Rotate the turtle's _dir_ vector by each of the 
-    // Euler angles indicated by the input.
-    rotateTurtle(x, y, z) {
-        var e = new THREE.Euler(
-                x * 3.14/180,
-                y * 3.14/180,
-                z * 3.14/180);
-        this.state.dir.applyEuler(e);
-    }
+    // // Rotate the turtle's _dir_ vector by each of the 
+    // // Euler angles indicated by the input.
+    // rotateTurtle(x, y, z) {
+    //     var e = new THREE.Euler(
+    //             x * 3.14/180,
+    //             y * 3.14/180,
+    //             z * 3.14/180);
+    //     this.state.dir.applyEuler(e);
+    // }
 
-    // Translate the turtle along the input vector.
-    // Does NOT change the turtle's _dir_ vector
-    moveTurtle(x, y, z) {
-        var new_vec = THREE.Vector3(x, y, z);
-        this.state.pos.add(new_vec);
-    };
+    // // Translate the turtle along the input vector.
+    // // Does NOT change the turtle's _dir_ vector
+    // moveTurtle(x, y, z) {
+    //     var new_vec = THREE.Vector3(x, y, z);
+    //     this.state.pos.add(new_vec);
+    // };
 
-    // Translate the turtle along its _dir_ vector by the distance indicated
-    moveForward(dist) {
-        var newVec = this.state.dir.multiplyScalar(dist);
-        this.state.pos.add(newVec);
-    };
+    // // Translate the turtle along its _dir_ vector by the distance indicated
+    // moveForward(dist) {
+    //     var newVec = this.state.dir.multiplyScalar(dist);
+    //     this.state.pos.add(newVec);
+    // };
     
-    // Make a cylinder of given length and width starting at turtle pos
-    // Moves turtle pos ahead to end of the new cylinder
-    makeCylinder(len, width) {
-        var geometry = new THREE.CylinderGeometry(width, width, len);
-        // var material = new THREE.MeshBasicMaterial( {color: 0x00cccc} );
-        var material = new THREE.MeshBasicMaterial( {color: fullRGBToHex(this.color.r, this.color.g, this.color.b)} );
-        var cylinder = new THREE.Mesh( geometry, material );
-        this.scene.add( cylinder );
+    // // Make a cylinder of given length and width starting at turtle pos
+    // // Moves turtle pos ahead to end of the new cylinder
+    // makeCylinder(len, width) {
+    //     var geometry = new THREE.CylinderGeometry(width, width, len);
+    //     // var material = new THREE.MeshBasicMaterial( {color: 0x00cccc} );
+    //     var material = new THREE.MeshBasicMaterial( {color: fullRGBToHex(this.color.r, this.color.g, this.color.b)} );
+    //     var cylinder = new THREE.Mesh( geometry, material );
+    //     this.scene.add( cylinder );
 
-        //Orient the cylinder to the turtle's current direction
-        var quat = new THREE.Quaternion();
-        quat.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(1,0,0));
-        var mat4 = new THREE.Matrix4();
-        mat4.makeRotationFromQuaternion(quat);
-        cylinder.applyMatrix(mat4);
+    //     //Orient the cylinder to the turtle's current direction
+    //     var quat = new THREE.Quaternion();
+    //     quat.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(1,0,0));
+    //     var mat4 = new THREE.Matrix4();
+    //     mat4.makeRotationFromQuaternion(quat);
+    //     cylinder.applyMatrix(mat4);
 
 
-        //Move the cylinder so its base rests at the turtle's current position
-        var mat5 = new THREE.Matrix4();
+    //     //Move the cylinder so its base rests at the turtle's current position
+    //     var mat5 = new THREE.Matrix4();
 
-        var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * len));
+    //     var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * len));
 
-        mat5.makeTranslation(trans.x, trans.y, trans.z);
-        cylinder.applyMatrix(mat5);
+    //     mat5.makeTranslation(trans.x, trans.y, trans.z);
+    //     cylinder.applyMatrix(mat5);
 
-        //Scoot the turtle forward by len units
-        this.moveForward(len/2.0);
-    };
+    //     //Scoot the turtle forward by len units
+    //     this.moveForward(len/2.0);
+    // };
     
     // Call the function to which the input symbol is bound.
     // Look in the Turtle's constructor for examples of how to bind 
@@ -564,17 +435,18 @@ export default class Turtle {
         this.renderTree(fullTree);
     }
 
-    renderObject(treeNode, yPos) {
-        var xLoc = treeNode.position.x;
+    renderObject(treeNode, xPos, yPos, zPos, width) {
+        console.log("");
+        console.log("RENDERING OBJECT");
+        console.log("");
+        var xLoc = xPos;
         var yLoc = yPos;
-        var zLoc = treeNode.position.z;
-
-        treeNode.position.y = yPos;
+        var zLoc = zPos;
 
         treeNode.height = this.newCubeDim(yPos);
         var cubeHeight = treeNode.height;
-        // var cubeShift = cubeHeight/2;
-        var width = treeNode.xyDim;
+
+        console.log("cubeHeight: " + cubeHeight + " width: " + width);
 
         // cube = 0
         var geometry = new THREE.BoxGeometry( width, width, cubeHeight);
@@ -590,6 +462,7 @@ export default class Turtle {
         material.side = THREE.DoubleSide;
         var cube = new THREE.Mesh( geometry, material );
 
+        // TO MAKE SURE FACING PROPER AXIS DIRECTION [different for cylinders and cones]
         if (treeNode.objType != 1 && treeNode.objType != 2) {
             var quat = new THREE.Quaternion();
             quat.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1));
@@ -598,52 +471,106 @@ export default class Turtle {
             cube.applyMatrix(mat4);
         }
 
-        // console.log("obj.position.y before shift: " + cube.position.y + " cubeShift: " + cubeShift);
-        cube.position.y = treeNode.position.y; // + cubeShift;
+        // console.log("obj.position.y before shift: " + yPos + " cubeShift: " + cubeShift);
+        cube.position.x = xPos;
+        cube.position.y = yPos;// + cubeShift; // at top of parent plus shift for current height
+        cube.position.z = zPos;
+        console.log("obj.position.x: " + cube.position.x + " objType: " + treeNode.objType);
         console.log("obj.position.y: " + cube.position.y + " objType: " + treeNode.objType);
+        console.log("obj.position.z: " + cube.position.z + " objType: " + treeNode.objType);
         
+        console.log(cube);
+        console.log("added to scene");
 
         this.scene.add(cube);
     }
 
     renderTree(treeNode) {
         if (treeNode != null) {
-            treeNode.height = this.newCubeDim(treeNode.position.y);
-            var cubeShift = treeNode.height/2;
             var parentY = 0;
+            var parentX = 0;
+            var parentZ = 0;
+            var parentWidth = 0;
+            var parentHeight = treeNode.height;
+
+            var numParentIterating = 0;
+
+            //console.log(treeNode.parent);
             if (treeNode.parent != null) {
-                parentY = treeNode.parent.position.y + treeNode.height/2;
+                if (treeNode.parent.objType == 3 /* so on base */) {
+                    parentHeight = 0;
+                }
+                //console.log("getting in the parent's shift");
+                parentY = treeNode.parent.position.y + treeNode.parent.height/2; // at top of parent
+                parentX = treeNode.parent.position.x;
+                parentZ = treeNode.parent.position.z;
+                parentWidth = treeNode.parent.xyDim;
+
+                numParentIterating = treeNode.parent.children.length;
+                if (numParentIterating > 6) {
+                    numParentIterating = 6;
+                }
+
+                treeNode.xyDim = parentWidth/(numParentIterating+1);
+            } else {
+                //console.log("DID NOT: get in the parent's shift");
+
             }
-            var locY = parentY + cubeShift;
-            this.renderObject(treeNode, locY);
+
+            
+            treeNode.height = this.newCubeDim(parentY);
+            treeNode.position.y = parentY + treeNode.height/2; // now at top of parent
+            var locY = treeNode.position.y; // treeNode.height/2 = cubeShift
+
+            var locX = parentX;
+            if (numParentIterating > 1) {
+                locX += parentWidth/2 * Math.cos(360/numParentIterating * treeNode.childId);
+            }
+            treeNode.position.x = locX;
+
+            var locZ = parentZ;
+            if (numParentIterating > 1) {
+                locZ += parentWidth/2 * Math.sin(360/numParentIterating * treeNode.childId);
+            }
+            treeNode.position.z = locZ;
+
+            //console.log("RENDERING PARENT:");
+            //console.log("parent height: " + treeNode.height + " parent.y: " + treeNode.position.y);
+
+            // max render height i want to use
+            if (locZ < 500) {
+                this.renderObject(treeNode, locX, locY, locZ, treeNode.xyDim);
+            }
+
+            
 
             // TO DO:
             // BASED ON NUMBER OF CHILDREN - ALLOCATE THEIR X,Y POSITIONS AND XYWIDTHS BASED
             //      ON NUM OF TOTAL CHILREN
+
+            // var parentWidth = treeNode.xyDim;
+            // var parentY = locY;
+            // var halfHeight = this.newCubeDim(parentY)/2;
+
+            // console.log("rendering");
             var numIterating = treeNode.children.length;
             if (numIterating > 6) {
                 numIterating = 6;
             }
-
-            var parentWidth = treeNode.xyDim;
-            var parentY = treeNode.position.y;
-            var halfHeight = this.newCubeDim(parentY)/2;
-
-            // console.log("rendering");
             console.log("numChildren: numIterating: " + numIterating);
 
             // NOTE: IF CHILDREN > 6 IGNORING THOSE
             for (var i =0; i<numIterating; i++) {
-                var onChild = treeNode.children[i];
-                onChild.position.x += parentWidth/2 * Math.cos(360/numIterating * i);
-                onChild.position.z += parentWidth/2 * Math.sin(360/numIterating * i);
-                onChild.position.y = parentY + halfHeight + onChild.height/2;
-                onChild.height = this.newCubeDim(onChild.position.y);
-                console.log("onChild height: " + onChild.height + "onChild.y: " + onChild.position.y + 
-                            " parent height: " + parentY        + " parent.y: " + treeNode.position.y);
-                onChild.xyDim = parentWidth/3*2;
+                // var onChild = treeNode.children[i];
+                // onChild.position.x += parentWidth/2 * Math.cos(360/numIterating * onChild.childId);
+                // onChild.position.z += parentWidth/2 * Math.sin(360/numIterating * i);
+                // onChild.height = this.newCubeDim(onChild.position.y);
+                // onChild.position.y = parentY + halfHeight + onChild.height/2;
+                // console.log("onChild height: " + onChild.height  + " onChild.y: " + onChild.position.y + 
+                //             " parent height: " + treeNode.height + " parent.y: " + treeNode.position.y);
+                // onChild.xyDim = parentWidth/3*2;
 
-                this.renderTree(onChild);                
+                this.renderTree(treeNode.children[i]);                
             }
 
 
