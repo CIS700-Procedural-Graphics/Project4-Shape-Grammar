@@ -247,7 +247,8 @@ function parseShapeSet(scene) {
     var t = 1.0 - (distanceToCenter / Math.sqrt(dxSampling*dxSampling + dySampling*dySampling));
     var colorFactor = gain(0.7, t)*0.7+0.3;
     var material;
-    if (shape.geom_type === 'SkyscraperCorner' || shape.geom_type === 'SkyscraperSide' || shape.geom_type === 'SkyscraperRoof') {
+    if (shape.geom_type === 'SkyscraperCorner' || shape.geom_type === 'SkyscraperSide' || 
+      shape.geom_type === 'SkyscraperRoof') {
       material = new THREE.MeshLambertMaterial({color: palette(50.0/60.0).multiplyScalar(colorFactor), shading: THREE.FlatShading });
     }
     else {

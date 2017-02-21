@@ -56,12 +56,16 @@ export default class Lsystem {
 
 		//skyscraper rules
 		this.grammar['S'] = [
-			new Rule(0.6, 'ht'),
-			new Rule(0.4, 'g')
+			new Rule(0.8, 'ht'),
+			new Rule(0.2, 'g')
 		];
 		this.grammar['U'] = [
 			new Rule(1.0, 'ht')
 		];
+		this.grammar['P'] = [
+			new Rule(0.2, 'ht'),
+			new Rule(0.8, 'g')
+		]
 
 		//binds grammar to method stored in this class
 	    this.renderGrammar = {
@@ -190,7 +194,11 @@ export default class Lsystem {
 				//add a little bit of randomness to the height of building
 				var height = Math.max(Math.round(replacedShape.scale.y + Math.random()*5.0), 5.0);
 				//type of building depends on the height
-				if (height > 30.0) {
+				if (height > 45.0) {
+					buildingType = 'P';
+					geometryType = 'Skyscraper';
+				}
+				else if (height > 30.0) {
 					buildingType = 'S';
 					geometryType = 'Skyscraper';
 				}
@@ -560,7 +568,7 @@ export default class Lsystem {
 		shape.mat = new THREE.Matrix4().copy(replacedShape.mat);
 	 	shape.mat.multiply(new THREE.Matrix4().makeTranslation(0, replacedShape.scale.y - 1.0, 0));
 	 	//scale the edges down a litle bit, to match window thickness (exact numbers from obj file)
-		shape.scale = new THREE.Vector3(replacedShape.scale.x-0.146*2, 1, replacedShape.scale.z-0.146*2);
+		shape.scale = new THREE.Vector3(replacedShape.scale.x-0.146*2.0, 1.0, replacedShape.scale.z-0.146*2.0);
 		shape.terminal = true;
 		shape.geom_type = 'SkyscraperRoof';
 		shapeSet.add(shape);
@@ -569,7 +577,7 @@ export default class Lsystem {
 	stackSkyscraper(shapeSet, replacedShape) {
 
 		//base case, if skyscraper is getting too small
-		if (replacedShape.scale.x <= 4.0 || replacedShape.scale.z <= 4.0 || replacedShape.scale.y <= 7.0) {
+		if (replacedShape.scale.x <= 4.0 || replacedShape.scale.z <= 4.0 || replacedShape.scale.y <= 10.0) {
 			//does not stack anymore, type 'U'
 			var skyscraper = new Shape('U');
 			skyscraper.mat = new THREE.Matrix4().copy(replacedShape.mat);
@@ -581,6 +589,7 @@ export default class Lsystem {
 		}
 
 		//bottom does not stack anymore, type 'U'
+		//use the golden ratio for stacking height
 		var bottomHeight = Math.round(replacedShape.scale.y / 2.618);
 		var bottomSkyscraper = new Shape('U');
 		bottomSkyscraper.mat = new THREE.Matrix4().copy(replacedShape.mat);
@@ -590,7 +599,14 @@ export default class Lsystem {
 		shapeSet.add(bottomSkyscraper);
 
 		//top can continue to stack, type 'S'
-		var topSkyscraper = new Shape('S');
+		var shape_type;
+		if (replacedShape.symbol === 'P') {
+			shape_type = 'P';
+		}
+		else {
+			shape_type = 'S';
+		}
+		var topSkyscraper = new Shape(shape_type);
 		topSkyscraper.mat = new THREE.Matrix4().copy(replacedShape.mat);
 		//apply translation
 	 	topSkyscraper.mat.multiply(new THREE.Matrix4().makeTranslation(0, bottomHeight, 0));
