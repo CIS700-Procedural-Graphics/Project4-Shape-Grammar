@@ -116,11 +116,28 @@ export default class Turtle {
             g : 60,
             b : 240
         }
+
+        // this.globalLoc = {
+        //     x: 0,
+        //     y: 0,
+        //     z: 0
+        // }
+
+        // this.baseHeight = 10;
     }
 
     doNothing() {
         // NOTHING
     }
+
+    // findNewStartLocation() {
+        
+    // }
+
+    // buildBaseEnvironment(){
+    //     this.buildLandAndWater();
+    //     this.buildBaseLandMounds();
+    // }
 
     newCubeDim(y) {
         if (y > 50) {
@@ -135,6 +152,74 @@ export default class Turtle {
             return 20;
         }
     }
+
+    // buildBaseLandMounds() {
+    //     // dist from 3 chosen locations 
+    //     // loc 1
+    //     // loc 2
+    //     // loc 3
+    //     // for now just 1 loc
+    //     var cubeHeight = 20;
+    //     var cubeShift = cubeHeight/2;
+    //     var width = 200;
+    //     var geometry = new THREE.BoxGeometry( width, cubeHeight, width);
+    //     var texture = new THREE.ImageUtils.loadTexture( '/img/5.jpeg' );
+    //     var material = new THREE.MeshLambertMaterial( {map: texture} );
+    //     var cube = new THREE.Mesh( geometry, material );
+        
+    //     var quat = new THREE.Quaternion();
+    //     quat.setFromUnitVectors(new THREE.Vector3(1,0,0), new THREE.Vector3(0,0,1));
+    //     var mat4 = new THREE.Matrix4();
+    //     mat4.makeRotationFromQuaternion(quat);
+    //     cube.applyMatrix(mat4);
+
+    //     cube.position.y += cubeShift;
+
+    //     this.scene.add(cube);
+    //     this.globalLoc.x = cube.position.x;
+    //     var cubeY = cube.position.y;
+    //     this.globalLoc.y = cubeShift + cubeY;
+    //     this.globalLoc.z = cube.position.z;
+    // }
+
+    // buildLandAndWater() {
+    //     // WATER
+    //     var geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 10,10 );
+    //     var materialWater = new THREE.MeshLambertMaterial({ color: fullRGBToHex(this.color.r, this.color.g, this.color.b),
+    //                                                         transparent:true,
+    //                                                         opacity: 0.5,
+    //                                                         side: THREE.DoubleSide });
+    //     //new THREE.MeshBasicMaterial( {color: fullRGBToHex(this.color.r, this.color.g, this.color.b), side: THREE.DoubleSide} );
+    //     var planeWater = new THREE.Mesh( geometry, materialWater );
+    //     this.scene.add(planeWater);
+
+
+    //     var quat = new THREE.Quaternion();
+    //     quat.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1));
+    //     var mat4 = new THREE.Matrix4();
+    //     mat4.makeRotationFromQuaternion(quat);
+    //     planeWater.applyMatrix(mat4);
+
+    //     planeWater.position.y = this.baseHeight - 2;
+
+    //     // GROUND
+
+    //     var texture, materialGround, planeGround;
+
+    //     texture = new THREE.ImageUtils.loadTexture( '/img/dirtTerrain.jpeg' );
+    //     texture.wrapS =  THREE.RepeatWrapping; 
+    //     texture.wrapT =  THREE.RepeatWrapping;
+    //     texture.repeat.set( 1, 1 ); 
+
+    //     var geometryGround = new THREE.PlaneBufferGeometry( 1000, 1000, 10,10 );
+    //     materialGround = new THREE.MeshLambertMaterial({ map : texture });
+    //     planeGround = new THREE.Mesh(geometryGround, materialGround);
+    //     planeGround.material.side =  THREE.DoubleSide;
+
+    //     planeGround.applyMatrix(mat4);
+
+    //     this.scene.add(planeGround);
+    // }
 
     makeValBetween0and1(val) {
         if (val < 0) {
@@ -281,6 +366,68 @@ export default class Turtle {
         console.log(this.state.dir)
     }
 
+    // // Rotate the turtle's _dir_ vector by each of the 
+    // // Euler angles indicated by the input.
+    // rotateTurtle(x, y, z) {
+    //     var e = new THREE.Euler(
+    //             x * 3.14/180,
+    //             y * 3.14/180,
+    //             z * 3.14/180);
+    //     this.state.dir.applyEuler(e);
+    // }
+
+    // // Translate the turtle along the input vector.
+    // // Does NOT change the turtle's _dir_ vector
+    // moveTurtle(x, y, z) {
+    //     var new_vec = THREE.Vector3(x, y, z);
+    //     this.state.pos.add(new_vec);
+    // };
+
+    // // Translate the turtle along its _dir_ vector by the distance indicated
+    // moveForward(dist) {
+    //     var newVec = this.state.dir.multiplyScalar(dist);
+    //     this.state.pos.add(newVec);
+    // };
+    
+    // // Make a cylinder of given length and width starting at turtle pos
+    // // Moves turtle pos ahead to end of the new cylinder
+    // makeCylinder(len, width) {
+    //     var geometry = new THREE.CylinderGeometry(width, width, len);
+    //     // var material = new THREE.MeshBasicMaterial( {color: 0x00cccc} );
+    //     var material = new THREE.MeshBasicMaterial( {color: fullRGBToHex(this.color.r, this.color.g, this.color.b)} );
+    //     var cylinder = new THREE.Mesh( geometry, material );
+    //     this.scene.add( cylinder );
+
+    //     //Orient the cylinder to the turtle's current direction
+    //     var quat = new THREE.Quaternion();
+    //     quat.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(1,0,0));
+    //     var mat4 = new THREE.Matrix4();
+    //     mat4.makeRotationFromQuaternion(quat);
+    //     cylinder.applyMatrix(mat4);
+
+
+    //     //Move the cylinder so its base rests at the turtle's current position
+    //     var mat5 = new THREE.Matrix4();
+
+    //     var trans = this.state.pos.add(this.state.dir.multiplyScalar(0.5 * len));
+
+    //     mat5.makeTranslation(trans.x, trans.y, trans.z);
+    //     cylinder.applyMatrix(mat5);
+
+    //     //Scoot the turtle forward by len units
+    //     this.moveForward(len/2.0);
+    // };
+    
+    // Call the function to which the input symbol is bound.
+    // Look in the Turtle's constructor for examples of how to bind 
+    // functions to grammar symbols.
+    // renderSymbol(symbolNode) {
+    //     var func = this.renderGrammar[symbolNode.character];
+    //     if (func) {
+    //         func();
+    //     }
+    // };
+
     // Invoke renderSymbol for every node in a linked list of grammar symbols.
     renderSymbols(linkedList) {
         var fullTree = this.buildTree(linkedList);
@@ -299,7 +446,7 @@ export default class Turtle {
         treeNode.height = this.newCubeDim(yPos);
         var cubeHeight = treeNode.height;
 
-        // console.log("cubeHeight: " + cubeHeight + " width: " + width);
+        console.log("cubeHeight: " + cubeHeight + " width: " + width);
 
         // cube = 0
         var geometry = new THREE.BoxGeometry( width, width, cubeHeight);
@@ -328,12 +475,12 @@ export default class Turtle {
         cube.position.x = xPos;
         cube.position.y = yPos;// + cubeShift; // at top of parent plus shift for current height
         cube.position.z = zPos;
-        // console.log("obj.position.x: " + cube.position.x + " objType: " + treeNode.objType);
-        // console.log("obj.position.y: " + cube.position.y + " objType: " + treeNode.objType);
-        // console.log("obj.position.z: " + cube.position.z + " objType: " + treeNode.objType);
+        console.log("obj.position.x: " + cube.position.x + " objType: " + treeNode.objType);
+        console.log("obj.position.y: " + cube.position.y + " objType: " + treeNode.objType);
+        console.log("obj.position.z: " + cube.position.z + " objType: " + treeNode.objType);
         
-        // console.log(cube);
-        // console.log("added to scene");
+        console.log(cube);
+        console.log("added to scene");
 
         this.scene.add(cube);
     }
@@ -344,18 +491,17 @@ export default class Turtle {
             var parentX = 0;
             var parentZ = 0;
             var parentWidth = 0;
-            var parentHeight = 0;
+            var parentHeight = treeNode.height;
 
             var numParentIterating = 0;
 
             //console.log(treeNode.parent);
             if (treeNode.parent != null) {
-                parentHeight = treeNode.parent.height;
                 if (treeNode.parent.objType == 3 /* so on base */) {
                     parentHeight = 0;
                 }
                 //console.log("getting in the parent's shift");
-                parentY = treeNode.parent.position.y + parentHeight/2; //treeNode.parent.height/2; // at top of parent
+                parentY = treeNode.parent.position.y + treeNode.parent.height/2; // at top of parent
                 parentX = treeNode.parent.position.x;
                 parentZ = treeNode.parent.position.z;
                 parentWidth = treeNode.parent.xyDim;
@@ -370,43 +516,41 @@ export default class Turtle {
                 //console.log("DID NOT: get in the parent's shift");
 
             }
+
             
             treeNode.height = this.newCubeDim(parentY);
             treeNode.position.y = parentY + treeNode.height/2; // now at top of parent
             var locY = treeNode.position.y; // treeNode.height/2 = cubeShift
 
-            console.log("CHECKING POS VALUES FOR MULTIPLE CHILDREN");
-            console.log("treeNode.childId : " + (treeNode.childId + 1) + ", numParentIterating: " + numParentIterating);
-
             var locX = parentX;
             if (numParentIterating > 1) {
-                var locAdj = parentWidth/2 * Math.cos(2*Math.PI * (treeNode.childId + 1) / numParentIterating);
-                //console.log("parentWidth/2: " + (parentWidth/2) + " * cos(" + (2*Math.PI * (treeNode.childId + 1) / numParentIterating) + ")");
-                locX += locAdj;
-                //console.log("xPos with more than 1 on shared plane: " + locX);
+                locX += parentWidth/2 * Math.cos(360/numParentIterating * treeNode.childId);
             }
             treeNode.position.x = locX;
 
             var locZ = parentZ;
             if (numParentIterating > 1) {
-                var locAdj = parentWidth/2 * Math.sin(2*Math.PI * (treeNode.childId + 1) / numParentIterating);
-                //console.log("parentWidth/2: " + (parentWidth/2) + " * sin(" + (2*Math.PI * (treeNode.childId + 1) / numParentIterating) + ")")
-                locZ += locAdj;
-                //console.log("zPos with more than 1 on shared plane: " + locZ);
+                locZ += parentWidth/2 * Math.sin(360/numParentIterating * treeNode.childId);
             }
             treeNode.position.z = locZ;
 
             //console.log("RENDERING PARENT:");
             //console.log("parent height: " + treeNode.height + " parent.y: " + treeNode.position.y);
 
-            // max render height to use
+            // max render height i want to use
             if (locZ < 500) {
                 this.renderObject(treeNode, locX, locY, locZ, treeNode.xyDim);
             }
 
+            
+
             // TO DO:
             // BASED ON NUMBER OF CHILDREN - ALLOCATE THEIR X,Y POSITIONS AND XYWIDTHS BASED
             //      ON NUM OF TOTAL CHILREN
+
+            // var parentWidth = treeNode.xyDim;
+            // var parentY = locY;
+            // var halfHeight = this.newCubeDim(parentY)/2;
 
             // console.log("rendering");
             var numIterating = treeNode.children.length;
@@ -417,10 +561,21 @@ export default class Turtle {
 
             // NOTE: IF CHILDREN > 6 IGNORING THOSE
             for (var i =0; i<numIterating; i++) {
+                // var onChild = treeNode.children[i];
+                // onChild.position.x += parentWidth/2 * Math.cos(360/numIterating * onChild.childId);
+                // onChild.position.z += parentWidth/2 * Math.sin(360/numIterating * i);
+                // onChild.height = this.newCubeDim(onChild.position.y);
+                // onChild.position.y = parentY + halfHeight + onChild.height/2;
+                // console.log("onChild height: " + onChild.height  + " onChild.y: " + onChild.position.y + 
+                //             " parent height: " + treeNode.height + " parent.y: " + treeNode.position.y);
+                // onChild.xyDim = parentWidth/3*2;
+
                 this.renderTree(treeNode.children[i]);                
             }
-        }//end: if (tree!=null);
 
+
+        }
+        
     }
 
     buildTree(list) {
