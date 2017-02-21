@@ -194,17 +194,17 @@ export default function Lsystem(axiom, grammar, iterations) {
 		new Rule(0.6, '-FX')
 	];
 	this.grammar['A'] = [
-		new Rule(0.6, 'FF'), 
+		new Rule(0.6, '[BC[B[B]AB[CA]]'), 
 		new Rule(0.6, 'FF'), 
 		new Rule(0.4, 'A')
 	];
 	this.grammar['B'] = [
-		new Rule(0.6, 'BC'), 
+		new Rule(0.6, 'B'), 
 		new Rule(0.6, 'B'), 
 		new Rule(0.3, 'B')
 	];
 	this.grammar['C'] = [
-		new Rule(0.5, 'CBB'), 
+		new Rule(0.5, 'CBA'), 
 		new Rule(0.5, 'C'), 
 		new Rule(0.5, 'C')
 	];
@@ -319,7 +319,7 @@ export default function Lsystem(axiom, grammar, iterations) {
 				var onChar = h.character;
 				//console.log("on char : " + onChar);
 				if ( !(stringListOfChars.includes(onChar))
-						&& (onChar == 'F' || onChar == 'X' || onChar == 'A' || onChar == 'B' || onChar == 'C') ) {
+						&& (onChar == 'F' || onChar == 'X' || onChar == 'A' || onChar == 'B' || onChar == 'C' || onChar == 'D') ) {
 					stringListOfChars += h.character;
 				}
 				h = h.next;

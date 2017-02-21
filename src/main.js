@@ -36,6 +36,18 @@ function onLoad(framework) {
   camera.position.set(1, 1, 2);
   camera.lookAt(new THREE.Vector3(0,0,0));
 
+  // set skybox
+    var loader = new THREE.CubeTextureLoader();
+    var urlPrefix = 'img/skymap/';
+
+    var skymap = new THREE.CubeTextureLoader().load([
+        urlPrefix + 'px.jpg', urlPrefix + 'nx.jpg',
+        urlPrefix + 'py.jpg', urlPrefix + 'ny.jpg',
+        urlPrefix + 'pz.jpg', urlPrefix + 'nz.jpg'
+    ] );
+
+    scene.background = skymap;
+
   // initialize LSystem and a Turtle to draw
   var lsys = new Lsystem();
   turtle = new Turtle(scene);
@@ -129,7 +141,7 @@ function buildOnOldSystem(lsystem, iterations, turtle) {
     var result = lsystem.axiom;
     console.log("error? : 2" );
     var listFromOld = lsystem.doIterationsFromAxiom(iterations, whichTree.tree, result);
-    var listFromTree = 
+    //var listFromTree = 
     doRestForBuild(turtle, listFromOld);
 }
 
