@@ -200,20 +200,20 @@ function initializeMap() {
   var objLoader = new THREE.OBJLoader();
 
   //apartment objects
-  objLoader.load('./geo/SimpleApartmentBaseSide.obj', function(obj) { typeToObjMap.set('ApartmentBaseSide', obj.children[0].geometry) });
-  objLoader.load('./geo/SimpleApartmentBaseCorner.obj', function(obj) { typeToObjMap.set('ApartmentBaseCorner', obj.children[0].geometry) });
-  objLoader.load('./geo/SimpleApartmentFloorSide1.obj', function(obj) { tempMap.set('ApartmentFloorSide1', obj.children[0].geometry); });
-  objLoader.load('./geo/SimpleApartmentFloorCorner1.obj', function(obj) { tempMap.set('ApartmentFloorCorner1', obj.children[0].geometry); });
-  objLoader.load('./geo/SimpleApartmentFloorSide2.obj', function(obj) { tempMap.set('ApartmentFloorSide2', obj.children[0].geometry); });
-  objLoader.load('./geo/SimpleApartmentFloorCorner2.obj', function(obj) { tempMap.set('ApartmentFloorCorner2', obj.children[0].geometry); });
-  objLoader.load('./geo/SimpleApartmentRoofSide.obj', function(obj) { typeToObjMap.set('ApartmentRoofSide', obj.children[0].geometry) });
-  objLoader.load('./geo/SimpleApartmentRoofCorner.obj', function(obj) { typeToObjMap.set('ApartmentRoofCorner', obj.children[0].geometry) });
-  objLoader.load('./geo/SimpleApartmentRoofCenter.obj', function(obj) { typeToObjMap.set('ApartmentRoofCenter', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentBaseSide.obj', function(obj) { typeToObjMap.set('ApartmentBaseSide', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentBaseCorner.obj', function(obj) { typeToObjMap.set('ApartmentBaseCorner', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentFloorSide1.obj', function(obj) { tempMap.set('ApartmentFloorSide1', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentFloorCorner1.obj', function(obj) { tempMap.set('ApartmentFloorCorner1', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentFloorSide2.obj', function(obj) { tempMap.set('ApartmentFloorSide2', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentFloorCorner2.obj', function(obj) { tempMap.set('ApartmentFloorCorner2', obj.children[0].geometry); });
+  objLoader.load('/geo/SimpleApartmentRoofSide.obj', function(obj) { typeToObjMap.set('ApartmentRoofSide', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentRoofCorner.obj', function(obj) { typeToObjMap.set('ApartmentRoofCorner', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleApartmentRoofCenter.obj', function(obj) { typeToObjMap.set('ApartmentRoofCenter', obj.children[0].geometry) });
 
   //skyscraper objects
-  objLoader.load('./geo/SimpleSkyscraperSide.obj', function(obj) { typeToObjMap.set('SkyscraperSide', obj.children[0].geometry) });
-  objLoader.load('./geo/SimpleSkyscraperCorner.obj', function(obj) { typeToObjMap.set('SkyscraperCorner', obj.children[0].geometry) });
-  objLoader.load('./geo/SimpleSkyscraperRoof.obj', function(obj) { typeToObjMap.set('SkyscraperRoof', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleSkyscraperSide.obj', function(obj) { typeToObjMap.set('SkyscraperSide', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleSkyscraperCorner.obj', function(obj) { typeToObjMap.set('SkyscraperCorner', obj.children[0].geometry) });
+  objLoader.load('/geo/SimpleSkyscraperRoof.obj', function(obj) { typeToObjMap.set('SkyscraperRoof', obj.children[0].geometry) });
 
   return tempMap;
 }
