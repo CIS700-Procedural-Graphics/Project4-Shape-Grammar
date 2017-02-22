@@ -37,7 +37,7 @@ The following renders strongly exhibit the implementation of how geometry goes u
 ![Geometry Inheritance 1](https://github.com/hanbollar/Project4-Shape-Grammar/blob/697f06241b50ccf78fdb424311ab38b4e97ac70e/shotsForVisual/7.png "Geometry Inheritance 1")
 ![Geometry Inheritance 2](https://github.com/hanbollar/Project4-Shape-Grammar/blob/697f06241b50ccf78fdb424311ab38b4e97ac70e/shotsForVisual/5.png "Geometry Inheritance 2")
 
-Detail of an amalgamation of lots of geometry.\n
+Detail of an amalgamation of lots of geometry.<br />
 ![Detail](https://github.com/hanbollar/Project4-Shape-Grammar/blob/697f06241b50ccf78fdb424311ab38b4e97ac70e/shotsForVisual/4.png "Detail")
 
 
