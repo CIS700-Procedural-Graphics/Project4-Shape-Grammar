@@ -189,12 +189,12 @@ export default function Lsystem(axiom, grammar, iterations) {
 	];
 	// adding in my rules -HB
 	this.grammar['F'] = [
-		new Rule(0.7, 'CC'), 
+		new Rule(0.7, '[]F'), 
 		new Rule(0.6, 'FF'), 
 		new Rule(0.6, '-FX')
 	];
 	this.grammar['A'] = [
-		new Rule(0.6, '[BC[B[B]AB[CA]]'), 
+		new Rule(0.6, '[BC[X][FA][BA[B]FAB[ACAX]]'), 
 		new Rule(0.6, 'FF'), 
 		new Rule(0.4, 'A')
 	];
@@ -204,14 +204,14 @@ export default function Lsystem(axiom, grammar, iterations) {
 		new Rule(0.3, 'B')
 	];
 	this.grammar['C'] = [
-		new Rule(0.5, 'CBA'), 
+		new Rule(0.5, 'CAB[]AX'), 
 		new Rule(0.5, 'C'), 
 		new Rule(0.5, 'C')
 	];
 	// START BUILDING MAIN SCENE: perlin terrian and water plane
 	// 		ALWAYS MUST BE FIRST IN AXIOM
 	this.grammar['D'] = [ 
-		new Rule(0.5, 'D'),
+		new Rule(0.5, 'DA'),
 		new Rule(0.5, 'D'), 
 		new Rule(0.5, 'D')
 	];

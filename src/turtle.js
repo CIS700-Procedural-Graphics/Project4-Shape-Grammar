@@ -288,27 +288,28 @@ export default class Turtle {
         this.renderTree(fullTree);
     }
 
-    renderObject(treeNode, xPos, yPos, zPos, width) {
+    renderObject(treeNode, xPos, yPos, zPos, width, height) {
         console.log("");
         console.log("RENDERING OBJECT");
         console.log("");
-        var xLoc = xPos;
-        var yLoc = yPos;
-        var zLoc = zPos;
 
-        treeNode.height = this.newCubeDim(yPos);
-        var cubeHeight = treeNode.height;
+        if (treeNode.parent == null) {
+            treeNode.objType == 3;
+        }
 
-        // console.log("cubeHeight: " + cubeHeight + " width: " + width);
-
-        // cube = 0
-        var geometry = new THREE.BoxGeometry( width, width, cubeHeight);
+        // CUBE
+        var geometry = new THREE.BoxGeometry( width, width, height);
+        // CYLINDER
         if (treeNode.objType == 1) {
-            geometry = new THREE.CylinderGeometry( width/2, width/2, cubeHeight);
+            geometry = new THREE.CylinderGeometry( width*4/5, width*4/5, height);
+            //geometry = new THREE.CylinderGeometry( width/2, width/2, height);
+        // CONE
         } else if (treeNode.objType == 2) {
-            geometry = new THREE.CylinderGeometry( width/4, width/2, cubeHeight);
+            geometry = new THREE.CylinderGeometry( width*2/5, width*4/5, height);
+            //geometry = new THREE.CylinderGeometry( width/4, width/2, height);
+        // BASE PLANE
         } else if (treeNode.objType == 3) {
-            geometry = new THREE.PlaneGeometry( width, width, cubeHeight);
+            geometry = new THREE.PlaneGeometry( width*5, width*5, height);
         }
 
         var material = treeNode.meshAttrib;
@@ -324,16 +325,9 @@ export default class Turtle {
             cube.applyMatrix(mat4);
         }
 
-        // console.log("obj.position.y before shift: " + yPos + " cubeShift: " + cubeShift);
         cube.position.x = xPos;
         cube.position.y = yPos;// + cubeShift; // at top of parent plus shift for current height
         cube.position.z = zPos;
-        // console.log("obj.position.x: " + cube.position.x + " objType: " + treeNode.objType);
-        // console.log("obj.position.y: " + cube.position.y + " objType: " + treeNode.objType);
-        // console.log("obj.position.z: " + cube.position.z + " objType: " + treeNode.objType);
-        
-        // console.log(cube);
-        // console.log("added to scene");
 
         this.scene.add(cube);
     }
@@ -350,15 +344,17 @@ export default class Turtle {
 
             //console.log(treeNode.parent);
             if (treeNode.parent != null) {
-                parentHeight = treeNode.parent.height;
-                if (treeNode.parent.objType == 3 /* so on base */) {
-                    parentHeight = 0;
-                }
                 //console.log("getting in the parent's shift");
-                parentY = treeNode.parent.position.y + parentHeight/2; //treeNode.parent.height/2; // at top of parent
+                parentY = treeNode.parent.position.y; //treeNode.parent.height/2; // at top of parent
                 parentX = treeNode.parent.position.x;
                 parentZ = treeNode.parent.position.z;
                 parentWidth = treeNode.parent.xyDim;
+                parentHeight = treeNode.parent.height;//treeNode.parent.height;
+                if (treeNode.parent.objType == 3 /* so on base */) {
+                    parentHeight = 0;
+                }
+
+                parentY += parentHeight/2;
 
                 numParentIterating = treeNode.parent.children.length;
                 if (numParentIterating > 6) {
@@ -368,19 +364,23 @@ export default class Turtle {
                 treeNode.xyDim = parentWidth/(numParentIterating+1);
             } else {
                 //console.log("DID NOT: get in the parent's shift");
-
             }
             
+
+            //var locY = treeNode.position.y; // treeNode.height/2 = cubeShift
             treeNode.height = this.newCubeDim(parentY);
-            treeNode.position.y = parentY + treeNode.height/2; // now at top of parent
+            console.log("treeNode.height: " + treeNode.height);
+            treeNode.position.y = parentY + treeNode.height/2; //this.newCubeDim(parentY)/2;// + treeNode.height/2; //+ treeNode.height/2; // parentY = at top of parent
             var locY = treeNode.position.y; // treeNode.height/2 = cubeShift
+
+            console.log("currY: " + treeNode.position.y + " parentY: " + parentY);
 
             console.log("CHECKING POS VALUES FOR MULTIPLE CHILDREN");
             console.log("treeNode.childId : " + (treeNode.childId + 1) + ", numParentIterating: " + numParentIterating);
 
             var locX = parentX;
             if (numParentIterating > 1) {
-                var locAdj = parentWidth/2 * Math.cos(2*Math.PI * (treeNode.childId + 1) / numParentIterating);
+                var locAdj = parentWidth/3.5 * Math.cos(2*Math.PI * (treeNode.childId + 1) / numParentIterating);
                 //console.log("parentWidth/2: " + (parentWidth/2) + " * cos(" + (2*Math.PI * (treeNode.childId + 1) / numParentIterating) + ")");
                 locX += locAdj;
                 //console.log("xPos with more than 1 on shared plane: " + locX);
@@ -389,7 +389,7 @@ export default class Turtle {
 
             var locZ = parentZ;
             if (numParentIterating > 1) {
-                var locAdj = parentWidth/2 * Math.sin(2*Math.PI * (treeNode.childId + 1) / numParentIterating);
+                var locAdj = parentWidth/3.5 * Math.sin(2*Math.PI * (treeNode.childId + 1) / numParentIterating);
                 //console.log("parentWidth/2: " + (parentWidth/2) + " * sin(" + (2*Math.PI * (treeNode.childId + 1) / numParentIterating) + ")")
                 locZ += locAdj;
                 //console.log("zPos with more than 1 on shared plane: " + locZ);
@@ -401,7 +401,7 @@ export default class Turtle {
 
             // max render height to use
             if (locZ < 500) {
-                this.renderObject(treeNode, locX, locY, locZ, treeNode.xyDim);
+                this.renderObject(treeNode, locX, locY, locZ, treeNode.xyDim, treeNode.height);
             }
 
             // TO DO:
@@ -446,8 +446,18 @@ export default class Turtle {
                     onT = onT.parent;
                 } else if (onT.childId != 0) {
                     // choose different child
-                    onT = onT.parent.children[onT.childId-1];
+                    onT = onT.parent.children[Math.floor(Math.random()*onT.parent.children.length)];
                 }
+
+            // SWITCHING TO PARENT'S PARENT
+            } else if (onElement.character == 'X') {
+                if (onT.parent != null) {
+                    if (onT.parent.parent != null && onT.parent.parent.parent != null) {
+                        onT = onT.parent.parent;
+                    } else {
+                        onT = onT.parent;
+                    }
+                } // else do nothing stay on same
 
             // SETTING MATERIAL OF CURRENT TO RANDOM POSSIBLE COLOR
             } else if (onElement.character == 'A') {
