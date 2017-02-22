@@ -369,14 +369,14 @@ export default class Turtle {
 
             //var locY = treeNode.position.y; // treeNode.height/2 = cubeShift
             treeNode.height = this.newCubeDim(parentY);
-            console.log("treeNode.height: " + treeNode.height);
+            // console.log("treeNode.height: " + treeNode.height);
             treeNode.position.y = parentY + treeNode.height/2; //this.newCubeDim(parentY)/2;// + treeNode.height/2; //+ treeNode.height/2; // parentY = at top of parent
             var locY = treeNode.position.y; // treeNode.height/2 = cubeShift
 
-            console.log("currY: " + treeNode.position.y + " parentY: " + parentY);
+            // console.log("currY: " + treeNode.position.y + " parentY: " + parentY);
 
-            console.log("CHECKING POS VALUES FOR MULTIPLE CHILDREN");
-            console.log("treeNode.childId : " + (treeNode.childId + 1) + ", numParentIterating: " + numParentIterating);
+            // console.log("CHECKING POS VALUES FOR MULTIPLE CHILDREN");
+            // console.log("treeNode.childId : " + (treeNode.childId + 1) + ", numParentIterating: " + numParentIterating);
 
             var locX = parentX;
             if (numParentIterating > 1) {
@@ -413,7 +413,21 @@ export default class Turtle {
             if (numIterating > 6) {
                 numIterating = 6;
             }
-            console.log("numChildren: numIterating: " + numIterating);
+            // console.log("numChildren: numIterating: " + numIterating);
+
+            // ASSIGNING OBJ ATTRIBUTES BASED ON PARENTAL HIERARCHY
+            if (treeNode.parent != null) {
+                if (treeNode.objType == -1) {
+                    treeNode.objType = treeNode.parent.objType;
+                }
+            }
+
+            // assigning color if !yet defined
+            if (treeNode.meshAttrib == null || Math.random() > .7) {
+                var usingCol = new THREE.Vector3(0, 0, 0);
+                usingCol = this.colorFromHeight(locZ);
+                treeNode.meshAttrib = new THREE.MeshLambertMaterial({ color : fullRGBToHex(usingCol.x, usingCol.y, usingCol.z) });
+            }
 
             // NOTE: IF CHILDREN > 6 IGNORING THOSE
             for (var i =0; i<numIterating; i++) {
@@ -421,6 +435,23 @@ export default class Turtle {
             }
         }//end: if (tree!=null);
 
+    }
+
+    colorFromHeight(y) {
+        var color = new THREE.Vector3(0,0,0);
+        if (y > 50) {
+            color = new THREE.Vector3(Math.floor(Math.random()*255), 0, 0);
+        } else if (y > 40) {
+            color = new THREE.Vector3(0, Math.floor(Math.random()*255), 0);
+        } else if (y > 30) {
+            color = new THREE.Vector3(0, 0, Math.floor(Math.random()*255));
+        } else if (y > 20) {
+            color = new THREE.Vector3(0, 125, Math.floor(Math.random()*255));
+        } else {
+            color = new THREE.Vector3(125, 0, Math.floor(Math.random()*255));
+        }
+
+        return color;
     }
 
     buildTree(list) {

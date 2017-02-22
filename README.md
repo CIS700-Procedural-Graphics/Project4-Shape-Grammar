@@ -1,45 +1,32 @@
 
 # Project 4: Shape Grammar
 
-For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
-
 **Goal:** to model an urban environment using a shape grammar. 
 
 **Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
 
-## Symbol Node (5 points)
-Modify your symbol node class to include attributes necessary for rendering, such as
-- Associated geometry instance
-- Position
-- Scale 
-- Anything else you may need
+## Symbol Node
+Instead of modifying my symbol node class, I actually used that class from the previous homework just for rule creation and assembly. From there i built off a TreeNode class which included the heirarchy and building up locations of each of my objects. This allowed me to build up in scale and easily connect objects to one another by particular dimension choices based on current height value of the object being added and maintain parental attributes for the children as well.
 
-## Grammar design (55 points)
-- Design at least five shape grammar rules for producing procedural buildings. Your buildings should vary in geometry and decorative features (beyond just differently-scaled cubes!). At least some of your rules should create child geometry that is in some way dependent on its parent’s state. (20 points)
-    - Eg. A building may be subdivided along the x, y, or z axis into two smaller buildings
-    - Some of your rules must be designed to use some property about its location. (10 points)
-    - Your grammar should have some element of variation so your buildings are non-deterministic.  Eg. your buildings sometimes subdivide along the x axis, and sometimes the y. (10 points)   
-- Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
+## Grammar design
+Designing five shape grammar rules: 
+[: adding new child to current TreeNode and now building from that child node - if no attributes are ever assigned to this child, then it will keep its parents attributes in terms of color and geometric shape.
+]: finished building current child so going back up a level in the tree, so now on a parent node or if there's no parent node, stay on the current node.
+F: switch from current node to the parent's parent [if it exists] - allows for jumping around tree levels
+A: setting color of current node to random color. during rendering if color attribute is not assigned - gets coloring based on height
+B: current object being changed to random geometry based on given possibilities [cube, cylinder, cone]
+C: set current obj material to phong with random coloring and highlight with opp/partialcomplementary coloring
+D: used to build the base environment - bottom terrain. This is part of the Tree itself (the first node), because it allowed me to easily maintain location and xyDimensions of how I wanted the buildings to be created in the environment.
 
-## Create a city (30 points)
-- Add a ground plane or some other base terrain to your scene (0 points, come on now)
-- Using any strategy you’d like, procedurally generate features that demarcate your city into different areas in an interesting and plausible way (Just a uniform grid is neither interesting nor plausible). (20 points)
-    - Suggestions: roads, rivers, lakes, parks, high-population density
-    - Note, these features don’t have to be directly visible, like high-population density, but they should somehow be visible in the appearance or arrangement of your buildings. Eg. High population density is more likely to generate taller buildings
-- Generate buildings throughout your city, using information about your city’s features. Color your buildings with a method that uses some aspect of its state. Eg. Color buildings by height, by population density, by number of rules used to generate it. (5 points)
-- Document your grammar rules and general approach in the readme. (5 points)
-- ???
-- Profit.
+Wrote a renderer for the TreeNode class that follows the given rules and based on input given properly places geometry in space in the scene.
 
-## Make it interesting (10)
-Experiment! Make your city a work of art.
+## Create a city
+Added a ground plane and skybox. Built from the ground plane using my TreeNode system such that each level of children was built directly on top of their parent and depending on the number of children a particular arrangement would be created for them to be positioned on top of the parent. Generating buildings throughout my city using information about the city's features by using their parent's information about the city. Basically, color and location attributes carry down from parent to child if not already declared in the child. 
 
 
-## Warnings:
-You can very easily blow up three.js with this assignment. With a very simple grammar, our medium quality machine was able to handle 100 buildings with 6 generations each, but be careful if you’re doing this all CPU-side.
+## Photos of renders
 
-## Suggestions for the overachievers:
-Go for a very high level of decorative detail!
-Place buildings with a strategy such that buildings have doors and windows that are always accessible.
-Generate buildings with coherent interiors
-If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+When building: started first by making sure I understand how the placement of the blocks should be. The below render wa not built in the TreeNode design but in fact just manual placement of blocks based on positions of other blocks to make sure I understood how to do it properly.
+//img1
+
+
