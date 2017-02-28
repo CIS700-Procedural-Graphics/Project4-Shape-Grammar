@@ -11,12 +11,18 @@ import Block from './block.js'
 import {popMap} from './perlin.js'
 
 // paramters
-var cityX = 90; var cityZ = 90;
-var roadWidth = 2;
-var numCars = 6;
-var waterlevel = -0.1;
-var map = popMap(cityX, cityZ);
-//var numHouses = 60;
+var Parameters = function() {
+  this.cityX = 50;
+  this.cityZ = 50;
+  this.roadWidth = 2;
+  this.numCars = 6;
+  this.waterlevel = 0.1;
+  this.trees = 0.4;
+  this.buildings = 0.3;
+  this.map = popMap(this.cityX, this.cityZ);
+  this.render = function() {rebuild();};
+}
+var params = new Parameters();
 
 var scene;
 var building; // object
@@ -31,7 +37,7 @@ var arrRoof = []; var arrBrick = []; var arrDoor = [];
 var arrFancy = []; var arrTree = []; var arrCar = [];
 var arrRoad = []; var arrChim = [];
 
-// total
+// scene components
 var totalGeo = new THREE.Geometry(); 
 var totalMat = new THREE.MeshLambertMaterial({
   color: 0xffffff,
@@ -39,6 +45,8 @@ var totalMat = new THREE.MeshLambertMaterial({
   vertexColors: THREE.VertexColors
 });
 var totalMesh = new THREE.Mesh(totalGeo, totalMat);
+var plane; var water;
+var plane_material = new THREE.MeshLambertMaterial( {color: 0x2B6815, side: THREE.DoubleSide} );
 
 
 var initialized = false;
@@ -48,7 +56,7 @@ for (var i = 0; i < 5; i ++) {
 }
 
 function bias(b, t) {
-    return Math.pow(t, Math.log(b) / Math.log(0.5));
+  return Math.pow(t, Math.log(b) / Math.log(0.5));
 }
 
 // called after the scene loads
@@ -69,13 +77,13 @@ function onLoad(framework) {
   directionalLight.castShadow = true;  // SHADOWS
   directionalLight.shadow.mapSize.width = 2048;  // default
   directionalLight.shadow.mapSize.height = 2048; // default
-  directionalLight.shadow.camera.top = cityZ;
-  directionalLight.shadow.camera.bottom = -cityZ;
-  directionalLight.shadow.camera.left = -cityX;
-  directionalLight.shadow.camera.right = cityX;
+  directionalLight.shadow.camera.top = params.cityZ;
+  directionalLight.shadow.camera.bottom = -params.cityZ;
+  directionalLight.shadow.camera.left = -params.cityX;
+  directionalLight.shadow.camera.right = params.cityX;
   directionalLight.shadow.camera.near = 0.5;       // default
   directionalLight.shadow.camera.far = 500;      // default
-  directionalLight.target = new THREE.DirectionalLight(cityX, 0, cityZ);
+  directionalLight.target = new THREE.DirectionalLight(params.cityX, 0, params.cityZ);
   scene.add(directionalLight.target);
   scene.add(directionalLight);
 
@@ -84,7 +92,7 @@ function onLoad(framework) {
 
   // set camera position
   camera.position.set(30,30,0);
-  camera.lookAt(new THREE.Vector3(cityX/2,0,cityZ/2));
+  camera.lookAt(new THREE.Vector3(params.cityX/2,0,params.cityZ/2));
 
   var loader = new THREE.CubeTextureLoader();
   var urlPrefix = 'images/skymap/';
@@ -97,57 +105,7 @@ function onLoad(framework) {
 
   scene.background = skymap;
 
-  roadGeo = new THREE.PlaneGeometry( 0.5, 0.5 );
-  chimGeo = new THREE.BoxGeometry(1,1,1);
-
-  // layout = new Layout(scene);
-  // layout.doIterations();
-
-
-  // for (var i = 0; i < layout.blocks.length; i++) {
-  //   layoutBlock(layout.blocks[i]);
-  // }
-
-  // ground plane
-    var geometry = new THREE.PlaneGeometry( cityX, cityZ,cityX-1,cityZ-1 );
-    geometry.rotateX(Math.PI/2);
-    geometry.translate(cityX/2,-0.5,cityZ/2);
-    console.log(geometry.vertices);
-    var num = 0;
-    for (var i = cityZ-1; i >= 0; i--) {
-      for (var j = 0; j < cityX; j++) {
-        geometry.vertices[num].y += 5*map[j][i];
-        //var d = new THREE.Vector3(j, 0, i).distanceTo(new THREE.Vector3(cityX/2, 0, cityZ/2));
-        if (geometry.vertices[num].y > 0 
-          && geometry.vertices[num].y < 1
-          && j%3 == 0 && i%3 ==0 && Math.random() > 0.3) {
-          countryLayout(geometry.vertices[num]);
-        }
-        if (geometry.vertices[num].y > 1
-          && geometry.vertices[num].y *Math.random() < 0.4) {
-            var pos = geometry.vertices[num];
-            var rot = new THREE.Vector3(0,0,0);
-            var scale = new THREE.Vector3(1,1,1);
-            arrTree.push(new Draw(pos,rot,scale));
-        }
-        num++;
-      }
-    }
-    var material = new THREE.MeshLambertMaterial( {color: 0x2B6815, side: THREE.DoubleSide} );
-    var plane = new THREE.Mesh( geometry, material );
-    plane.castShadow = true;
-    plane.receiveShadow = true;
-    scene.add( plane );
-    //build(arrRoad, roadGeo, '0x000000'); 
-
-    var flat = new THREE.PlaneGeometry( cityX, cityZ,cityX-1,cityZ-1 );
-    flat.rotateX(Math.PI/2);
-    flat.translate(cityX/2,waterlevel,cityZ/2);
-    var waterM= new THREE.MeshLambertMaterial( {color: 0x024469, side: THREE.DoubleSide} );
-    var water = new THREE.Mesh( flat, waterM );
-    water.castShadow = true;
-    water.receiveShadow = true;
-    scene.add(water);
+  draw();
 
     // draw trees 
     var objLoader = new THREE.OBJLoader();
@@ -157,15 +115,6 @@ function onLoad(framework) {
       //drawTrees(layout);
       build(arrTree, treeGeo, '0x063600');
     });
-
-    // // draw cars
-    // var obj = objLoader.load('car.obj', function(obj) {
-    //   carGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
-    //   done[1] = true;
-    //   drawCars(layout);
-    //   carGeo.scale(0.4, 0.4, 0.4);
-    //   build(arrCar, carGeo, '0xD00101');    
-    // });
 
     var obj = objLoader.load('brick.obj', function(obj) {
       brickGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
@@ -192,8 +141,88 @@ function onLoad(framework) {
       build(arrRoof, roofGeo, '0x604938');
     });
 
+    setupGUI(gui);
 
   }
+
+function setupGUI(gui) {
+  gui.add(params, 'trees', 0, 1);
+  gui.add(params, 'buildings', 0, 1);
+  gui.add(params, 'waterlevel', 0, 1);
+  gui.add(params, 'cityX', 0, 100).step(1).onChange(function(value) {
+    params.cityZ = value;
+  });
+  gui.add(params, 'render');
+}
+
+function remove() {
+  arrRoof = []; arrBrick = []; arrDoor = []; 
+  arrFancy = []; arrTree = []; arrCar = [];
+  arrRoad = []; arrChim = [];
+
+  scene.remove(plane); 
+  scene.remove(water);
+  totalGeo.dispose();
+  scene.remove(totalMesh);
+}
+
+function rebuild() {
+  remove();
+  draw();
+  build(arrTree, treeGeo, '0x063600');
+  build(arrBrick, brickGeo,'0x604938');
+  build(arrDoor, doorGeo, '0x604938');
+  build(arrFancy, fancyGeo,'0x604938');
+  build(arrRoof, roofGeo, '0x604938');
+  totalMesh = new THREE.Mesh(totalGeo, totalMat);
+  totalMesh.castShadow = true;
+  totalMesh.receiveShadow = true;
+  scene.add(totalMesh);
+}
+
+function draw() {
+    // ground plane
+
+  totalGeo = new THREE.Geometry();
+  var geometry = new THREE.PlaneGeometry( params.cityX, params.cityZ,
+    params.cityX-1,params.cityZ-1 );
+  geometry.rotateX(Math.PI/2);
+  geometry.translate(params.cityX/2,-0.5,params.cityZ/2);
+  var num = 0;
+  for (var i = params.cityZ-1; i >= 0; i--) {
+    for (var j = 0; j < params.cityX; j++) {
+      geometry.vertices[num].y += 5*params.map[j][i];
+        if (geometry.vertices[num].y > (-0.5 + params.waterlevel)
+          && geometry.vertices[num].y < 1
+          && j%3 == 0 && i%3 ==0 && Math.random() > params.buildings) {
+          countryLayout(geometry.vertices[num]);
+        }
+      if (geometry.vertices[num].y > 1
+        && geometry.vertices[num].y *Math.random() < params.trees) {
+        var pos = geometry.vertices[num];
+      var rot = new THREE.Vector3(0,0,0);
+      var scale = new THREE.Vector3(1,1,1);
+      arrTree.push(new Draw(pos,rot,scale));
+      }
+    num++;
+    }
+  }
+
+plane = new THREE.Mesh( geometry, plane_material );
+plane.castShadow = true;
+plane.receiveShadow = true;
+scene.add( plane );
+    //build(arrRoad, roadGeo, '0x000000'); 
+
+    var flat = new THREE.PlaneGeometry( params.cityX, params.cityZ,params.cityX-1,params.cityZ-1 );
+    flat.rotateX(Math.PI/2);
+    flat.translate(params.cityX/2,-0.5 + params.waterlevel,params.cityZ/2);
+    var waterM= new THREE.MeshLambertMaterial( {color: 0x024469, side: THREE.DoubleSide} );
+    water = new THREE.Mesh( flat, waterM );
+    water.castShadow = true;
+    water.receiveShadow = true;
+    scene.add(water);
+}
 
 // add shapes into total geometry
 function build(shapes, geo, color) {
@@ -213,6 +242,7 @@ function build(shapes, geo, color) {
       mesh.updateMatrix();
 
       totalGeo.mergeMesh(mesh);
+      geometry.dispose();
     }
   }
 
@@ -262,10 +292,10 @@ function layoutBlock(block) {
     var material = new THREE.LineBasicMaterial({
       color: 0x0000ff
     });
-    var line = new THREE.Geometry();
-    line.vertices.push(scaledP[(i+1)%4], scaledP[i]);
-    var line = new THREE.Line(line, material);
-    layout.scene.add(line);
+    // var line = new THREE.Geometry();
+    // line.vertices.push(scaledP[(i+1)%4], scaledP[i]);
+    // var line = new THREE.Line(line, material);
+    // layout.scene.add(line);
 
     rot.y = - Math.atan2(dir.z/len, dir.x/len);
     var houses = len/3;
@@ -275,7 +305,7 @@ function layoutBlock(block) {
       var pos = scaledP[i].clone().lerp(scaledP[(i+1)%4],(j)/houses);
       var x = Math.floor(pos.x);
       var y = Math.floor(pos.z);
-      pos.y += 5 *map[x][y];
+      pos.y += 5 *params.map[x][y];
       scale = new THREE.Vector3(1,1,1);
       building = new Building(scene, pos, rot, scale);
       building.doIterations();
@@ -317,7 +347,7 @@ function drawTrees(layout) {
         var pos = new THREE.Vector3(x, -0.499, z);
         var x = Math.floor(pos.x);
         var y = Math.floor(pos.z);
-        pos.y += 5 *map[x][y];
+        pos.y += 5 *params.map[x][y];
         var rot = new THREE.Vector3();
         var scale = new THREE.Vector3(1,1,1);
         arrTree.push(new Draw(pos,rot,scale));
@@ -327,14 +357,11 @@ function drawTrees(layout) {
 }
 
 function drawCars(layout) {
-  for (var i = 0; i < numCars; i ++) {
+  for (var i = 0; i < params.numCars; i ++) {
     var b = Math.floor(10*Math.random());
     var s = Math.floor(4*Math.random());
     var l = Math.random();
     var loc = layout.blocks[b%layout.blocks.length].p[s].clone(); loc.y = -0.2;
-      // var x = Math.floor(loc.x);
-      // var y = Math.floor(loc.z);
-      // loc.y += 5 *layout.map[x][y];
       var rot = new THREE.Vector3();
       var scale = new THREE.Vector3(1,1,1);
       if (s == 0 || s == 2) rot.y = Math.PI/2;
