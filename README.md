@@ -1,45 +1,36 @@
-
+﻿
 # Project 4: Shape Grammar
 
-For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
+This project took many different directions before arriving at its final product. So there are a lot of implementation details that never made it into the completed town but I will outline here since they could be used for other styles of cities and since they took time and effort. 
 
-**Goal:** to model an urban environment using a shape grammar. 
+Overall details:
+Shape contains the symbol of the geometry used for iterating through the shape grammars, a terminal flag, and vectors for rotation, position, and scale stored in a Draw object. 
 
-**Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
+Block contains the four points that define the four corners of a neighborhood block. These points are generated with subdivides that allow random street intersections to occur without creating blocks that are too small for a house to fit on. In order to draw houses on each block, new points are defined inside of the original block to insure no intersecting houses. Each house was also oriented to always face the street. At the last minute I decided to make a rural scene rather than a city scene so these blocks are not used in the final implementation. 
 
-## Symbol Node (5 points)
-Modify your symbol node class to include attributes necessary for rendering, such as
-- Associated geometry instance
-- Position
-- Scale 
-- Anything else you may need
+Perlin contains the perlin noise code from Project 1 redefined in Javascript
 
-## Grammar design (55 points)
-- Design at least five shape grammar rules for producing procedural buildings. Your buildings should vary in geometry and decorative features (beyond just differently-scaled cubes!). At least some of your rules should create child geometry that is in some way dependent on its parent’s state. (20 points)
-    - Eg. A building may be subdivided along the x, y, or z axis into two smaller buildings
-    - Some of your rules must be designed to use some property about its location. (10 points)
-    - Your grammar should have some element of variation so your buildings are non-deterministic.  Eg. your buildings sometimes subdivide along the x axis, and sometimes the y. (10 points)   
-- Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
+The main javascript file contains most of the code to draw the object. Since my computer is a potato, all the geometries created are stored in one mesh. As new objects are created, they are stored in arrays of the different types of geometries (made in Maya). when the geometries are loaded, a build function is called that merges all the objects in the array to the overall scene mesh. The mesh is added to the scene in onUpdate only after all objects have been loaded. The function layout block is not used, but is instead replaced with countryLayout.  
 
-## Create a city (30 points)
-- Add a ground plane or some other base terrain to your scene (0 points, come on now)
-- Using any strategy you’d like, procedurally generate features that demarcate your city into different areas in an interesting and plausible way (Just a uniform grid is neither interesting nor plausible). (20 points)
-    - Suggestions: roads, rivers, lakes, parks, high-population density
-    - Note, these features don’t have to be directly visible, like high-population density, but they should somehow be visible in the appearance or arrangement of your buildings. Eg. High population density is more likely to generate taller buildings
-- Generate buildings throughout your city, using information about your city’s features. Color your buildings with a method that uses some aspect of its state. Eg. Color buildings by height, by population density, by number of rules used to generate it. (5 points)
-- Document your grammar rules and general approach in the readme. (5 points)
-- ???
-- Profit.
+The town in constructed with a flat plane representing the water and a perlin distorted plane to represent rolling hills. Since humans require water, the buildings are constructed near the waterline while the trees and nature are towards higher ground. The building orientation and positions are random to simulate an old (pre car) town. Don't worry, I also made a more city like town if you uncomment the code and reuse the blocks as described above.
 
-## Make it interesting (10)
-Experiment! Make your city a work of art.
+The shape grammar consists of creating floors and nearby "garages" (except not garages because this is a pre-car town, remember?). There are also huts, and fancier temples near the water. 
 
+Required details:
+Symbol node = Shape class
+grammar rules include:
+	subdivideScaleX: cut in half and scale one half
+	subdivideScaleZ
+	subdivideX: cut in the correct number of adjacent pieces
+	subdivideZ
+	add: create a duplicate on this geometry on top of this one 
+	addDoor: this function uses the property of location by only placing "fancy" doors with columns like a temple near the water (low y value)
+	addRoof
+most grammar rules are probabilitic and will choose up to 3 different possibilities
+demarcate city with hills and rivers (also blocks originally). essentially based on a perlin noise map
+Buildings are based on city features from the location of water to the height of the hills to nearby buildings
 
-## Warnings:
-You can very easily blow up three.js with this assignment. With a very simple grammar, our medium quality machine was able to handle 100 buildings with 6 generations each, but be careful if you’re doing this all CPU-side.
-
-## Suggestions for the overachievers:
-Go for a very high level of decorative detail!
-Place buildings with a strategy such that buildings have doors and windows that are always accessible.
-Generate buildings with coherent interiors
-If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+Extra details:
+shadow casting
+perlin noise
+added trees, cars, fancy geometry
