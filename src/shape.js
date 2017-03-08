@@ -274,7 +274,7 @@ export default class Shape
       }
       else
       {
-        //-z        
+        //-z
         var jitter = -scale.x/2.0  + offset + Math.random()*(scale.x - offset);
         door.position.set(pos.x + jitter, 0, pos.z + scale.z/2.0);
       }

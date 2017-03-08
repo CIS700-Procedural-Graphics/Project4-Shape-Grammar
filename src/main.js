@@ -47,7 +47,9 @@ var gladosGeo = new THREE.Geometry();
 var glados;
 
 var box = new THREE.BoxGeometry( 1, 1, 1 );
-var cube = new THREE.Mesh( box, building_Material );
+var mat = new THREE.MeshBasicMaterial( { color:  (new THREE.Color(Math.random(), Math.random(), Math.random())).getHex()});
+// var cube = new THREE.Mesh( box, building_Material );
+var cube = new THREE.Mesh( box, mat );
 
 var balconyGeo = new THREE.Geometry();
 var balconyMesh = new THREE.Mesh(); //loaded in later
@@ -81,10 +83,10 @@ function changeGUI(gui, camera, scene)
     guiParameters.levelOfDetail = newVal;
     onreset(scene);
   });
-  gui.add(guiParameters, 'Adam_Make1', 0, 1).step(1).onChange(function(newVal) {
-    guiParameters.levelOfDetail = newVal;
-    onreset(scene);
-  });
+  // gui.add(guiParameters, 'Adam_Make1', 0, 1).step(1).onChange(function(newVal) {
+  //   guiParameters.levelOfDetail = newVal;
+  //   onreset(scene);
+  // });
 
   gui.add(guiParameters, 'city_center_x', -30.0, 30.0).onChange(function(newVal) {
     guiParameters.city_center_x = newVal;
@@ -348,16 +350,16 @@ function createCity(scene)
   torusKnot.scale.set(0.05*radius, 0.05*radius, 0.05*radius);
   scene.add( torusKnot );
 
-  var objLoader = new THREE.OBJLoader();
-  objLoader.load('geometry/glados.obj', function(obj)
-  {
-      gladosGeo = obj.children[0].geometry;
-      var mglados = new THREE.MeshLambertMaterial( { color: 0x0080FF } );
-      glados = new THREE.Mesh(gladosGeo, mglados);
-      glados.position.set(guiParameters.city_center_x, 0.1*radius, guiParameters.city_center_z);
-      glados.scale.set(0.005*radius, 0.005*radius, 0.005*radius);
-      scene.add( glados );
-  });
+  // var objLoader = new THREE.OBJLoader();
+  // objLoader.load('geometry/glados.obj', function(obj)
+  // {
+  //     gladosGeo = obj.children[0].geometry;
+  //     var mglados = new THREE.MeshLambertMaterial( { color: 0x0080FF } );
+  //     glados = new THREE.Mesh(gladosGeo, mglados);
+  //     glados.position.set(guiParameters.city_center_x, 0.1*radius, guiParameters.city_center_z);
+  //     glados.scale.set(0.005*radius, 0.005*radius, 0.005*radius);
+  //     scene.add( glados );
+  // });
 
   //----------------------------------------------------------------------------
   var numberOfLayers = 3;
@@ -523,20 +525,20 @@ function onLoad(framework)
 function onUpdate(framework)
 {
   var scene = framework.scene;
-  if(torusKnot && glados)
+  if(torusKnot)// && glados)
   {
-    if(guiParameters.Adam_Make1 == 0)
-    {
-      scene.remove(glados);
+    // if(guiParameters.Adam_Make1 == 0)
+    // {
+    //   scene.remove(glados);
       scene.add(torusKnot);
       torusKnot.rotateY(1/50.0);
-    }
-    else if(guiParameters.Adam_Make1 == 1)
-    {
-      scene.remove(torusKnot);
-      scene.add(glados);
-      glados.rotateY(1/50.0);
-    }
+    // }
+    // else if(guiParameters.Adam_Make1 == 1)
+    // {
+    //   scene.remove(torusKnot);
+    //   scene.add(glados);
+    //   glados.rotateY(1/50.0);
+    // }
   }
 }
 
