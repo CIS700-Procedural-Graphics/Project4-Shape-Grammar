@@ -1,23 +1,8 @@
 const THREE = require('three')
-var scale_factor = 4;
-var building_Material = new THREE.ShaderMaterial({
-  uniforms:
-  {
-    shapeColor:
-    {
-        type: "v3",
-        value: new THREE.Color(0xB266FF) // violet
-    },
-    lightVec:
-    {
-        type: "v3",
-        value: new THREE.Vector3( 10, 10, 10 )
-    }
-  },
-  vertexShader: require('./shaders/buildings-vert.glsl'),
-  fragmentShader: require('./shaders/buildings-frag.glsl')
-});
 
+var scale_factor = 4;
+//Shape is a container for the mesh of each type of shape used for making the building;
+//This container holds features about the shape like its position and scaling
 export default class Shape
 {
     constructor( typeid, _mesh)
@@ -32,24 +17,28 @@ export default class Shape
 
     printState()
     {
-        console.log("Type: " + this.type);
-        console.log("Name: " + this.name);
-        console.log("Position: " + this.pos);
-        console.log("scale_x: " + this.scale);
+      //for debugging purposes
+      console.log("Type: " + this.type);
+      console.log("Name: " + this.name);
+      console.log("Position: " + this.pos);
+      console.log("scale_x: " + this.scale);
     }
 
     createbuilding(shapeList, index)
     {
+      //this function is used to simply call the subdivide function with better parameters
       var axis = Math.random() * 2.0 - 0.01;
       axis = Math.floor(axis);
 
       this.subDivideBuilding( shapeList, index, axis);
-      // this.subDivideBuilding( shapeList, index, Math.abs(axis-1));
-      // this.subDivideBuilding( shapeList, index + 1, Math.abs(axis-1));
     }
 
     subDivideBuilding(shapeList, index, axis) //axis should be x or z
     {
+      //takes a shape and divides it into 2 shapes with the same type of geometry
+      //and also this function scales it about the same axis so the building shapes
+      //are scaled appropriately
+      //subdivided along either the x axis or the z axis
         var shape1 = new Shape(shapeList[index].type, shapeList[index].mesh);
         var shape2 = new Shape(shapeList[index].type, shapeList[index].mesh);
 
@@ -95,6 +84,7 @@ export default class Shape
 
     scaleBuilding(shape, axis) //axis should be x or z
     {
+      //scales a shape about the chosen axis by a random amount
       if(axis == 0)
       {
         var temp = 1 + Math.random() * scale_factor;
@@ -118,18 +108,16 @@ export default class Shape
     addWindows(shape, scene, mesh) //shape should be a floor
     {
       var pos = shape.pos;
-      // debugger;
-      var windowsize = 2.0; //increases with windowsize
-      var numFloors = Math.floor((shape.scale.y*2.0)/windowsize); // -1.0 and 0.5 are the spaceing between the top and b0ttom
+      var windowsize = 2.0; //reached through a lot trial and error
+      var numFloors = Math.floor((shape.scale.y*2.0)/windowsize);
       var halffloor = (shape.scale.y/numFloors)*0.5;
       var floormid = new THREE.Vector3(shape.pos.x, shape.pos.y - shape.scale.y*0.5, shape.pos.z);
-      var numwindowsx = Math.floor(shape.scale.x/1.0);
-      var numwindowsz = Math.floor(shape.scale.z/1.0);
+      var numwindowsx = Math.floor(shape.scale.x/1.0); //no. of windows along the x axis
+      var numwindowsz = Math.floor(shape.scale.z/1.0); //no. of windows along the z axis
 
       for(var j=1; j<numFloors; j++) //start from 1 to skip the ground floor
       {
         var floorY = 2*j*halffloor; // starts from ground where y is zero
-        // debugger;
         for(var i=0; i<numwindowsx; i++)
         {
           var window = mesh.clone();
@@ -138,6 +126,7 @@ export default class Shape
 
           if(shape.pos.x >= -0.001 && shape.pos.x <= 0.001)
           {
+            //handles an edge case where the building is centered at the origin
             wallx = (floormid.x - (shape.scale.x * 0.5)) + i + 0.5;
             window.scale.set(0.9, 0.9, 0.9);
             window.position.set(wallx, floorY + 0.1 , floormid.z + shape.scale.z/2.0);
@@ -148,7 +137,9 @@ export default class Shape
             //geometry has subdivided so scale is the entire thing not half
             wallx = (floormid.x - (shape.scale.x * 0.25)) + i + 0.5;
             window.scale.set(0.9, 0.9, 0.9);
-            window.position.set(wallx - 1.0 * shape.scale.x * 0.25, floorY + 0.1 , floormid.z + shape.scale.z/2.0); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+
+            //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+            window.position.set(wallx - 1.0 * shape.scale.x * 0.25, floorY + 0.1 , floormid.z + shape.scale.z/2.0);
             scene.add( window );
           }
         }
@@ -158,9 +149,6 @@ export default class Shape
           var window = mesh.clone();
           window.rotateY(3.14*1.5);
           var wallx;
-          // console.log(shape.pos);
-          // console.log(shape.scale);
-          // console.log(floormid);
           if(shape.pos.x >= -0.001 && shape.pos.x <= 0.001)
           {
             wallx = (floormid.x - (shape.scale.x * 0.5)) + i + 0.5;
@@ -173,10 +161,11 @@ export default class Shape
             //geometry has subdivided so scale is the entire thing not half
             wallx = (floormid.x - (shape.scale.x * 0.25)) + i + 0.5;
             window.scale.set(0.9, 0.9, 0.9);
-            window.position.set(wallx - 1.0 * shape.scale.x * 0.25, floorY + 0.1 , floormid.z - shape.scale.z/2.0); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+
+            //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+            window.position.set(wallx - 1.0 * shape.scale.x * 0.25, floorY + 0.1 , floormid.z - shape.scale.z/2.0);
             scene.add( window );
           }
-          // console.log(wallx);
         }
 
         for(var i=0; i<numwindowsz; i++)
@@ -195,7 +184,9 @@ export default class Shape
             //geometry has subdivided so scale is the entire thing not half
             wallz = (floormid.z - (shape.scale.z * 0.25)) + i + 0.5;
             window.scale.set(0.9, 0.9, 0.9);
-            window.position.set(floormid.x - shape.scale.x/2.0, floorY + 0.1 ,  wallz - 1.0 * shape.scale.z * 0.25); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+
+            //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+            window.position.set(floormid.x - shape.scale.x/2.0, floorY + 0.1 ,  wallz - 1.0 * shape.scale.z * 0.25);
             scene.add( window );
           }
         }
@@ -217,7 +208,9 @@ export default class Shape
             //geometry has subdivided so scale is the entire thing not half
             wallz = (floormid.z - (shape.scale.z * 0.25)) + i + 0.5;
             window.scale.set(0.9, 0.9, 0.9);
-            window.position.set(floormid.x + shape.scale.x/2.0, floorY + 0.1 ,  wallz - 1.0 * shape.scale.z * 0.25); //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+
+            //wallx - 1.0 * shape.scale.x * 0.25 is a trial and error value
+            window.position.set(floormid.x + shape.scale.x/2.0, floorY + 0.1 ,  wallz - 1.0 * shape.scale.z * 0.25);
             scene.add( window );
           }
         }
@@ -226,14 +219,17 @@ export default class Shape
 
     addRoofcastle(shape, scene, mesh) //shape should be a building
     {
+      //adds a roof to a building
       var roof = mesh.clone();
       var pos = shape.pos;
       roof.scale.set(shape.scale.x *0.7, 1, shape.scale.z*0.7);
       roof.position.set(pos.x, pos.y+ shape.scale.y/2.0 , pos.z);
       scene.add( roof );
     }
+
     addRoofchimney(shape, scene, mesh) //shape should be a building
     {
+      //adds a different type roof to the building
       var roof = mesh.clone();
       var pos = shape.pos;
       roof.scale.set(shape.scale.x *1, 1, shape.scale.z*1);
@@ -243,6 +239,7 @@ export default class Shape
 
     addDoor(shape, scene, mesh) //shape should be a ground floor
     {
+      //add a door on the ground floor on a random wall on the building
       var pos = shape.pos;
       var scale = shape.scale;
       var door = mesh.clone();
@@ -279,15 +276,5 @@ export default class Shape
         door.position.set(pos.x + jitter, 0, pos.z + scale.z/2.0);
       }
       scene.add(door);
-    }
-
-    addBalcony(shape) //shape should be a floor that is not the ground floor
-    {
-      // var geometry = new THREE.ConeGeometry( 5, 20, 32 );
-      // var roof = new THREE.Mesh( geometry, building_Material );
-      // var pos = shape.pos;
-      // roof.scale.set(shape.scale.x *0.1, 0.2, shape.scale.z*0.1);
-      // roof.position.set(pos.x, pos.y+ shape.scale.y/2.0 + 0.35*shape.scale.y, pos.z);
-      // scene.add( roof );
     }
 }

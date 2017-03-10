@@ -7,16 +7,13 @@ var OBJLoader = require('three-obj-loader');
 OBJLoader(THREE);
 
 var shapeType = require('./shape.js');
-var flag_loaded = 2; //array of flags
 //------------------------------------------------------------------------------
-var sampler = []; //array of vector2's
 var guiParameters = {
   buildingIterations: 4.0,
   city_center_x: 0.01,
   city_center_z: 0.01,
   levelOfDetail: 5,
-  towerRadius: 5,
-  Adam_Make1: 0
+  towerRadius: 5
 }
 
 var building_Material = new THREE.ShaderMaterial({
@@ -43,35 +40,32 @@ var geoknot = new THREE.TorusKnotGeometry( 10, 3, 132, 11 );
 var mknot = new THREE.MeshBasicMaterial( { color: 0x0080FF } );
 var torusKnot = new THREE.Mesh( geoknot, mknot );
 
-var gladosGeo = new THREE.Geometry();
-var glados;
-
 var box = new THREE.BoxGeometry( 1, 1, 1 );
 var mat = new THREE.MeshBasicMaterial( { color:  (new THREE.Color(Math.random(), Math.random(), Math.random())).getHex()});
-// var cube = new THREE.Mesh( box, building_Material );
 var cube = new THREE.Mesh( box, mat );
 
 var balconyGeo = new THREE.Geometry();
 var balconyMesh = new THREE.Mesh(); //loaded in later
 
 var doorGeo = new THREE.Geometry();
-var doorMesh = new THREE.Mesh(); //undefined; //loaded in later
+var doorMesh = new THREE.Mesh(); //loaded in later
 
 var floorDivisionGeo = new THREE.Geometry();
-var floorDivisionMesh = new THREE.Mesh(); //undefined; //loaded in later
+var floorDivisionMesh = new THREE.Mesh(); //loaded in later
 
 var roofCastleTypeGeo = new THREE.Geometry();
-var roofCastleTypeMesh = new THREE.Mesh(); //undefined; //loaded in later
+var roofCastleTypeMesh = new THREE.Mesh(); //loaded in later
 
 var roofChimneyTypeGeo = new THREE.Geometry();
-var roofChimneyTypeMesh = new THREE.Mesh(); //undefined; //loaded in later
+var roofChimneyTypeMesh = new THREE.Mesh(); //loaded in later
 
 var window_lGeo = new THREE.Geometry();
-var window_lMesh = new THREE.Mesh(); //undefined; //loaded in later
+var window_lMesh = new THREE.Mesh(); //loaded in later
 
 var window_sGeo = new THREE.Geometry();
-var window_sMesh = new THREE.Mesh(); //undefined; //loaded in later
+var window_sMesh = new THREE.Mesh(); //loaded in later
 //------------------------------------------------------------------------------
+
 function changeGUI(gui, camera, scene)
 {
   gui.add(guiParameters, 'buildingIterations', 0, 4).step(1).onChange(function(newVal) {
@@ -83,10 +77,6 @@ function changeGUI(gui, camera, scene)
     guiParameters.levelOfDetail = newVal;
     onreset(scene);
   });
-  // gui.add(guiParameters, 'Adam_Make1', 0, 1).step(1).onChange(function(newVal) {
-  //   guiParameters.levelOfDetail = newVal;
-  //   onreset(scene);
-  // });
 
   gui.add(guiParameters, 'city_center_x', -30.0, 30.0).onChange(function(newVal) {
     guiParameters.city_center_x = newVal;
@@ -112,7 +102,7 @@ function setupLightsandSkybox(scene, camera)
   scene.add(directionalLight);
   building_Material.lightVec = directionalLight.position;
 
-  // // set skybox
+  // set skybox
   var loader = new THREE.CubeTextureLoader();
   var urlPrefix = 'images/skymap/';
   var skymap = new THREE.CubeTextureLoader().load([
@@ -135,120 +125,22 @@ function setupLightsandSkybox(scene, camera)
   camera.lookAt(new THREE.Vector3(0,0,0));
 }
 
-function loadGeometry()
-{
-  var objLoader1 = new THREE.OBJLoader();
-  objLoader1.load('geometry/floorDivision.obj', function(obj)
-  {
-      floorDivisionGeo = obj.children[0].geometry;
-      floorDivisionMesh = new THREE.Mesh(floorDivisionGeo, building_Material);
-  });
-
-  var objLoader2 = new THREE.OBJLoader();
-  objLoader2.load('geometry/balcony.obj', function(obj)
-  {
-      balconyGeo = obj.children[0].geometry;
-      balconyMesh = new THREE.Mesh(balconyGeo, building_Material);
-      // balconyMesh.name = "blehh";
-  });
-
-  var objLoader3 = new THREE.OBJLoader();
-  objLoader3.load('geometry/door.obj', function(obj)
-  {
-      doorGeo = obj.children[0].geometry;
-      doorMesh = new THREE.Mesh(doorGeo, building_Material);
-      // doorMesh.name = "undefined";
-  });
-
-  var objLoader4 = new THREE.OBJLoader();
-  objLoader4.load('geometry/roofCastleType.obj', function(obj)
-  {
-      roofCastleTypeGeo = obj.children[0].geometry;
-      roofCastleTypeMesh = new THREE.Mesh(roofCastleTypeGeo, building_Material);
-      // roofCastleTypeMesh.name = "undefined";
-  });
-
-  var objLoader5 = new THREE.OBJLoader();
-  objLoader5.load('geometry/roofChimneyType.obj', function(obj)
-  {
-      roofChimneyTypeGeo = obj.children[0].geometry;
-      roofChimneyTypeMesh = new THREE.Mesh(roofChimneyTypeGeo, building_Material);
-      // roofChimneyTypeMesh.name = "undefined";
-  });
-
-  var objLoader6 = new THREE.OBJLoader();
-  objLoader6.load('geometry/window_l.obj', function(obj)
-  {
-      window_lGeo = obj.children[0].geometry;
-      window_lMesh = new THREE.Mesh(window_lGeo, building_Material);
-      // window_lMesh.name = "undefined";
-  });
-
-  var objLoader7 = new THREE.OBJLoader();
-  objLoader7.load('geometry/window_s.obj', function(obj)
-  {
-      window_sGeo = obj.children[0].geometry;
-      window_lMesh = new THREE.Mesh(window_sGeo, building_Material);
-      // window_sMesh.name = "undefined";
-  });
-}
-
 function onreset(scene)
 {
   cleanscene(scene);
-  // finalbuildingGeneration(scene);
-  // renderbuildings(scene);
-}
-
-function shadows(scene)
-{
-  //Create a WebGLRenderer and turn on shadows in the renderer
-  var renderer = new THREE.WebGLRenderer();
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-
-  //Create a DirectionalLight and turn on shadows for the light
-  var light = new THREE.DirectionalLight( 0xffffff, 1, 100 );
-  light.position.set( 0, 1, 0 ); 			//default; light shining from top
-  light.castShadow = true;            // default false
-  scene.add( light );
-
-    //Set up shadow properties for the light
-  light.shadow.mapSize.width = 512;  // default
-  light.shadow.mapSize.height = 512; // default
-  light.shadow.camera.near = 0.5;       // default
-  light.shadow.camera.far = 500      // default
-
-  //Create a sphere that cast shadows (but does not receive them)
-  var sphereGeometry = new THREE.SphereBufferGeometry( 5, 32, 32 );
-  var sphereMaterial = new THREE.MeshStandardMaterial( { color: 0xff0000 } );
-  var sphere = new THREE.Mesh( sphereGeometry, sphereMaterial );
-  sphere.castShadow = true; //default is false
-  sphere.receiveShadow = false; //default
-  scene.add( sphere );
-
-  //Create a plane that receives shadows (but does not cast them)
-  var planeGeometry = new THREE.PlaneBufferGeometry( 20, 20, 32, 32 );
-  var planeMaterial = new THREE.MeshStandardMaterial( { color: 0x00ff00 } )
-  var plane = new THREE.Mesh( planeGeometry, planeMaterial );
-  plane.receiveShadow = true;
-  scene.add( plane );
-
-  //Create a helper for the shadow camera (optional)
-  var helper = new THREE.CameraHelper( light.shadow.camera );
-  scene.add( helper );
 }
 
 //------------------------------------------------------------------------------
 function cleanscene(scene)
 {
+  //remove all objects from the scene
   for( var i = scene.children.length - 1; i >= 0; i--)
   {
     var obj = scene.children[i];
     scene.remove(obj);
   }
 
-  //set plane
+  //create a plane and add it back to the scene
   var geometry = new THREE.PlaneGeometry( 150, 150, 1 );
   var material = new THREE.MeshBasicMaterial( {color: 0x696969, side: THREE.DoubleSide} );
   var plane = new THREE.Mesh( geometry, material );
@@ -256,12 +148,13 @@ function cleanscene(scene)
   plane.rotateX(90 * 3.14/180);
   scene.add( plane );
 
+  //recreate the city
   createCity(scene);
 }
 
 function finalbuildingGeneration(scene, shapeList)
 {
-  //actual cubes and buildings
+  //actual buildings(just cubes at the moment) created
   for(var i=0; i<guiParameters.buildingIterations; i++)
   {
     var l = shapeList.length;
@@ -276,6 +169,7 @@ function finalbuildingGeneration(scene, shapeList)
   }
 
   //now we have terminal geometry so added features to them
+  //load in geometry and place it on the existing building somewhere
   //roofs
   var objLoader4 = new THREE.OBJLoader();
   objLoader4.load('geometry/roofCastleType.obj', function(obj)
@@ -318,6 +212,7 @@ function finalbuildingGeneration(scene, shapeList)
 
 function renderbuildings(scene, shapeList)
 {
+  // add the allthe shapes to the scene at their proper position and scale
     for(var j=0; j<shapeList.length; j++)
     {
       shapeList[j].mesh.scale.set( shapeList[j].scale.x, shapeList[j].scale.y, shapeList[j].scale.z );
@@ -350,29 +245,18 @@ function createCity(scene)
   torusKnot.scale.set(0.05*radius, 0.05*radius, 0.05*radius);
   scene.add( torusKnot );
 
-  // var objLoader = new THREE.OBJLoader();
-  // objLoader.load('geometry/glados.obj', function(obj)
-  // {
-  //     gladosGeo = obj.children[0].geometry;
-  //     var mglados = new THREE.MeshLambertMaterial( { color: 0x0080FF } );
-  //     glados = new THREE.Mesh(gladosGeo, mglados);
-  //     glados.position.set(guiParameters.city_center_x, 0.1*radius, guiParameters.city_center_z);
-  //     glados.scale.set(0.005*radius, 0.005*radius, 0.005*radius);
-  //     scene.add( glados );
-  // });
-
   //----------------------------------------------------------------------------
   var numberOfLayers = 3;
   var segments = guiParameters.levelOfDetail*2;
   var numroadplanes = 20;
 
+  //road structure is based off of layers of circles
   //create circle Layers
   for(var i=0; i<numberOfLayers ;i++)
   {
     var circlegeo = new THREE.CircleGeometry( radius*1.5 + i*20, segments );
     circlegeo.rotateX(-PI*0.5);
     var mat = new THREE.MeshBasicMaterial( { color:  (new THREE.Color(Math.random(), Math.random(), Math.random())).getHex() , side: THREE.DoubleSide} );
-    // var mat = new THREE.MeshBasicMaterial( { color: 0x696969 , side: THREE.DoubleSide} );
     var circle = new THREE.Mesh( circlegeo, mat ); // first vertex is the center the others are points on the circle,
                                                   // starting alligned with the +x axis
     circle.position.set(guiParameters.city_center_x, 0.03 *(numberOfLayers-i) + 0.05, guiParameters.city_center_z);
@@ -383,7 +267,7 @@ function createCity(scene)
   //major roads, buildings, and fill curvePointsList
   for(var i=0; i<numberOfLayers-1 ;i++)
   {
-    //major roads -- permanent -- don't change randomly
+    //major roads -- permanent -- they don't change randomly
     for(var j=0; j<segments; j=j+2)
     {
       var curve = new THREE.SplineCurve( [
@@ -394,6 +278,7 @@ function createCity(scene)
       var path = new THREE.Path( curve.getPoints( numroadplanes ) );
       var roadpoints = path.createPointsGeometry( numroadplanes );
 
+      //add black planes to represent tarred roads
       for(var k=0; k<numroadplanes ;k++)
       {
         var geo = new THREE.PlaneGeometry( 1, 1, 1 );
@@ -433,6 +318,7 @@ function createCity(scene)
         var path = new THREE.Path( curve.getPoints( 10 ) );
         var buildingpoints = path.createPointsGeometry( 10 );
 
+        //initial shape that all building groups start from
         var shape1 = new Shape(0, cube);
         shape1.scale = new THREE.Vector3( 10, 1, 10 );
         shape1.pos.set(buildingpoints.vertices[6].x + guiParameters.city_center_x,
@@ -457,22 +343,12 @@ function createCity(scene)
       var t = guiParameters.towerRadius;
       if(i == (t*2 - 2))
       {
-        // curve = new THREE.SplineCurve( [
-        //   new THREE.Vector2( curvePointsList[i].vertices[numroadplanes].x, curvePointsList[i].vertices[numroadplanes].y ),
-        //   new THREE.Vector2( curvePointsList[i+1].vertices[numroadplanes].x, curvePointsList[i+1].vertices[numroadplanes].y ),
-        //   new THREE.Vector2( curvePointsList[t].vertices[numroadplanes].x, curvePointsList[t].vertices[numroadplanes].y )
-        //   ] );
-        //not bothering with edgecases
+        //edge case; dont draw roads, they cross actual plots of land
         break;
       }
       else if(i == t-2)
       {
-        // curve = new THREE.SplineCurve( [
-        //   new THREE.Vector2( curvePointsList[i].vertices[numroadplanes].x, curvePointsList[i].vertices[numroadplanes].y ),
-        //   new THREE.Vector2( curvePointsList[i+1].vertices[numroadplanes].x, curvePointsList[i=1].vertices[numroadplanes].y ),
-        //   new THREE.Vector2( curvePointsList[0].vertices[numroadplanes].x, curvePointsList[0].vertices[numroadplanes].y )
-        //   ] );
-        //not bothering with edgecases
+        //edge case; dont draw roads, they cross actual plots of land
         break;
       }
       else
@@ -517,28 +393,16 @@ function onLoad(framework)
   guiParameters.city_center_z = (-10.0 + Math.random() * 20.0);
 
   createCity(scene);
-
-  // shadows(scene);
 }
 
 // called on frame updates
 function onUpdate(framework)
 {
   var scene = framework.scene;
-  if(torusKnot)// && glados)
+  if(torusKnot)
   {
-    // if(guiParameters.Adam_Make1 == 0)
-    // {
-    //   scene.remove(glados);
       scene.add(torusKnot);
       torusKnot.rotateY(1/50.0);
-    // }
-    // else if(guiParameters.Adam_Make1 == 1)
-    // {
-    //   scene.remove(torusKnot);
-    //   scene.add(glados);
-    //   glados.rotateY(1/50.0);
-    // }
   }
 }
 
