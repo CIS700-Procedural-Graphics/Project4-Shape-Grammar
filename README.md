@@ -3,6 +3,10 @@
 
 **Goal:** to model an urban environment using a shape grammar. 
 
+## View the Project
+
+# [Click Here](https://hanbollar.github.io/Project4-Shape-Grammar/)
+
 ## Symbol Node
 Instead of modifying my symbol node class, I actually used that class from the previous homework just for rule creation and assembly. From there i built off a TreeNode class which included the heirarchy and building up locations of each of my objects. This allowed me to build up in scale and easily connect objects to one another by particular dimension choices based on current height value of the object being added and maintain parental attributes for the children as well.
 
