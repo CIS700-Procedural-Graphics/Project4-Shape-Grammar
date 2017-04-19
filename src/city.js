@@ -3,12 +3,13 @@ import ShapeGrammar from './shapegrammar.js'
 import Noise from './noise.js'
 
 
-var flatMat = new THREE.MeshPhongMaterial( { color: 0x000000, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1});
+var flatMat = new THREE.MeshPhongMaterial( { color: 0x000000, polygonOffset: true, 
+	polygonOffsetFactor: 1, polygonOffsetUnits: 1});
 flatMat.shading = THREE.FlatShading;
 var lineMat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
 
 
-function City (scene) {
+function City (scene, g1, g2) {
 	this.shapeGrammars = [];
 	
 	// Create plane 
@@ -25,7 +26,8 @@ function City (scene) {
 		for (var i = 0; i < this.plane.geometry.vertices.length; i++) {
 			var vertex = this.plane.geometry.vertices[i];
 			if (Noise.generateNoise(vertex.x, vertex.y, vertex.y) > 1.4){
-				var building = new ShapeGrammar.ShapeGrammar('D', this.scene, 5, vertex, 1.5*Noise.generateNoise(vertex.x, vertex.z, vertex.y));
+				var building = new ShapeGrammar.ShapeGrammar('D', this.scene, 5, vertex, 
+					1.5*Noise.generateNoise(vertex.x, vertex.z, vertex.y), g1, g2);
 				building.render();
 			}
 			

@@ -3,21 +3,12 @@ const THREE = require('three');
 var objLoader = new THREE.OBJLoader();
 var geo1;
 var geo2;
-objLoader.load('Build11_obj.obj', function(obj) {
-
-    // LOOK: This function runs after the obj has finished loading
-    geo1 = obj.children[0].geometry;
-});
-objLoader.load('Build10_obj.obj', function(obj) {
-
-    // LOOK: This function runs after the obj has finished loading
-    geo2 = obj.children[0].geometry;
-});
 
 var GEO1SCALE = new THREE.Vector3(1 / 125, 1 / 200, 1 / 130);
 var GEO2SCALE = new THREE.Vector3(1 / 350, 1 / 400, 1 / 230);
 // Materials
-var flatMat = new THREE.MeshPhongMaterial( { color: 0x000000, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1});
+var flatMat = new THREE.MeshPhongMaterial( { color: 0x000000, 
+	polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1});
 flatMat.shading = THREE.FlatShading;
 var lineMat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
 
@@ -286,7 +277,9 @@ function buildBaseOrBridge(parent) {
 
 
 // Encapsulate grammar methods
-function ShapeGrammar(axiom, scene, iterations, origin, height) {
+function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
+	geo1 = g1;
+	geo2 = g2;
 	this.axiom = axiom;
 	this.material = flatMat.clone();
 	this.grammar = [];

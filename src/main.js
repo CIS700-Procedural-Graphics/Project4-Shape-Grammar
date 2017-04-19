@@ -6,9 +6,9 @@ import City from './city.js'
 
 var objLoader = new THREE.OBJLoader();
 var treeGeo;
-objLoader.load('tree.obj', function(obj) {
-    treeGeo = obj.children[0].geometry;
-});
+var geo1;
+var geo2;
+
 
 // called after the scene loads
 function onLoad(framework) {
@@ -30,9 +30,21 @@ function onLoad(framework) {
   camera.position.set(1, 1, 5);
   camera.lookAt(new THREE.Vector3(0,0,0));
   camera.updateProjectionMatrix();
-  
-  var city = new City.City(scene);
-  city.render();
+
+
+objLoader.load('tree.obj', function(obj) {
+    treeGeo = obj.children[0].geometry;
+    objLoader.load('Build11_obj.obj', function(obj) {
+      // LOOK: This function runs after the obj has finished loading
+      geo1 = obj.children[0].geometry;
+      objLoader.load('Build10_obj.obj', function(obj) {
+        // LOOK: This function runs after the obj has finished loading
+        geo2 = obj.children[0].geometry;
+        var city = new City.City(scene, geo1, geo2);
+        city.render();
+      });
+    });
+});
 
   // Gui variables
   gui.add(camera, 'fov', 0, 180).onChange(function(newVal) {

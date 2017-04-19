@@ -65,9 +65,8 @@
 	
 	var objLoader = new THREE.OBJLoader();
 	var treeGeo;
-	objLoader.load('tree.obj', function (obj) {
-	  treeGeo = obj.children[0].geometry;
-	});
+	var geo1;
+	var geo2;
 	
 	// called after the scene loads
 	function onLoad(framework) {
@@ -90,8 +89,19 @@
 	  camera.lookAt(new THREE.Vector3(0, 0, 0));
 	  camera.updateProjectionMatrix();
 	
-	  var city = new _city2.default.City(scene);
-	  city.render();
+	  objLoader.load('tree.obj', function (obj) {
+	    treeGeo = obj.children[0].geometry;
+	    objLoader.load('Build11_obj.obj', function (obj) {
+	      // LOOK: This function runs after the obj has finished loading
+	      geo1 = obj.children[0].geometry;
+	      objLoader.load('Build10_obj.obj', function (obj) {
+	        // LOOK: This function runs after the obj has finished loading
+	        geo2 = obj.children[0].geometry;
+	        var city = new _city2.default.City(scene, geo1, geo2);
+	        city.render();
+	      });
+	    });
+	  });
 	
 	  // Gui variables
 	  gui.add(camera, 'fov', 0, 180).onChange(function (newVal) {
@@ -48302,21 +48312,12 @@
 	var objLoader = new THREE.OBJLoader();
 	var geo1;
 	var geo2;
-	objLoader.load('Build11_obj.obj', function (obj) {
-	
-		// LOOK: This function runs after the obj has finished loading
-		geo1 = obj.children[0].geometry;
-	});
-	objLoader.load('Build10_obj.obj', function (obj) {
-	
-		// LOOK: This function runs after the obj has finished loading
-		geo2 = obj.children[0].geometry;
-	});
 	
 	var GEO1SCALE = new THREE.Vector3(1 / 125, 1 / 200, 1 / 130);
 	var GEO2SCALE = new THREE.Vector3(1 / 350, 1 / 400, 1 / 230);
 	// Materials
-	var flatMat = new THREE.MeshPhongMaterial({ color: 0x000000, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+	var flatMat = new THREE.MeshPhongMaterial({ color: 0x000000,
+		polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
 	flatMat.shading = THREE.FlatShading;
 	var lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
 	
@@ -48569,7 +48570,9 @@
 	}
 	
 	// Encapsulate grammar methods
-	function ShapeGrammar(axiom, scene, iterations, origin, height) {
+	function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
+		geo1 = g1;
+		geo2 = g2;
 		this.axiom = axiom;
 		this.material = flatMat.clone();
 		this.grammar = [];
@@ -48701,11 +48704,12 @@
 	var THREE = __webpack_require__(6);
 	
 	
-	var flatMat = new THREE.MeshPhongMaterial({ color: 0x000000, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+	var flatMat = new THREE.MeshPhongMaterial({ color: 0x000000, polygonOffset: true,
+		polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
 	flatMat.shading = THREE.FlatShading;
 	var lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
 	
-	function City(scene) {
+	function City(scene, g1, g2) {
 		this.shapeGrammars = [];
 	
 		// Create plane 
@@ -48722,7 +48726,7 @@
 			for (var i = 0; i < this.plane.geometry.vertices.length; i++) {
 				var vertex = this.plane.geometry.vertices[i];
 				if (_noise2.default.generateNoise(vertex.x, vertex.y, vertex.y) > 1.4) {
-					var building = new _shapegrammar2.default.ShapeGrammar('D', this.scene, 5, vertex, 1.5 * _noise2.default.generateNoise(vertex.x, vertex.z, vertex.y));
+					var building = new _shapegrammar2.default.ShapeGrammar('D', this.scene, 5, vertex, 1.5 * _noise2.default.generateNoise(vertex.x, vertex.z, vertex.y), g1, g2);
 					building.render();
 				}
 			}
