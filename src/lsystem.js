@@ -203,8 +203,8 @@ export default class Lsystem {
 					geometryType = 'Skyscraper';
 				}
 				else {
-					buildingType = 'A';
-					geometryType = 'Apartment';
+					buildingType = 'S';
+					geometryType = 'Skyscraper';
 				}
 
 				var shape1 = new Shape(buildingType);

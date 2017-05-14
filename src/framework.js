@@ -7,18 +7,18 @@ import DAT from 'dat-gui'
 // when the scene is done initializing, the function passed as `callback` will be executed
 // then, every frame, the function passed as `update` will be executed
 function init(callback, update) {
-  var stats = new Stats();
-  stats.setMode(1);
-  stats.domElement.style.position = 'absolute';
-  stats.domElement.style.left = '0px';
-  stats.domElement.style.top = '0px';
-  document.body.appendChild(stats.domElement);
+  // var stats = new Stats();
+  // stats.setMode(1);
+  // stats.domElement.style.position = 'absolute';
+  // stats.domElement.style.left = '0px';
+  // stats.domElement.style.top = '0px';
+  // document.body.appendChild(stats.domElement);
 
-  var gui = new DAT.GUI();
+  //var gui = new DAT.GUI();
 
   var framework = {
-    gui: gui,
-    stats: stats
+    //gui: gui,
+    //stats: stats
   };
 
   // run this function after the window loads
@@ -55,10 +55,10 @@ function init(callback, update) {
 
     // begin the animation loop
     (function tick() {
-      stats.begin();
+      //stats.begin();
       update(framework); // perform any requested updates
       renderer.render(scene, camera); // render the scene
-      stats.end();
+      //stats.end();
       requestAnimationFrame(tick); // register to call this again when the browser renders a new frame
     })();
 
