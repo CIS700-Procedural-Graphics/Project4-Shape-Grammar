@@ -176,24 +176,6 @@ function onLoad(framework) {
   //parseShapeSet(scene);
 }
 
-/*
-// clears the scene by removing all geometries added by turtle.js
-function clearScene(turtle) {
-  var obj;
-  for( var i = turtle.scene.children.length - 1; i > 2; i--) {
-      obj = turtle.scene.children[i];
-      turtle.scene.remove(obj);
-  }
-}
-
-function doLsystem(lsystem, iterations, turtle, anglefactor) {
-    var result = lsystem.doIterations(iterations);
-    turtle.clear();
-    turtle = new Turtle(turtle.scene, iterations, anglefactor);
-    turtle.renderSymbols(result);
-}
-*/
-
 function initializeMap() {
   var tempMap = new Map();
   var objLoader = new THREE.OBJLoader();
