@@ -13,9 +13,9 @@ Subdivide: A->AB, B->A This is the recursive subdividing of the left and half of
 My rules use the location to determine the placement of the subdivided components. The location is also passed to a noise function, which determines the height that is calculated for the rules.
 
 ## Building Results
-![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/buildingtype1.png)
-![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/buildingtype2.png)
-![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/buildingtype3.png)
+![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/images/buildingtype1.png)
+![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/images/buildingtype2.png)
+![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/images/buildingtype3.png)
 
 ## City Planning
 I used a noise function to simulate population density. I then tested at each vertex of a plane if the 3D noise value is greater than some threshold. If the noise is high enough, the building is created. You can also see in the skyline that the noise also dictates the height of the buildings generated.
@@ -26,4 +26,4 @@ THe buildings are colored some shade of blue based on the length of the grammar 
 ![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/Skyline.png)
 
 ## Layout
-![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/noisygrid.png)
+![](https://raw.githubusercontent.com/emily-vo/Project4-Shape-Grammar/master/images/noisygrid.png)
