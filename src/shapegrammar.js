@@ -156,11 +156,13 @@ function buildBaseOrBridge(parent) {
 	buildingMain.scale = parent.scale;
 	buildingMain.scale.x = parent.scale.x * 0.8;
 	buildingMain.scale.z = parent.scale.z * 0.8;
+	
 	buildingMain.position.x = parent.position.x;
 	buildingMain.position.y = parent.position.y;
 	buildingMain.position.z = parent.position.z;
 	
 	baseBottom.scale.y = 0.25;
+	
 	baseBottom.position.x = parent.position.x;
 	baseBottom.position.y = parent.position.y;
 	baseBottom.position.z = parent.position.z;
@@ -168,6 +170,7 @@ function buildBaseOrBridge(parent) {
 	baseMiddle.scale.y = 0.5;
 	baseMiddle.scale.x = 0.75;
 	baseMiddle.scale.z = 0.75;
+	
 	baseMiddle.position.x = parent.position.x;
 	baseMiddle.position.y = parent.position.y;
 	baseMiddle.position.z = parent.position.z;
@@ -175,6 +178,7 @@ function buildBaseOrBridge(parent) {
 	baseTop.scale.y = 0.75;
 	baseTop.scale.x = 0.50;
 	baseTop.scale.z = 0.50;
+	
 	baseTop.position.x = parent.position.x;
 	baseTop.position.z = parent.position.z;
 	baseTop.position.y = parent.position.y;
@@ -258,16 +262,21 @@ function buildBaseOrBridge(parent) {
 		// Determine displacement
 		left.position.z = parent.position.z;
 		right.position.z = parent.position.z;
+		
 		left.position.x = parent.position.x - parent.scale.x / 2 + left.scale.x / 3;
 		right.position.x = parent.position.x + parent.scale.x / 2 - right.scale.x / 3;
+		
 		left.position.y = parent.position.y;
 		right.position.y = parent.position.y;
+		
 		bridge.scale.x = parent.scale.x * 0.75;
 		bridge.scale.y = parent.scale.y / 12;
 		bridge.scale.z = Math.min(left.scale.z, right.scale.z) / 4;
+		
 		bridge.position.x = parent.position.x;
 		bridge.position.z = parent.position.z;
 		bridge.position.y = parent.position.y + parent.scale.y / 2;
+		
 		newShapes.push(left);
 		newShapes.push(right);
 		newShapes.push(bridge);

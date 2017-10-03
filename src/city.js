@@ -9,7 +9,7 @@ flatMat.shading = THREE.FlatShading;
 var lineMat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
 
 
-function City (scene, g1, g2) {
+function City (scene, g1, g2, createVoronoi) {
 	this.shapeGrammars = [];
 	
 	// Create plane 
@@ -20,18 +20,23 @@ function City (scene, g1, g2) {
 	this.plane.rotateX((90 * Math.PI)/180);
 	this.scene = scene;
 
-	this.render = function() {
+	this.render = function(createVoronoi) {
 		this.scene.add(this.plane);
-		// Create new shape grammar at each vertex on the plane
-		for (var i = 0; i < this.plane.geometry.vertices.length; i++) {
-			var vertex = this.plane.geometry.vertices[i];
-			if (Noise.generateNoise(vertex.x, vertex.y, vertex.y) > 1.4){
-				var building = new ShapeGrammar.ShapeGrammar('D', this.scene, 5, vertex, 
-					1.5*Noise.generateNoise(vertex.x, vertex.z, vertex.y), g1, g2);
-				building.render();
+		// Create new shape grammar at each vertex on the plane using noise
+		if (!createVoronoi) {
+			for (var i = 0; i < this.plane.geometry.vertices.length; i++) {
+				var vertex = this.plane.geometry.vertices[i];
+				if (Noise.generateNoise(vertex.x, vertex.y, vertex.y) > 1.4) {
+					var building = new ShapeGrammar.ShapeGrammar('D', this.scene, 5, vertex, 
+						1.5*Noise.generateNoise(vertex.x, vertex.z, vertex.y), g1, g2);
+					building.render();
+				}
 			}
-			
+		} else {
+
 		}
+
+		
 		this.plane.scale.x = 200*this.plane.scale.x;
 		this.plane.scale.y = 200*this.plane.scale.y;
 	}
