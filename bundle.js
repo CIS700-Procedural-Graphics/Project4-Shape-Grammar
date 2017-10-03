@@ -64,9 +64,11 @@
 	
 	
 	var objLoader = new THREE.OBJLoader();
-	var treeGeo;
+	
 	var geo1;
 	var geo2;
+	
+	var voronoi = !true;
 	
 	// called after the scene loads
 	function onLoad(framework) {
@@ -89,17 +91,14 @@
 	  camera.lookAt(new THREE.Vector3(0, 0, 0));
 	  camera.updateProjectionMatrix();
 	
-	  objLoader.load('tree.obj', function (obj) {
-	    treeGeo = obj.children[0].geometry;
-	    objLoader.load('Build11_obj.obj', function (obj) {
+	  objLoader.load('Build11_obj.obj', function (obj) {
+	    // LOOK: This function runs after the obj has finished loading
+	    geo1 = obj.children[0].geometry;
+	    objLoader.load('Build10_obj.obj', function (obj) {
 	      // LOOK: This function runs after the obj has finished loading
-	      geo1 = obj.children[0].geometry;
-	      objLoader.load('Build10_obj.obj', function (obj) {
-	        // LOOK: This function runs after the obj has finished loading
-	        geo2 = obj.children[0].geometry;
-	        var city = new _city2.default.City(scene, geo1, geo2);
-	        city.render();
-	      });
+	      geo2 = obj.children[0].geometry;
+	      var city = new _city2.default.City(scene, geo1, geo2);
+	      city.render(voronoi);
 	    });
 	  });
 	
@@ -48458,11 +48457,13 @@
 		buildingMain.scale = parent.scale;
 		buildingMain.scale.x = parent.scale.x * 0.8;
 		buildingMain.scale.z = parent.scale.z * 0.8;
+	
 		buildingMain.position.x = parent.position.x;
 		buildingMain.position.y = parent.position.y;
 		buildingMain.position.z = parent.position.z;
 	
 		baseBottom.scale.y = 0.25;
+	
 		baseBottom.position.x = parent.position.x;
 		baseBottom.position.y = parent.position.y;
 		baseBottom.position.z = parent.position.z;
@@ -48470,6 +48471,7 @@
 		baseMiddle.scale.y = 0.5;
 		baseMiddle.scale.x = 0.75;
 		baseMiddle.scale.z = 0.75;
+	
 		baseMiddle.position.x = parent.position.x;
 		baseMiddle.position.y = parent.position.y;
 		baseMiddle.position.z = parent.position.z;
@@ -48477,6 +48479,7 @@
 		baseTop.scale.y = 0.75;
 		baseTop.scale.x = 0.50;
 		baseTop.scale.z = 0.50;
+	
 		baseTop.position.x = parent.position.x;
 		baseTop.position.z = parent.position.z;
 		baseTop.position.y = parent.position.y;
@@ -48552,16 +48555,21 @@
 			// Determine displacement
 			left.position.z = parent.position.z;
 			right.position.z = parent.position.z;
+	
 			left.position.x = parent.position.x - parent.scale.x / 2 + left.scale.x / 3;
 			right.position.x = parent.position.x + parent.scale.x / 2 - right.scale.x / 3;
+	
 			left.position.y = parent.position.y;
 			right.position.y = parent.position.y;
+	
 			bridge.scale.x = parent.scale.x * 0.75;
 			bridge.scale.y = parent.scale.y / 12;
 			bridge.scale.z = Math.min(left.scale.z, right.scale.z) / 4;
+	
 			bridge.position.x = parent.position.x;
 			bridge.position.z = parent.position.z;
 			bridge.position.y = parent.position.y + parent.scale.y / 2;
+	
 			newShapes.push(left);
 			newShapes.push(right);
 			newShapes.push(bridge);
@@ -48709,7 +48717,7 @@
 	flatMat.shading = THREE.FlatShading;
 	var lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
 	
-	function City(scene, g1, g2) {
+	function City(scene, g1, g2, createVoronoi) {
 		this.shapeGrammars = [];
 	
 		// Create plane 
@@ -48720,16 +48728,19 @@
 		this.plane.rotateX(90 * Math.PI / 180);
 		this.scene = scene;
 	
-		this.render = function () {
+		this.render = function (createVoronoi) {
 			this.scene.add(this.plane);
-			// Create new shape grammar at each vertex on the plane
-			for (var i = 0; i < this.plane.geometry.vertices.length; i++) {
-				var vertex = this.plane.geometry.vertices[i];
-				if (_noise2.default.generateNoise(vertex.x, vertex.y, vertex.y) > 1.4) {
-					var building = new _shapegrammar2.default.ShapeGrammar('D', this.scene, 5, vertex, 1.5 * _noise2.default.generateNoise(vertex.x, vertex.z, vertex.y), g1, g2);
-					building.render();
+			// Create new shape grammar at each vertex on the plane using noise
+			if (!createVoronoi) {
+				for (var i = 0; i < this.plane.geometry.vertices.length; i++) {
+					var vertex = this.plane.geometry.vertices[i];
+					if (_noise2.default.generateNoise(vertex.x, vertex.y, vertex.y) > 1.4) {
+						var building = new _shapegrammar2.default.ShapeGrammar('D', this.scene, 5, vertex, 1.5 * _noise2.default.generateNoise(vertex.x, vertex.z, vertex.y), g1, g2);
+						building.render();
+					}
 				}
-			}
+			} else {}
+	
 			this.plane.scale.x = 200 * this.plane.scale.x;
 			this.plane.scale.y = 200 * this.plane.scale.y;
 		};
