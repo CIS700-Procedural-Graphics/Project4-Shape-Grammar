@@ -28,14 +28,14 @@ Rule = {predecessor, successor = f(predecessor), probability}
 #### Example
 
 Describing a simple building with some basic rules.
-• temple -> Subdiv(“Y”, …, … } { podium | columns | roof }
-• column -> Subdiv(“Y”, …){ base | shaft | capital }
-• columns -> Repeat(“X”, …){ column }
-• base -> (corinthian_base)
-• shaft -> (corinthian_shaft)
-• capital -> (corinthian_capital)
-• podium -> (podium)
-• roof -> (roof)
+- temple -> Subdiv(“Y”, …, … } { podium | columns | roof }
+- column -> Subdiv(“Y”, …){ base | shaft | capital }
+- columns -> Repeat(“X”, …){ column }
+- base -> (corinthian_base)
+- shaft -> (corinthian_shaft)
+- capital -> (corinthian_capital)
+- podium -> (podium)
+- roof -> (roof)
 
 ![](images/readme/shapeGrammarTemple.png)
 
