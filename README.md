@@ -15,9 +15,9 @@ Shape grammars in computation are a specific class of production systems that ge
 
 #### Basic Layout of shape grammar systems:
 
-Symbol = {terminal, non-terminal}
-Shape = {symbol, geometry, numeric attributes}
-Rule = {predecessor, successor = f(predecessor), probability}
+###### Symbol = {terminal, non-terminal}
+###### Shape = {symbol, geometry, numeric attributes}
+###### Rule = {predecessor, successor = f(predecessor), probability}
 
 1. Begin with some configuration of shapes (like an l-system axiom)
 2. Select an shape S from set.
