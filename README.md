@@ -1,45 +1,72 @@
+# Dynamic Procedural City
 
-# Project 4: Shape Grammar
+[![](images/readme/ProceduralCity_vimeoLink.png)](https://vimeo.com/231604217)
 
-For this assignment you'll be building directly off of Project 3. To make things easier to keep track of, please fork and clone this repository [https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar](https://github.com/CIS700-Procedural-Graphics/Project4-Shape-Grammar) and copy your Project 3 code to start.
+## Overview
 
-**Goal:** to model an urban environment using a shape grammar. 
+A procedural city built using shape grammar; The city is dynamic and changes with every build.
 
-**Note:** We’re well aware that a nice-looking procedural city is a lot of work for a single week. Focus on designing a nice building grammar. The city layout strategies outlined in class (the extended l-systems) are complex and not expected. We will be satisfied with something reasonably simple, just not a uniform grid!
+## Introduction to Shape Grammar
 
-## Symbol Node (5 points)
-Modify your symbol node class to include attributes necessary for rendering, such as
-- Associated geometry instance
-- Position
-- Scale 
-- Anything else you may need
+Shape grammars in computation are a specific class of production systems that generate geometric shapes. They are very similar to L-Systems but the grammar production process and rendering instructions are more intertwined.
+- Symbols have numeric attributes, eg. position, scale
+- Successors are computed, based on the numeric attributes of their predecessor, instead of just being predetermined
+- Since transformation information is usually stored, symbol ordering is not necessarily important
 
-## Grammar design (55 points)
-- Design at least five shape grammar rules for producing procedural buildings. Your buildings should vary in geometry and decorative features (beyond just differently-scaled cubes!). At least some of your rules should create child geometry that is in some way dependent on its parent’s state. (20 points)
-    - Eg. A building may be subdivided along the x, y, or z axis into two smaller buildings
-    - Some of your rules must be designed to use some property about its location. (10 points)
-    - Your grammar should have some element of variation so your buildings are non-deterministic.  Eg. your buildings sometimes subdivide along the x axis, and sometimes the y. (10 points)   
-- Write a renderer that will interpret the results of your shape grammar parser and adds the appropriate geometry to your scene for each symbol in your set. (10 points)
+#### Basic Layout of shape grammar systems:
 
-## Create a city (30 points)
-- Add a ground plane or some other base terrain to your scene (0 points, come on now)
-- Using any strategy you’d like, procedurally generate features that demarcate your city into different areas in an interesting and plausible way (Just a uniform grid is neither interesting nor plausible). (20 points)
-    - Suggestions: roads, rivers, lakes, parks, high-population density
-    - Note, these features don’t have to be directly visible, like high-population density, but they should somehow be visible in the appearance or arrangement of your buildings. Eg. High population density is more likely to generate taller buildings
-- Generate buildings throughout your city, using information about your city’s features. Color your buildings with a method that uses some aspect of its state. Eg. Color buildings by height, by population density, by number of rules used to generate it. (5 points)
-- Document your grammar rules and general approach in the readme. (5 points)
-- ???
-- Profit.
+###### Symbol = {terminal, non-terminal}
+###### Shape = {symbol, geometry, numeric attributes}
+###### Rule = {predecessor, successor = f(predecessor), probability}
 
-## Make it interesting (10)
-Experiment! Make your city a work of art.
+1. Begin with some configuration of shapes (like an l-system axiom)
+2. Select an shape S from set.
+3. Choose a production rule with S as predecessor, compute successor(s) S_new, and add it to the set.
+4. Remove S from the set.
+5. Repeat until all shapes in the set are terminal.
+
+#### Example
+
+Describing a simple building with some basic rules.
+- temple -> Subdiv(“Y”, …, … } { podium | columns | roof }
+- column -> Subdiv(“Y”, …){ base | shaft | capital }
+- columns -> Repeat(“X”, …){ column }
+- base -> (corinthian_base)
+- shaft -> (corinthian_shaft)
+- capital -> (corinthian_capital)
+- podium -> (podium)
+- roof -> (roof)
+
+![](images/readme/shapeGrammarTemple.png)
+
+## Project details
+
+The project goes about creating a city, which is created anew every time an item of the gui is updated.
+Every building is modeled procedurally based on shape grammar rules and the city layout is similarly randomized.
+Various GUI controls were added to give the project more life.
+
+### GUI controls:
+- Change the position that the city will spawn around.
+- Change the number of iterations over the shape grammar rule applied to buildings.
+- Change the density of the city.
+- Change the field of view of the camera.
+
+### Talking points for the Algorithm
+- Create multiple layers of circles of increasing size centered at the same point.
+- Have major roads along alternate segments joining these circles. Permanent roads.
+- Have minor roads be created randomly that connect various arcs of circles.
+- Place buildings inside the circles in between roads.
+
+### Shape Grammar rules
+- Subdivide buildings randomly about x or z axis
+- Scale every building randomly
+- Place windows on buildings depending upon the length and width of the building. And The windows are all above the ground floor.
+- Add a door randomly on one of the faces of the building and randomly jitter its position along that wall.
+- Add roof tops to buildings, depending on the shape and size of the buildings.
+- Give every building a random color.
+- All features added after the main cube building structure are shaded based on position.
 
 
-## Warnings:
-You can very easily blow up three.js with this assignment. With a very simple grammar, our medium quality machine was able to handle 100 buildings with 6 generations each, but be careful if you’re doing this all CPU-side.
+## References:
 
-## Suggestions for the overachievers:
-Go for a very high level of decorative detail!
-Place buildings with a strategy such that buildings have doors and windows that are always accessible.
-Generate buildings with coherent interiors
-If dividing your city into lots, generate odd-shaped lots and create building meshes that match their shape ie. rather than working with cubes, extrude upwards from the building footprints you find to generate a starting mesh to subdivide rather than starting with platonic geometry.
+- https://cis700-procedural-graphics.github.io/files/shape_grammar_2_7_17.pdf
