@@ -4,12 +4,13 @@ var objLoader = new THREE.OBJLoader();
 var geo1;
 var geo2;
 
+// rescale geometry to be of unit cube size
 var GEO1SCALE = new THREE.Vector3(1 / 125, 1 / 200, 1 / 130);
 var GEO2SCALE = new THREE.Vector3(1 / 350, 1 / 400, 1 / 230);
+
 // Materials
 var flatMat = new THREE.MeshPhongMaterial( { color: 0x000000, 
-	polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1});
-flatMat.shading = THREE.FlatShading;
+	polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, shading: THREE.FlatShading});
 var lineMat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
 
 // A class that represents a symbol replacement rule to
@@ -76,8 +77,9 @@ function subdivideX(parent) {
 	}
 	if (rz < 0.6) {
 		rz = 0.6;
-	}
-	// 
+	} 
+	
+	// rescale so that the x dimension of both sides are half of the parent
 	left.scale = new THREE.Vector3(parent.scale.x / 2, 
 		parent.scale.y, lz * parent.scale.z);
 	right.scale = new THREE.Vector3(parent.scale.x / 2, 
@@ -85,12 +87,10 @@ function subdivideX(parent) {
 
 
 	// Determine displacement
-	left.position.z = parent.position.z;
-	right.position.z = parent.position.z;
-	left.position.x = parent.position.x - parent.scale.x / 2 + left.scale.x / 2;
-	right.position.x = parent.position.x + parent.scale.x / 2 - right.scale.x / 2;
-	left.position.y = parent.position.y;
-	right.position.y = parent.position.y;
+	var leftX = parent.position.x - parent.scale.x / 2 + left.scale.x / 2;
+	var rightX = parent.position.x + parent.scale.x / 2 - right.scale.x / 2;
+	left.position = new THREE.Vector3(leftX, parent.position.y, parent.position.z);
+	right.position = new THREE.Vector3(rightX, parent.position.y, parent.position.z);
 
 	newShapes.push(left);
 	newShapes.push(right);
@@ -99,6 +99,7 @@ function subdivideX(parent) {
 }
 
 // B -> A
+// Terminal shape
 function noTrans(parent) {
 	parent.symbol = 'B';
 	return [parent];
@@ -106,6 +107,7 @@ function noTrans(parent) {
 
 // C -> AA
 // Creates two stacked components
+// higher box is slightly smaller
 function stack(parent) {
 	var newShapes = [];
 	var up = new SymbolNode('A', geo2);
@@ -115,20 +117,13 @@ function stack(parent) {
 	newShapes.push(up);
 	newShapes.push(down);
 
-	up.scale.x = 0.75*parent.scale.x;
-	down.scale.x = parent.scale.x;
-	up.scale.y = 0.5*parent.scale.y;
-	down.scale.y = 0.5*parent.scale.y;
-	up.scale.z = 0.75*parent.scale.z;
-	down.scale.z = parent.scale.z;
+	up.scale = up.scale.multiplyVectors(parent.scale.clone(), new THREE.Vector3(0.75, 0.5, 0.75));
+	down.scale = new THREE.Vector3(parent.scale.x, 0.5 * parent.scale.y, parent.scale.z);
+
+	up.position = parent.position.clone();
 	up.position.y = parent.position.y + up.scale.y / 2;
-	down.position.y = parent.position.y;
-	up.position.x = parent.position.x;
-	down.position.x = parent.position.x;
-	up.position.z = parent.position.z;
-	down.position.z = parent.position.z;
-
-
+	
+	down.position = parent.position.clone();
 	newShapes.push(up);
 	newShapes.push(down);
 	return newShapes;
@@ -284,30 +279,60 @@ function buildBaseOrBridge(parent) {
 	return newShapes;
 }
 
+// Determine color using IQ palletes and cosine function
+function palleteColor(a, b, c, t, d) {
+		c.multiplyScalar(t);
+		c.add(d);
+		c.multiplyScalar(6.28318);
+		c.x = Math.cos(c.x);
+		c.y = Math.cos(c.y);
+		c.z = Math.cos(c.z);
+		c.multiply(b);
+		c.add(a);
+		//console.log(c);
+		return new THREE.Color(c.x, c.y, c.z);
+	}
 
 // Encapsulate grammar methods
-function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
+// Param: axiom, scene, number of replace iterations,
+// position of the building, height of the building,
+// two geometries to pass into nodes
+function ShapeGrammar(axiom, scene, iterations, 
+						origin, height, g1, g2) {
 	geo1 = g1;
 	geo2 = g2;
 	this.axiom = axiom;
-	this.material = flatMat.clone();
 	this.grammar = [];
 	this.iterations = iterations;
 	this.scene = scene;
-	this.height = height;
+	//console.log(height);
+	this.height = 1.5 * height;
+	this.material;
+	
+		// cosine palate input values
+		var a = new THREE.Vector3(-3.142, -0.162, 0.688);
+		var b = new THREE.Vector3(1.068,0.500, 0.500);
+		var c = new THREE.Vector3(3.138, 0.688, 0.500);
+		var d = new THREE.Vector3(0.000, 0.667, 0.500);
+		var t = height - Math.floor(height);
+		//console.log(t);
+		// set material color to the pallete result
+		var result = palleteColor(a, b, c, t, d);
+		this.material = new THREE.MeshLambertMaterial({ color: result });
+		this.material.color.setRGB(result.r, result.g, result.b);
+
 	// Init grammar for shapes
 	for (var i = 0; i < this.axiom.length; i++) {
 		var node = new SymbolNode(axiom.charAt(i), new THREE.BoxGeometry(1, 1, 1));
 		node.scale = new THREE.Vector3(1, height, 1);
-		node.position.x = origin.x;
-		node.position.z = origin.y;
-		node.position.y = origin.z;
-		node.material = new THREE.MeshBasicMaterial({ color: 0xffffff });
-		var mesh = new THREE.Mesh(node.geometry, node.material);
-		mesh.position.x += 1;
+		node.position = new THREE.Vector3(origin.x, -0.05, origin.y);
+
+		// add the node to the grammar
 		this.grammar[i] = node;
 	} 
+
 	// Function to compute shape grammar for a number of iterations
+	// Swaps out characters for their grammar rule value
 	this.compute = function() {
 		// Repeats for number of iterations
 		for (var k = 0; k < this.iterations; k++) {
@@ -322,8 +347,8 @@ function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
 				// Subdivide rule
 				if (symbolNode.symbol == 'A') {
 					this.grammar.splice(i, 1);
-					//var newSymbols = subdivideX(symbolNode);
 					var newSymbols = subdivideX(symbolNode);
+					
 					// Add new symbols to the grammar
 					for (var j = 0; j < newSymbols.length; j++) {
 						newArr.push(newSymbols[j]);
@@ -333,6 +358,7 @@ function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
 				else if (symbolNode.symbol == 'B') {
 					this.grammar.splice(i, 1);
 					var newSymbols = noTrans(symbolNode);
+					
 					// Add new symbols to the grammar
 					for (var j = 0; j < newSymbols.length; j++) {
 						newArr.push(newSymbols[j]);
@@ -341,6 +367,7 @@ function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
 				else if (symbolNode.symbol == 'C') {
 					this.grammar.splice(i, 1);
 					var newSymbols = stack(symbolNode);
+					
 					// Add new symbols to the grammar
 					for (var j = 0; j < newSymbols.length; j++) {
 						newArr.push(newSymbols[j]);
@@ -349,12 +376,14 @@ function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
 				else if (symbolNode.symbol == 'D') {
 					this.grammar.splice(i, 1);
 					var newSymbols = buildBaseOrBridge(symbolNode);
+					
 					// Add new symbols to the grammar
 					for (var j = 0; j < newSymbols.length; j++) {
 						newArr.push(newSymbols[j]);
 					}
 				}
 			}
+
 			for (var j = 0; j < newArr.length; j++) {
 				this.grammar.push(newArr[j]);
 			}
@@ -362,38 +391,50 @@ function ShapeGrammar(axiom, scene, iterations, origin, height, g1, g2) {
 	}
 
 	// Function to render resulting shape grammar
+	// Uses node data from shape grammar to create a mesh
 	this.render = function() {
 		this.compute();
 
 		for (var i = 0; i < this.grammar.length; i++) {
 			var node = this.grammar[i];
-			//this.material.color.r += this.height / 15;
-			//this.material.color.g += Math.pow(this.height, 2) / 40;
-			var bcomp = this.grammar.length / 55;
-			//console.log(bcomp);
-			//this.material.color.r += bcomp;
-			//this.material.color.g += bcomp;
-			this.material.color.b += bcomp;
-			//console.log(this.height/5);
+
+			// create mesh for building
 			var mesh = new THREE.Mesh(node.geometry, this.material);
-			var geo = new THREE.EdgesGeometry(  node.geometry ); 
-			var wireframe = new THREE.LineSegments( geo, lineMat );
+			
+			// set color of buildings to be lighter version of the building color
+			var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
+			mat.color = this.material.color.clone();
+			mat.color.addScalar(0.95);
+
+			// create geometry for wireframe
+			var geo = new THREE.EdgesGeometry(  node.geometry );
+
+			// add mesh outlines
+			var wireframe = new THREE.LineSegments( geo, mat );
 			mesh.add(wireframe);
-			// Set position
-			mesh.position.set(node.position.x, node.position.y, node.position.z);
+			
+			// set position
+			var p = node.position.clone();
+			var r = node.rotation.clone();
 
-			// Set rotation
-			mesh.rotation.set(node.rotation.x, node.rotation.y, node.rotation.z);
+			// set rotation
+			mesh.position.set(p.x, p.y, p.z);
+			mesh.rotation.set(r.x, r.y, r.z);
 
-			// Set scale
-			mesh.scale.set(node.geomScale.x*node.scale.x, node.geomScale.y*node.scale.y, 
-				node.geomScale.y*node.scale.z);
+			// set scale
+			var m = new THREE.Vector3().multiplyVectors(node.geomScale, node.scale);
+			mesh.scale.set(m.x, m.y, m.z);
 
 			mesh.updateMatrix();
 			this.scene.add(mesh);
 		}
 	}
+
+	
 }
+
+
+
 
 export default {
 	ShapeGrammar : ShapeGrammar,

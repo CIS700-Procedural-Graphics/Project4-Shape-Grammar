@@ -11,10 +11,41 @@ var geo2;
 
 var voronoi = !true;
 
+var points = new THREE.Geometry();
+var velocities = [];
+
+    for ( var i = 0; i < 10000; i ++ ) {
+      var p = new THREE.Vector3();
+      p.x = THREE.Math.randFloatSpread( 200 );
+      p.y = THREE.Math.randFloatSpread( 200 );
+      p.z = THREE.Math.randFloatSpread( 200 );
+      points.vertices.push( p );
+      velocities.push(-Math.random() / 5);
+      points.lights = true;
+    }
+
+  var whiteCol = new THREE.PointsMaterial( { color: 0xffffff, size: 0.5, 
+    map: new THREE.TextureLoader().load('src/particle.png'),
+    blending: THREE.AdditiveBlending,
+    transparent: true  } )
+
+  var starField = new THREE.Points( points, whiteCol );
+
+  
+
 // called after the scene loads
 function onLoad(framework) {
   
   var scene = framework.scene;
+  scene.add( starField );
+  // add it to the scene
+scene.add(starField);
+
+
+  var loader = new THREE.TextureLoader();
+  var background = new THREE.TextureLoader().load('src/darkbluepainting.jpg');
+  scene.background = background;
+
   var camera = framework.camera;
   var renderer = framework.renderer;
   var gui = framework.gui;
@@ -28,10 +59,21 @@ function onLoad(framework) {
 
   scene.add(directionalLight);
 
-  camera.position.set(1, 1, 5);
+  camera.position.set(1, 10, 5);
   camera.lookAt(new THREE.Vector3(0,0,0));
   camera.updateProjectionMatrix();
 
+  var planeWidth = 100;
+  var material = new THREE.MeshBasicMaterial({color: 0x000000, wireframe:true});
+  var geometry = new THREE.PlaneGeometry( planeWidth, planeWidth, planeWidth * 2 - 1, planeWidth*2 - 1);
+  var plane = new THREE.Mesh( geometry, material );
+  plane.rotateX((90 * Math.PI)/180);
+  // plane.scale.set(100,100, 100);
+  plane.position.z = 5;
+  //scene.add(plane);
+
+
+  // Create particle system
 
   objLoader.load('Build11_obj.obj', function(obj) {
     // LOOK: This function runs after the obj has finished loading
@@ -52,6 +94,15 @@ function onLoad(framework) {
 
 // called on frame updates
 function onUpdate(framework) {
+  for ( var i = 0; i < 10000; i ++ ) {
+      points.vertices[i].y += velocities[i];
+      if (points.vertices[i].y <= 0.0) {
+        points.vertices[i].y = 20;
+      }
+      points.lights = true;
+    }
+  starField.geometry.verticesNeedUpdate = true;
+
 }
 
 // when the scene is done initializing, it will call onLoad, then on frame updates, call onUpdate
