@@ -8,11 +8,6 @@ var geo2;
 var GEO1SCALE = new THREE.Vector3(1 / 125, 1 / 200, 1 / 130);
 var GEO2SCALE = new THREE.Vector3(1 / 350, 1 / 400, 1 / 230);
 
-// Materials
-var flatMat = new THREE.MeshPhongMaterial( { color: 0x000000, 
-	polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1, shading: THREE.FlatShading});
-var lineMat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
-
 // A class that represents a symbol replacement rule to
 // be used when expanding an L-system grammar.
 function SymbolNode(symbol, geometry) {
@@ -26,6 +21,7 @@ function SymbolNode(symbol, geometry) {
 	this.geomScale = new THREE.Vector3(1, 1, 1);
 }
 
+// SET OF RULES
 // A -> AB
 function subdivideX(parent) {
 	var newShapes = [];
@@ -57,8 +53,8 @@ function subdivideX(parent) {
 		right.geomScale = GEO2SCALE;
 	}
 
-	left.material = flatMat;
-	right.material = flatMat;
+	left.material = parent.material;
+	right.material = parent.material;
 	
 	// Determine scale randomly
 	var ly = Math.random();
@@ -66,18 +62,10 @@ function subdivideX(parent) {
 	var ry = Math.random();
 	var rz = Math.random();
 
-	if (ly < 0.6) {
-		ly = 0.6;
-	}
-	if (lz < 0.6) {
-		lz = 0.6;
-	}
-	if (ry < 0.6) {
-		ry = 0.6;
-	}
-	if (rz < 0.6) {
-		rz = 0.6;
-	} 
+	if (ly < 0.6) ly = 0.6;
+	if (lz < 0.6) lz = 0.6;
+	if (ry < 0.6) ry = 0.6;
+	if (rz < 0.6) rz = 0.6;
 	
 	// rescale so that the x dimension of both sides are half of the parent
 	left.scale = new THREE.Vector3(parent.scale.x / 2, 
@@ -112,8 +100,8 @@ function stack(parent) {
 	var newShapes = [];
 	var up = new SymbolNode('A', geo2);
 	var down = new SymbolNode('A', geo1);
-	up.material = flatMat;
-	down.material = flatMat;
+	up.material = parent.material;
+	down.material = parent.material;
 	newShapes.push(up);
 	newShapes.push(down);
 
@@ -132,60 +120,25 @@ function stack(parent) {
 // D -> A
 // D -> C
 // D -> AEA
+// This function is a nondeterministic rule to determine main building structure
 function buildBaseOrBridge(parent) {
 	var newShapes = [];
-	var baseBottom = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
-	var baseMiddle = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
-	var baseTop = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
 
 	// Build base and main building
 	var buildingMain;
 	buildingMain = new SymbolNode('A', geo1);
 	buildingMain.geomScale = GEO1SCALE;
+	buildingMain.material = parent.material;
+	buildingMain.scale.multiplyVectors(parent.scale, new THREE.Vector3(1, 0.8, 0.8));
+	buildingMain.position = parent.position.clone();
 
-	baseBottom.material = flatMat;
-	baseMiddle.material = flatMat;
-	baseTop.material = flatMat;
-	buildingMain.material = flatMat;
-
-	buildingMain.scale = parent.scale;
-	buildingMain.scale.x = parent.scale.x * 0.8;
-	buildingMain.scale.z = parent.scale.z * 0.8;
-	
-	buildingMain.position.x = parent.position.x;
-	buildingMain.position.y = parent.position.y;
-	buildingMain.position.z = parent.position.z;
-	
-	baseBottom.scale.y = 0.25;
-	
-	baseBottom.position.x = parent.position.x;
-	baseBottom.position.y = parent.position.y;
-	baseBottom.position.z = parent.position.z;
-	
-	baseMiddle.scale.y = 0.5;
-	baseMiddle.scale.x = 0.75;
-	baseMiddle.scale.z = 0.75;
-	
-	baseMiddle.position.x = parent.position.x;
-	baseMiddle.position.y = parent.position.y;
-	baseMiddle.position.z = parent.position.z;
-	
-	baseTop.scale.y = 0.75;
-	baseTop.scale.x = 0.50;
-	baseTop.scale.z = 0.50;
-	
-	baseTop.position.x = parent.position.x;
-	baseTop.position.z = parent.position.z;
-	baseTop.position.y = parent.position.y;
 
 	//Decides whether this building is normal, based, or bridged
 	var RV = Math.random();
-	if (RV < 0.3333) {
+	if (RV < (1.0 / 3.0)) {
 		//builds with base
 		if (Math.random() < 0.4) {
-			newShapes.push(baseBottom);
-			newShapes.push(baseMiddle);
-			newShapes.push(baseTop);
+			buildBase(parent, newShapes);
 		}
 		newShapes.push(buildingMain);
 	}
@@ -196,136 +149,45 @@ function buildBaseOrBridge(parent) {
 		newShapes.push(buildingMain);
 	}
 	else {
-		var left = new SymbolNode('A', geo1);
-		var right = new SymbolNode('B', geo2);
-		var bridge = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
-		left.geomScale = GEO1SCALE;
-		right.geomScale = GEO2SCALE;
-		
-		// Switches up geom
-		var RV = Math.random();
-	
-		if (RV < 0.25) {
-			left = new SymbolNode('A', geo2);
-			right = new SymbolNode('B', geo1);
-			left.geomScale = GEO2SCALE;
-			right.geomScale = GEO1SCALE;
-		}
-		else if (RV < 0.5) {
-			left = new SymbolNode('A', geo1);
-			right = new SymbolNode('B', geo1);
-			left.geomScale = GEO1SCALE;
-			right.geomScale = GEO1SCALE;
-	
-		}
-		else if (RV < 0.75) {
-			left = new SymbolNode('A', geo2);
-			right = new SymbolNode('B', geo2);
-			left.geomScale = GEO2SCALE;
-			right.geomScale = GEO2SCALE;
-		}
-
-		left.material = flatMat;
-		right.material = flatMat;
-		bridge.material = flatMat;
-		
-		// Determine scale randomly
-		var ly = Math.random();
-		var lz = Math.random();
-		var ry = Math.random();
-		var rz = Math.random();
-	
-		if (ly < 0.6) {
-			ly = 0.6;
-		}
-		if (lz < 0.6) {
-			lz = 0.6;
-		}
-		if (ry < 0.6) {
-			ry = 0.6;
-		}
-		if (rz < 0.6) {
-			rz = 0.6;
-		}
-		
-		left.scale = new THREE.Vector3(parent.scale.x / 3, 
-			parent.scale.y, lz * parent.scale.z);
-		right.scale = new THREE.Vector3(parent.scale.x / 3, 
-			parent.scale.y, rz * parent.scale.z);
-	
-	
-		// Determine displacement
-		left.position.z = parent.position.z;
-		right.position.z = parent.position.z;
-		
-		left.position.x = parent.position.x - parent.scale.x / 2 + left.scale.x / 3;
-		right.position.x = parent.position.x + parent.scale.x / 2 - right.scale.x / 3;
-		
-		left.position.y = parent.position.y;
-		right.position.y = parent.position.y;
-		
-		bridge.scale.x = parent.scale.x * 0.75;
-		bridge.scale.y = parent.scale.y / 12;
-		bridge.scale.z = Math.min(left.scale.z, right.scale.z) / 4;
-		
-		bridge.position.x = parent.position.x;
-		bridge.position.z = parent.position.z;
-		bridge.position.y = parent.position.y + parent.scale.y / 2;
-		
-		newShapes.push(left);
-		newShapes.push(right);
-		newShapes.push(bridge);
+		buildBridge(parent, newShapes);
 	}
 	return newShapes;
 }
-
-// Determine color using IQ palletes and cosine function
-function palleteColor(a, b, c, t, d) {
-		c.multiplyScalar(t);
-		c.add(d);
-		c.multiplyScalar(6.28318);
-		c.x = Math.cos(c.x);
-		c.y = Math.cos(c.y);
-		c.z = Math.cos(c.z);
-		c.multiply(b);
-		c.add(a);
-		//console.log(c);
-		return new THREE.Color(c.x, c.y, c.z);
-	}
 
 // Encapsulate grammar methods
 // Param: axiom, scene, number of replace iterations,
 // position of the building, height of the building,
 // two geometries to pass into nodes
 function ShapeGrammar(axiom, scene, iterations, 
-						origin, height, g1, g2) {
+						origin, noise, g1, g2) {
 	geo1 = g1;
 	geo2 = g2;
 	this.axiom = axiom;
 	this.grammar = [];
 	this.iterations = iterations;
 	this.scene = scene;
-	//console.log(height);
-	this.height = 1.5 * height;
+	this.height = 2.0 * noise;
 	this.material;
 	
-		// cosine palate input values
-		var a = new THREE.Vector3(-3.142, -0.162, 0.688);
-		var b = new THREE.Vector3(1.068,0.500, 0.500);
-		var c = new THREE.Vector3(3.138, 0.688, 0.500);
-		var d = new THREE.Vector3(0.000, 0.667, 0.500);
-		var t = height - Math.floor(height);
-		//console.log(t);
-		// set material color to the pallete result
-		var result = palleteColor(a, b, c, t, d);
-		this.material = new THREE.MeshLambertMaterial({ color: result });
-		this.material.color.setRGB(result.r, result.g, result.b);
+	// cosine palate input values
+	var a = new THREE.Vector3(-3.142, -0.162, 0.688);
+	var b = new THREE.Vector3(1.068, 0.500, 0.500);
+	var c = new THREE.Vector3(3.138, 0.688, 0.500);
+	var d = new THREE.Vector3(0.000, 0.667, 0.500);
+	var t = this.height - Math.floor(this.height);
 
+	// set material color to the pallete result
+	var result = palleteColor(a, b, c, t, d);
+	this.material = new THREE.MeshLambertMaterial({ color: result });
+	this.material.color.setRGB(result.r, result.g, result.b);
+	this.material.color.addScalar(0.95);
+	
 	// Init grammar for shapes
 	for (var i = 0; i < this.axiom.length; i++) {
 		var node = new SymbolNode(axiom.charAt(i), new THREE.BoxGeometry(1, 1, 1));
-		node.scale = new THREE.Vector3(1, height, 1);
-		node.position = new THREE.Vector3(origin.x, -0.05, origin.y);
+		node.scale = new THREE.Vector3(1, this.height, 1);
+		node.position = new THREE.Vector3(origin.x, -0.02, origin.y);
+		node.material = this.material;
 
 		// add the node to the grammar
 		this.grammar[i] = node;
@@ -401,10 +263,10 @@ function ShapeGrammar(axiom, scene, iterations,
 			// create mesh for building
 			var mesh = new THREE.Mesh(node.geometry, this.material);
 			
-			// set color of buildings to be lighter version of the building color
+			// set color of buildings to be the color stored in this instance
 			var mat = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 2 } );
 			mat.color = this.material.color.clone();
-			mat.color.addScalar(0.95);
+			
 
 			// create geometry for wireframe
 			var geo = new THREE.EdgesGeometry(  node.geometry );
@@ -429,12 +291,113 @@ function ShapeGrammar(axiom, scene, iterations,
 			this.scene.add(mesh);
 		}
 	}
-
-	
 }
 
+// HELPER FUNCTIONS
+// Determine color using IQ palletes and cosine function
+function palleteColor(a, b, c, t, d) {
+	c.multiplyScalar(t);
+	c.add(d);
+	c.multiplyScalar(6.28318);
+	c.x = Math.cos(c.x);
+	c.y = Math.cos(c.y);
+	c.z = Math.cos(c.z);
+	c.multiply(b);
+	c.add(a);
+	//console.log(c);
+	return new THREE.Color(c.x, c.y, c.z);
+}
 
+function buildBridge(parent, newShapes) {
+	// Switches up geom
+	var RV = Math.random();
+	
+	var leftGeo, rightGeo;
+	var leftScale, rightScale;
 
+	leftGeo = geo2;
+	leftScale = GEO2SCALE;
+	rightGeo = geo1;
+	rightScale = GEO1SCALE;
+
+	if (RV < (1.0 / 3.0)) {
+		leftGeo = geo1;
+		leftScale = GEO1SCALE;
+	} else if (RV < 0.5) {
+		leftGeo = geo1;
+		leftScale = GEO1SCALE;
+		rightGeo = geo2;
+		rightScale = GEO2SCALE;
+	} else if (RV < 0.75) {
+		rightGeo = geo2;
+		rightScale = GEO2SCALE;
+	}
+
+	var left = new SymbolNode('A', leftGeo);
+	var right = new SymbolNode('B', rightGeo);
+	left.geomScale = leftScale;
+	right.geomScale = rightScale;
+	left.material = parent.material;
+	right.material = parent.material;
+
+	var bridge = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+	bridge.material = parent.material;
+	
+	// Determine scale randomly
+	var ly = Math.random();
+	var lz = Math.random();
+	var ry = Math.random();
+	var rz = Math.random();
+
+	if (ly < 0.6) ly = 0.6;
+	if (lz < 0.6) lz = 0.6;
+	if (ry < 0.6) ry = 0.6;
+	if (rz < 0.6) rz = 0.6;
+	
+	left.scale = new THREE.Vector3(parent.scale.x / 3, 
+		parent.scale.y, lz * parent.scale.z);
+	right.scale = new THREE.Vector3(parent.scale.x / 3, 
+		parent.scale.y, rz * parent.scale.z);
+
+	// Determine displacement
+	left.position = parent.position.clone();
+	left.position.x = parent.position.x - parent.scale.x / 2 + left.scale.x / 3;
+
+	right.position = parent.position.clone();
+	right.position.x = parent.position.x + parent.scale.x / 2 - right.scale.x / 3;;
+	
+	bridge.scale.x = parent.scale.x * 0.75;
+	bridge.scale.y = parent.scale.y / 12;
+	bridge.scale.z = Math.min(left.scale.z, right.scale.z) / 4;
+	
+	bridge.position = parent.position.clone();
+	bridge.position.y = parent.position.y + parent.scale.y / 2;
+	
+	// add left and right buildings, and then add bridge
+	newShapes.push(left);
+	newShapes.push(right);
+	newShapes.push(bridge);
+}
+
+// build base for the seed string
+function buildBase(parent, newShapes) {
+	var baseBottom = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+	var baseMiddle = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+	var baseTop = new SymbolNode('E', new THREE.BoxGeometry(1, 1, 1));
+
+	baseBottom.material = parent.material;
+	baseMiddle.material = parent.material;
+	baseTop.material = parent.material;
+
+	baseBottom.scale.y = 0.25;
+	baseBottom.position = parent.position.clone();
+	
+	baseMiddle.scale = new THREE.Vector3(0.75, 0.5, 0.75);
+	baseMiddle.position = parent.position.clone();
+	
+	baseTop.scale = new THREE.Vector3(0.5, 0.75, 0.5);
+	baseTop.position = parent.position.clone();
+}
 
 export default {
 	ShapeGrammar : ShapeGrammar,
