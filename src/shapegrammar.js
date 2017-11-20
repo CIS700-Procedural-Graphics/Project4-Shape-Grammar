@@ -397,6 +397,10 @@ function buildBase(parent, newShapes) {
 	
 	baseTop.scale = new THREE.Vector3(0.5, 0.75, 0.5);
 	baseTop.position = parent.position.clone();
+
+	newShapes.push(baseBottom);
+	newShapes.push(baseMiddle);
+	newShapes.push(baseTop);
 }
 
 export default {
